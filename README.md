@@ -17,7 +17,7 @@
 
 **Ninja Gekko represents the evolutionary leap from traditional trading bots to a completely autonomous, self-improving trading intelligence powered by Rust performance and MCP ecosystem integration.**
 
-[🥷 Features](#-revolutionary-features) • [🚀 Quick Start](#-quick-start) • [🧠 Neural Stack](#-neural-intelligence-stack) • [🎭 MCP Integration](#-mcp-first-architecture) • [📈 Performance](#-performance-benchmarks)
+[🥷 Features](#-revolutionary-features) • [🚀 Quick Start](#-quick-start) • [🧠 Neural Stack](#-neural-intelligence-stack) • [🎭 MCP Integration](#-mcp-first-architecture) • [🤝 Capability Matrix](#-capability-matrix-ninja-gekko-vs-modern-neural-trading-stacks) • [🌐 Integrations](#-integration-coverage--roadmap) • [⚠️ Risk Disclosure](#-experimental-research-disclosure) • [📈 Performance](#-performance-benchmarks)
 
 </div>
 
@@ -45,6 +45,26 @@
 - **⚡ GPU Acceleration**: CUDA 11.8+ and Apple Metal Performance Shaders support
 - **🌐 WebAssembly Deployment**: Run anywhere - browser, edge, server, embedded
 
+> **Experimental Research Disclosure**: Ninja Gekko is experimental, open-source software provided for research and development only. Automated trading is inherently risky. Use at your own risk. Nothing in this repository constitutes financial advice.
+
+---
+
+## 🧠 **Neural Architecture Compatibility**
+
+Ninja Gekko unifies ruv-FANN, Neuro-Divergent, and industry-standard NeuralForecast models under a single benchmarking harness with GPU and CPU parity.
+
+| Model Family | Supported Variants | Benchmark Focus | Status |
+|--------------|--------------------|-----------------|--------|
+| **NHITS** | Multi-horizon time-series, custom attention heads | Latency <10ms, horizon stability | ✅ Production |
+| **N-BEATSx** | Seasonality/trend expert stacks | Forecast accuracy, regime resilience | ✅ Production |
+| **LSTM / GRU** | ruv-FANN recurrent suite | Cross-asset adaptability, training throughput | ✅ Production |
+| **Temporal Fusion Transformer** | TFT with multi-asset covariates | Explainability, feature attributions | 🚧 Preview |
+| **Dilated CNN (WaveNet)** | Residual dilated convolutions | Order book microstructure modelling | ✅ Production |
+| **ruv-FANN Neuro-Divergent** | Ensemble neuro-symbolic hybrids | Strategy consensus, swarm scoring | ✅ Production |
+| **Hybrid RL Agents** | Policy-gradient & actor-critic blends | Risk-adjusted Sharpe, live feedback loops | 🧪 Research |
+
+The forthcoming **Neural Benchmarking Module** captures inference latency, MAE/MAPE, and Sharpe/Sortino metrics across every supported architecture with reproducible evaluation manifests.
+
 ---
 
 ## 🥷 **Revolutionary Features**
@@ -62,7 +82,7 @@ Built on cutting-edge Rust-based neural network technology:
 | **🌐 WASM Runtime** | Browser & Edge | Universal deployment |
 
 ### **🎭 MCP-First Architecture**
-Native Model Context Protocol integration with 70+ servers:
+Native Model Context Protocol integration with 70+ servers, formalized as the **Tenno-MCP** runtime for plug-and-play agent composition. Tenno-MCP provides USB-C-like interoperability for LLMs, automation tools, and market adapters with declarative manifests, hot-reloadable toolchains, and CLI/server parity.
 
 #### **🔧 Core MCP Servers**
 - **🎪 Playwright MCP**: Advanced browser automation, web scraping, and market data collection
@@ -82,6 +102,8 @@ Native Model Context Protocol integration with 70+ servers:
 | **📱 Social Intelligence** | Twitter, Reddit, YouTube, LinkedIn | Social sentiment, news monitoring, trend analysis |
 | **🔧 DevOps** | GitHub, GitLab, Docker, NPM | CI/CD pipelines, deployment automation |
 
+Tenno-MCP now exposes a **Tool Orchestration Registry** inspired by Claude-Flow, enabling swarm agents to register capabilities, negotiate ownership, and coordinate workflows through consensus-driven leasing contracts.
+
 ### **🥷 Autonomous Operation Modes**
 
 #### **🌙 Stealth Mode**  
@@ -98,12 +120,52 @@ Native Model Context Protocol integration with 70+ servers:
 - Risk-adjusted position optimization using Kelly Criterion
 - Real-time volatility clustering and regime detection
 
-#### **🤖 Swarm Mode**  
+#### **🤖 Swarm Mode**
 *Collaborative intelligence across multiple agents*
 - Distributed decision-making with consensus algorithms
 - Cross-market arbitrage detection and execution
 - Coordinated strategies across different asset classes
 - Fault-tolerant operation with automatic failover
+- Tenno-MCP orchestration registry with role-based leasing and health-checked failover rotation
+- Claude-Flow compatible tool negotiation and shared scratchpad for context-rich execution plans
+
+---
+
+## 🤝 **Capability Matrix: Ninja Gekko vs Modern Neural Trading Stacks**
+
+| Feature | **Ninja Gekko** | Neural Trader MCP | Claude-Flow |
+|---------|-----------------|-------------------|-------------|
+| **Neural Forecasting Models** | ruv-FANN, Neuro-Divergent, NHITS, N-BEATSx, LSTM/GRU, WaveNet, TFT preview | NHITS, N-BEATSx, LSTM/GRU | Swarm-assisted inference |
+| **MCP Protocol** | Tenno-MCP with declarative tool manifests and USB-C-style plug-and-play | FastMCP core | Claude MCP/Flow orchestration |
+| **Agentic Swarm Orchestration** | ruv-swarm with tool registry, leasing, and consensus failover | 87+ tool hive-mind | Swarm coordination layer |
+| **Trading Venue Integrations** | Coinbase, Binance, Oanda, Alpaca (beta), Deribit, Kraken | Polymarket, Betfair, Alpaca, Alpha Vantage, TheOddsAPI | Customizable adapters |
+| **Telemetry & Observability** | Prometheus, Grafana, OpenTelemetry traces, ELK | JSON dashboards, custom telemetry | Flow-native dashboards |
+| **Security & Governance** | MFA, TLS 1.3, RBAC, audit ledger, GDPR-ready | KYC/RBAC, end-to-end encryption | Workspace roles |
+| **Benchmarking** | Built-in neural latency/Sharpe harness with reproducible manifests | Proprietary benchmarking suite | Scenario planners |
+| **Deployment Footprint** | Rust microservices, Docker/K8s, WASM | Rust/Python hybrid, Docker/K8s | Python-first orchestration |
+
+> Tenno-MCP emphasizes transparent, modular interoperability so that researchers can replicate or extend benchmarks across open-source trading stacks.
+
+---
+
+## 🌐 **Integration Coverage & Roadmap**
+
+| Domain | Live Integrations | Upcoming Targets | Notes |
+|--------|------------------|------------------|-------|
+| **Centralized Exchanges** | Coinbase, Binance, Kraken, Oanda | Interactive Brokers, Bitfinex | Unified order router with smart venue selection |
+| **Decentralized / Prediction Markets** | Uniswap (data), dYdX (execution) | Polymarket, Betfair Exchange, TheGraph | Workflow recipes under Tenno-MCP tool registry |
+| **Market Data & Analytics** | Alpha Vantage, Tiingo, TradingView, Glassnode | TheOddsAPI, Kaiko, Polygon.io | Multi-frequency data normalization pipelines |
+| **AI / ML Services** | OpenAI, HuggingFace, Replicate | Anthropic Claude-Flow, Cohere, StabilityAI | Shared embeddings cache across agents |
+| **Community & Ops** | Slack, Discord, Telegram, Notion | Linear, Jira, GitLab Issues | MCP-driven incident response bots |
+| **Compliance & Governance** | Supabase Auth, custom RBAC, audit ledger | KYC/AML providers, on-chain attestations | Policy-driven access enforced via Tenno-MCP |
+
+Deployment runbooks for Docker and Kubernetes clusters now include:
+
+- **Docker Compose Playbook**: Layered services for core trading engine, Tenno-MCP routers, observability, and GPU inference nodes.
+- **Kubernetes Guide**: GPU node pool setup, Horizontal Pod Autoscaling, Istio/Linkerd service mesh integration, and secure secret distribution.
+- **Benchmark Automation**: CI hooks to execute neural benchmarking manifests and publish Grafana dashboards.
+
+Detailed instructions live in [`docs/deployment/`](docs/deployment/) with step-by-step sandbox parity validation.
 
 ---
 
@@ -163,6 +225,12 @@ Native Model Context Protocol integration with 70+ servers:
 | **ML Integration** | GPU-accelerated models with continuous learning | <50ms inference |
 | **Market Data** | Multi-platform real-time feeds with validation | <5ms latency |
 | **Portfolio Management** | Automated rebalancing and optimization | 24/7 monitoring |
+
+---
+
+## ⚠️ **Experimental Research Disclosure**
+
+Ninja Gekko is experimental, open-source research software. Automated trading carries significant financial risk, including potential loss of capital. Validate configurations in sandbox environments, comply with jurisdictional regulations, and consult professional advisors before any production deployment. Nothing herein constitutes investment, trading, or financial advice.
 
 ---
 
