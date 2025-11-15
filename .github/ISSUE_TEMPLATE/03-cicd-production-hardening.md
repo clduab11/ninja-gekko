@@ -2,15 +2,26 @@
 name: CI/CD Pipeline & Production Hardening
 about: Set up automation, testing, deployment, and production-grade reliability
 title: "[MILESTONE 3] Implement CI/CD Pipeline & Production Hardening"
-labels: infrastructure, devops, testing, production
+labels: infrastructure, devops, testing, production, ai-agent
 assignees: ''
 ---
+
+## 🤖 GitHub Copilot Context Prompt
+
+**Copy this into your Copilot chat before starting implementation:**
+
+```
+You are implementing MILESTONE 3: CI/CD Pipeline & Production Hardening for a Rust trading system. Follow November 2025 DevOps standards: GitHub Actions with caching, multi-stage Docker builds with distroless base, Kubernetes manifests with HPA/liveness/readiness probes, Prometheus metrics with Grafana dashboards, structured logging with tracing. Create GitHub Actions workflows: CI (fmt/clippy/test with Postgres/Redis services), security audit (cargo audit/deny), benchmarks (criterion with regression detection), Docker build/push to GHCR. Implement graceful shutdown: SIGTERM handler, cancel open orders, flush event queues, close connections within 30s timeout. Add health endpoints: /health/live (process alive), /health/ready (dependencies healthy). Prometheus metrics: counters for orders/fills, histograms for latency (p50/p95/p99), gauges for positions/balance/PnL. Activate circuit breaker in database layer: trip on 5 failures, half-open after timeout, track state. All async shutdown with tokio::select and proper signal handling. Docker: use rust:slim builder, debian:bookworm-slim runtime, non-root user, health checks. K8s: resource limits, rolling updates, config via ConfigMap, secrets via Secret. Monitoring: Grafana dashboards for trading/performance/system metrics, Prometheus alerts for failures/latency/loss limits. Testing: verify graceful shutdown, health endpoints return correct status, metrics export correctly. Code quality: clippy clean, formatted, comprehensive error handling, security-first (no secrets in logs). This enables production deployment—implement with reliability and observability as priorities.
+```
+
+---
+
 
 ## Overview
 
 **Milestone**: CI/CD & Production Readiness
 **Priority**: HIGH - Enables safe iteration and deployment
-**Estimated Complexity**: Medium
+**Implementation Scope**: Production deployment readiness - automation & reliability
 **Dependencies**: Issues #1 and #2 (for complete test coverage)
 
 ## Problem Statement

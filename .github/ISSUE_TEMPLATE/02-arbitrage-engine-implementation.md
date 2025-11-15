@@ -2,15 +2,26 @@
 name: Arbitrage Engine - Core Business Logic
 about: Implement opportunity detection, risk scoring, and execution coordination
 title: "[MILESTONE 2] Implement Arbitrage Detection & Execution Logic"
-labels: critical, arbitrage, trading-logic
+labels: critical, arbitrage, trading-logic, ai-agent
 assignees: ''
 ---
+
+## 🤖 GitHub Copilot Context Prompt
+
+**Copy this into your Copilot chat before starting implementation:**
+
+```
+You are implementing MILESTONE 2: Arbitrage Detection & Execution Logic for a production Rust trading system. Follow November 2025 standards: Rust 2021 edition, tokio 1.0+ async, thiserror for errors, tracing for logging, no unsafe code. Implement volatility scanning with multi-timeframe analysis (1m/5m/15m windows), cross-exchange opportunity detection with confidence scoring (0-1 scale, 85%+ threshold), Kelly Criterion position sizing with constraints, simultaneous order execution coordination. Use Decimal type for all financial calculations, never f64. Every function needs rustdoc with examples. Risk management: enforce stop-loss (2%), circuit breakers (5 consecutive losses), daily loss limits ($5000), position exposure limits (15% per symbol). Event-driven: emit to event bus for all opportunities/executions. Performance: <100ms volatility scan, <50ms opportunity detection, <100ms execution. Testing: >80% coverage, unit tests for each component, integration tests for full arbitrage cycle, property-based tests with proptest for Kelly Criterion. Reference existing types in crates/arbitrage-engine/src/lib.rs and config/arbitrage.toml for parameters. Code must be production-grade: zero clippy warnings, formatted with cargo fmt, comprehensive error handling, audit logging. This is the core revenue feature—implement with precision and correctness.
+```
+
+---
+
 
 ## Overview
 
 **Milestone**: Arbitrage Engine Implementation
 **Priority**: CRITICAL - Core revenue generation feature
-**Estimated Complexity**: High
+**Implementation Scope**: Core revenue generation - autonomous arbitrage trading
 **Dependencies**: Issue #1 (Exchange API Integration)
 
 ## Problem Statement
