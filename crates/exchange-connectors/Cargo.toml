@@ -43,3 +43,17 @@ parking_lot = { workspace = true }
 
 # WebSocket helpers
 futures-util = "0.3"
+
+[dev-dependencies]
+# Testing infrastructure (November 2025 standards)
+wiremock = "0.6"
+tokio-test = "0.4"
+proptest = "1.4"
+criterion = { version = "0.5", features = ["async_tokio"] }
+
+[lib]
+bench = false
+
+[[bench]]
+name = "exchange_benchmarks"
+harness = false
