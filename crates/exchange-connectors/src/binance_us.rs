@@ -1,16 +1,21 @@
 //! Binance.us API Connector (exchange spot markets)
 //!
-//! The implementation focuses on low-latency public market data streaming so it
-//! can feed the Ninja Gekko data pipeline without trading credentials. REST
-//! endpoints remain stubbed until order routing is required.
+//! Implements full REST API and WebSocket streaming for Binance.US
+//! with HMAC-SHA256 authentication following November 2025 standards.
 
 use crate::{
     Balance, ExchangeConnector, ExchangeError, ExchangeId, ExchangeOrder, ExchangeResult, Fill,
     MarketTick, OrderSide, OrderStatus, OrderType, StreamMessage, TransferRequest, TransferStatus,
+    TradingPair,
 };
 use async_trait::async_trait;
 use futures_util::{SinkExt, StreamExt};
+use hmac::{Hmac, Mac};
+use parking_lot::RwLock;
+use reqwest::Client;
 use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
+use sha2::Sha256;
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -24,7 +29,17 @@ use url::Url;
 const BINANCE_US_WS_URL: &str = "wss://stream.binance.us:9443/ws";
 const BINANCE_US_REST_URL: &str = "https://api.binance.us";
 
-/// Lightweight connector plumbing focused on WebSocket ingestion.
+type HmacSha256 = Hmac<Sha256>;
+
+/// Configuration for Binance.US API connector
+#[derive(Debug, Clone)]
+pub struct BinanceUsConfig {
+    pub api_key: String,
+    pub api_secret: String,
+    pub sandbox: bool,
+}
+
+/// Full-featured Binance.US connector with REST API and WebSocket streaming
 pub struct BinanceUsConnector {
     inner: Arc<BinanceInner>,
 }
@@ -32,19 +47,53 @@ pub struct BinanceUsConnector {
 struct BinanceInner {
     connected: AtomicBool,
     ws_url: Url,
-    #[allow(dead_code)]
     rest_url: Url,
+    client: Client,
+    credentials: RwLock<Option<BinanceUsCredentials>>,
+}
+
+#[derive(Clone)]
+struct BinanceUsCredentials {
+    api_key: String,
+    api_secret: String,
 }
 
 impl BinanceUsConnector {
+    /// Create new connector without credentials (streaming only)
     pub fn new() -> Self {
+        Self::new_with_credentials(None)
+    }
+
+    /// Create connector with API credentials for trading
+    pub fn with_config(config: BinanceUsConfig) -> Self {
+        let credentials = BinanceUsCredentials {
+            api_key: config.api_key,
+            api_secret: config.api_secret,
+        };
+        Self::new_with_credentials(Some(credentials))
+    }
+
+    fn new_with_credentials(credentials: Option<BinanceUsCredentials>) -> Self {
         Self {
             inner: Arc::new(BinanceInner {
                 connected: AtomicBool::new(false),
                 ws_url: Url::parse(BINANCE_US_WS_URL).expect("valid Binance.us ws url"),
                 rest_url: Url::parse(BINANCE_US_REST_URL).expect("valid Binance.us rest url"),
+                client: Client::builder()
+                    .timeout(Duration::from_secs(30))
+                    .build()
+                    .expect("valid HTTP client"),
+                credentials: RwLock::new(credentials),
             }),
         }
+    }
+
+    /// Set or update API credentials after construction
+    pub fn set_credentials(&self, api_key: String, api_secret: String) {
+        *self.inner.credentials.write() = Some(BinanceUsCredentials {
+            api_key,
+            api_secret,
+        });
     }
 }
 
@@ -69,44 +118,236 @@ impl ExchangeConnector for BinanceUsConnector {
         self.inner.connected.load(Ordering::SeqCst)
     }
 
-    async fn get_trading_pairs(&self) -> ExchangeResult<Vec<crate::TradingPair>> {
-        // REST plumbing is out of scope for this phase.
-        Ok(vec![])
+    async fn get_trading_pairs(&self) -> ExchangeResult<Vec<TradingPair>> {
+        debug!("fetching Binance.US trading pairs");
+
+        let url = format!("{}/api/v3/exchangeInfo", self.inner.rest_url);
+        let response = self.inner.client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| ExchangeError::Network(format!("Failed to fetch exchange info: {}", e)))?;
+
+        if !response.status().is_success() {
+            return Err(map_binance_error(response.status().as_u16(), "Failed to fetch exchange info").await);
+        }
+
+        let exchange_info: BinanceExchangeInfo = response.json().await
+            .map_err(|e| ExchangeError::Network(format!("Failed to parse exchange info: {}", e)))?;
+
+        let pairs = exchange_info.symbols.into_iter()
+            .filter(|s| s.status == "TRADING" && s.is_spot_trading_allowed.unwrap_or(false))
+            .map(|s| TradingPair {
+                base: s.base_asset,
+                quote: s.quote_asset,
+                symbol: s.symbol,
+            })
+            .collect();
+
+        Ok(pairs)
     }
 
     async fn get_balances(&self) -> ExchangeResult<Vec<Balance>> {
-        Ok(vec![])
+        debug!("fetching Binance.US account balances");
+
+        let credentials = self.inner.credentials.read().clone()
+            .ok_or_else(|| ExchangeError::Authentication("API credentials not configured".to_string()))?;
+
+        let timestamp = chrono::Utc::now().timestamp_millis();
+        let query = format!("timestamp={}", timestamp);
+        let signature = sign_request(&credentials.api_secret, &query);
+
+        let url = format!("{}/api/v3/account?{}&signature={}", self.inner.rest_url, query, signature);
+
+        let response = self.inner.client
+            .get(&url)
+            .header("X-MBX-APIKEY", &credentials.api_key)
+            .send()
+            .await
+            .map_err(|e| ExchangeError::Network(format!("Failed to fetch balances: {}", e)))?;
+
+        if !response.status().is_success() {
+            return Err(map_binance_error(response.status().as_u16(), "Failed to fetch balances").await);
+        }
+
+        let account: BinanceAccount = response.json().await
+            .map_err(|e| ExchangeError::Network(format!("Failed to parse account data: {}", e)))?;
+
+        let balances = account.balances.into_iter()
+            .filter_map(|b| {
+                let free = Decimal::from_str(&b.free).ok()?;
+                let locked = Decimal::from_str(&b.locked).ok()?;
+                let total = free + locked;
+
+                if total > Decimal::ZERO {
+                    Some(Balance {
+                        currency: b.asset,
+                        available: free,
+                        total,
+                        hold: locked,
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        Ok(balances)
     }
 
     async fn place_order(
         &self,
-        _symbol: &str,
-        _side: OrderSide,
-        _order_type: OrderType,
-        _quantity: Decimal,
-        _price: Option<Decimal>,
+        symbol: &str,
+        side: OrderSide,
+        order_type: OrderType,
+        quantity: Decimal,
+        price: Option<Decimal>,
     ) -> ExchangeResult<ExchangeOrder> {
-        Err(ExchangeError::InvalidRequest(
-            "Trading not implemented for Binance.us connector".to_string(),
-        ))
+        debug!(?side, ?order_type, %quantity, "placing Binance.US order");
+
+        let credentials = self.inner.credentials.read().clone()
+            .ok_or_else(|| ExchangeError::Authentication("API credentials not configured".to_string()))?;
+
+        let timestamp = chrono::Utc::now().timestamp_millis();
+        let symbol_clean = symbol.replace(['-', '_'], "").to_uppercase();
+        let side_str = match side {
+            OrderSide::Buy => "BUY",
+            OrderSide::Sell => "SELL",
+        };
+        let type_str = match order_type {
+            OrderType::Market => "MARKET",
+            OrderType::Limit => "LIMIT",
+            _ => return Err(ExchangeError::InvalidRequest(format!("Unsupported order type: {:?}", order_type))),
+        };
+
+        let mut query = format!("symbol={}&side={}&type={}&quantity={}&timestamp={}",
+            symbol_clean, side_str, type_str, quantity, timestamp);
+
+        if let Some(p) = price {
+            if order_type == OrderType::Limit {
+                query.push_str(&format!("&price={}&timeInForce=GTC", p));
+            }
+        }
+
+        let signature = sign_request(&credentials.api_secret, &query);
+        let url = format!("{}/api/v3/order?{}&signature={}", self.inner.rest_url, query, signature);
+
+        let response = self.inner.client
+            .post(&url)
+            .header("X-MBX-APIKEY", &credentials.api_key)
+            .send()
+            .await
+            .map_err(|e| ExchangeError::Network(format!("Failed to place order: {}", e)))?;
+
+        if !response.status().is_success() {
+            return Err(map_binance_error(response.status().as_u16(), "Failed to place order").await);
+        }
+
+        let binance_order: BinanceOrder = response.json().await
+            .map_err(|e| ExchangeError::Network(format!("Failed to parse order response: {}", e)))?;
+
+        convert_binance_order(binance_order, symbol)
     }
 
-    async fn cancel_order(&self, _order_id: &str) -> ExchangeResult<ExchangeOrder> {
-        Err(ExchangeError::InvalidRequest(
-            "Trading not implemented for Binance.us connector".to_string(),
-        ))
+    async fn cancel_order(&self, order_id: &str) -> ExchangeResult<ExchangeOrder> {
+        debug!(%order_id, "canceling Binance.US order");
+
+        let credentials = self.inner.credentials.read().clone()
+            .ok_or_else(|| ExchangeError::Authentication("API credentials not configured".to_string()))?;
+
+        // Parse order_id format: "symbol:order_id" (e.g., "BTCUSD:123456")
+        let parts: Vec<&str> = order_id.split(':').collect();
+        if parts.len() != 2 {
+            return Err(ExchangeError::InvalidRequest("Order ID must be in format 'SYMBOL:ID'".to_string()));
+        }
+        let symbol = parts[0];
+        let binance_order_id = parts[1];
+
+        let timestamp = chrono::Utc::now().timestamp_millis();
+        let query = format!("symbol={}&orderId={}&timestamp={}", symbol, binance_order_id, timestamp);
+        let signature = sign_request(&credentials.api_secret, &query);
+        let url = format!("{}/api/v3/order?{}&signature={}", self.inner.rest_url, query, signature);
+
+        let response = self.inner.client
+            .delete(&url)
+            .header("X-MBX-APIKEY", &credentials.api_key)
+            .send()
+            .await
+            .map_err(|e| ExchangeError::Network(format!("Failed to cancel order: {}", e)))?;
+
+        if !response.status().is_success() {
+            return Err(map_binance_error(response.status().as_u16(), "Failed to cancel order").await);
+        }
+
+        let binance_order: BinanceOrder = response.json().await
+            .map_err(|e| ExchangeError::Network(format!("Failed to parse cancel response: {}", e)))?;
+
+        convert_binance_order(binance_order, symbol)
     }
 
-    async fn get_order(&self, _order_id: &str) -> ExchangeResult<ExchangeOrder> {
-        Err(ExchangeError::InvalidRequest(
-            "Trading not implemented for Binance.us connector".to_string(),
-        ))
+    async fn get_order(&self, order_id: &str) -> ExchangeResult<ExchangeOrder> {
+        debug!(%order_id, "fetching Binance.US order");
+
+        let credentials = self.inner.credentials.read().clone()
+            .ok_or_else(|| ExchangeError::Authentication("API credentials not configured".to_string()))?;
+
+        // Parse order_id format: "symbol:order_id"
+        let parts: Vec<&str> = order_id.split(':').collect();
+        if parts.len() != 2 {
+            return Err(ExchangeError::InvalidRequest("Order ID must be in format 'SYMBOL:ID'".to_string()));
+        }
+        let symbol = parts[0];
+        let binance_order_id = parts[1];
+
+        let timestamp = chrono::Utc::now().timestamp_millis();
+        let query = format!("symbol={}&orderId={}&timestamp={}", symbol, binance_order_id, timestamp);
+        let signature = sign_request(&credentials.api_secret, &query);
+        let url = format!("{}/api/v3/order?{}&signature={}", self.inner.rest_url, query, signature);
+
+        let response = self.inner.client
+            .get(&url)
+            .header("X-MBX-APIKEY", &credentials.api_key)
+            .send()
+            .await
+            .map_err(|e| ExchangeError::Network(format!("Failed to fetch order: {}", e)))?;
+
+        if !response.status().is_success() {
+            return Err(map_binance_error(response.status().as_u16(), "Failed to fetch order").await);
+        }
+
+        let binance_order: BinanceOrder = response.json().await
+            .map_err(|e| ExchangeError::Network(format!("Failed to parse order: {}", e)))?;
+
+        convert_binance_order(binance_order, symbol)
     }
 
-    async fn get_market_data(&self, _symbol: &str) -> ExchangeResult<MarketTick> {
-        Err(ExchangeError::InvalidRequest(
-            "Use WebSocket streaming for real-time Binance.us data".to_string(),
-        ))
+    async fn get_market_data(&self, symbol: &str) -> ExchangeResult<MarketTick> {
+        debug!(%symbol, "fetching Binance.US market data");
+
+        let symbol_clean = symbol.replace(['-', '_'], "").to_uppercase();
+        let url = format!("{}/api/v3/ticker/24hr?symbol={}", self.inner.rest_url, symbol_clean);
+
+        let response = self.inner.client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| ExchangeError::Network(format!("Failed to fetch market data: {}", e)))?;
+
+        if !response.status().is_success() {
+            return Err(map_binance_error(response.status().as_u16(), "Failed to fetch market data").await);
+        }
+
+        let ticker: BinanceTicker = response.json().await
+            .map_err(|e| ExchangeError::Network(format!("Failed to parse ticker: {}", e)))?;
+
+        Ok(MarketTick {
+            symbol: symbol.to_string(),
+            bid: Decimal::from_str(&ticker.bid_price).unwrap_or(Decimal::ZERO),
+            ask: Decimal::from_str(&ticker.ask_price).unwrap_or(Decimal::ZERO),
+            last: Decimal::from_str(&ticker.last_price).unwrap_or(Decimal::ZERO),
+            volume_24h: Decimal::from_str(&ticker.volume).unwrap_or(Decimal::ZERO),
+            timestamp: chrono::Utc::now(),
+        })
     }
 
     async fn start_market_stream(
@@ -456,6 +697,159 @@ fn backoff_delay(attempt: u32) -> Duration {
     let capped_attempt = attempt.min(10);
     let millis = (500.0 * 1.5_f64.powi(capped_attempt as i32)).min(15_000.0);
     Duration::from_millis(millis as u64)
+}
+
+/// Generate HMAC-SHA256 signature for Binance.US API requests
+fn sign_request(secret: &str, query: &str) -> String {
+    let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
+        .expect("HMAC can take key of any size");
+    mac.update(query.as_bytes());
+    let result = mac.finalize();
+    hex::encode(result.into_bytes())
+}
+
+/// Map Binance.US HTTP status codes to ExchangeError
+async fn map_binance_error(status_code: u16, context: &str) -> ExchangeError {
+    match status_code {
+        401 => ExchangeError::Authentication(format!("{}: Invalid API key", context)),
+        403 => ExchangeError::Authentication(format!("{}: API key permissions insufficient", context)),
+        429 => ExchangeError::RateLimit(format!("{}: Rate limit exceeded", context)),
+        400 | 404 => ExchangeError::InvalidRequest(format!("{}: Bad request or not found", context)),
+        500 | 502 | 503 => ExchangeError::Network(format!("{}: Server error", context)),
+        _ => ExchangeError::Api {
+            code: status_code.to_string(),
+            message: context.to_string(),
+        },
+    }
+}
+
+/// Convert Binance.US order response to ExchangeOrder
+fn convert_binance_order(order: BinanceOrder, symbol: &str) -> ExchangeResult<ExchangeOrder> {
+    let side = match order.side.as_str() {
+        "BUY" => OrderSide::Buy,
+        "SELL" => OrderSide::Sell,
+        _ => return Err(ExchangeError::Network(format!("Unknown order side: {}", order.side))),
+    };
+
+    let order_type = match order.order_type.as_str() {
+        "MARKET" => OrderType::Market,
+        "LIMIT" => OrderType::Limit,
+        _ => OrderType::Limit, // Default to limit
+    };
+
+    let status = match order.status.as_str() {
+        "NEW" => OrderStatus::Pending,
+        "PARTIALLY_FILLED" => OrderStatus::PartiallyFilled,
+        "FILLED" => OrderStatus::Filled,
+        "CANCELED" => OrderStatus::Cancelled,
+        "REJECTED" => OrderStatus::Rejected,
+        _ => OrderStatus::Pending,
+    };
+
+    let quantity = Decimal::from_str(&order.orig_qty)
+        .map_err(|e| ExchangeError::Network(format!("Invalid quantity: {}", e)))?;
+
+    let price = if !order.price.is_empty() && order.price != "0.00" {
+        Some(Decimal::from_str(&order.price)
+            .map_err(|e| ExchangeError::Network(format!("Invalid price: {}", e)))?)
+    } else {
+        None
+    };
+
+    let fills = order.fills.unwrap_or_default().into_iter()
+        .filter_map(|f| {
+            let fill_price = Decimal::from_str(&f.price).ok()?;
+            let fill_qty = Decimal::from_str(&f.qty).ok()?;
+            let commission = Decimal::from_str(&f.commission).ok()?;
+
+            Some(Fill {
+                id: format!("{}:fill", order.order_id),
+                order_id: format!("{}:{}", symbol, order.order_id),
+                price: fill_price,
+                quantity: fill_qty,
+                fee: commission,
+                timestamp: chrono::Utc::now(),
+            })
+        })
+        .collect();
+
+    Ok(ExchangeOrder {
+        id: format!("{}:{}", symbol, order.order_id),
+        exchange_id: ExchangeId::BinanceUs,
+        symbol: symbol.to_string(),
+        side,
+        order_type,
+        quantity,
+        price,
+        status,
+        timestamp: chrono::Utc::now(),
+        fills,
+    })
+}
+
+// Binance.US API response structures
+
+#[derive(Debug, Deserialize)]
+struct BinanceExchangeInfo {
+    symbols: Vec<BinanceSymbol>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BinanceSymbol {
+    symbol: String,
+    status: String,
+    base_asset: String,
+    quote_asset: String,
+    is_spot_trading_allowed: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+struct BinanceAccount {
+    balances: Vec<BinanceBalance>,
+}
+
+#[derive(Debug, Deserialize)]
+struct BinanceBalance {
+    asset: String,
+    free: String,
+    locked: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BinanceOrder {
+    symbol: String,
+    order_id: u64,
+    #[serde(rename = "type")]
+    order_type: String,
+    side: String,
+    price: String,
+    orig_qty: String,
+    executed_qty: String,
+    status: String,
+    time_in_force: Option<String>,
+    fills: Option<Vec<BinanceFill>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct BinanceFill {
+    price: String,
+    qty: String,
+    commission: String,
+    #[serde(rename = "commissionAsset")]
+    commission_asset: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BinanceTicker {
+    symbol: String,
+    price_change: String,
+    last_price: String,
+    bid_price: String,
+    ask_price: String,
+    volume: String,
 }
 
 #[cfg(test)]
