@@ -1,0 +1,213 @@
+name: Bug Report
+description: Report a bug in Ninja Gekko
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Bug Report
+        Thank you for reporting this issue. Please provide detailed information to help diagnose and fix the bug.
+
+        Reference: [AGENTS.md](../AGENTS.md) for diagnostic commands and testing guidelines.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Bug Category
+      description: Select the category that best describes this bug
+      options:
+        - Exchange Connectivity
+        - Trading Logic
+        - Authentication
+        - Data Pipeline
+        - Performance
+        - Security
+        - Database
+        - API
+        - Configuration
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How severe is this bug?
+      options:
+        - Critical - System unusable, data loss, security vulnerability
+        - High - Major feature broken, significant impact
+        - Medium - Feature partially broken, workaround exists
+        - Low - Minor issue, cosmetic, edge case
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: environment
+    attributes:
+      label: Environment
+      description: Where does this bug occur?
+      options:
+        - label: "Development"
+        - label: "Staging"
+        - label: "Production"
+
+  - type: checkboxes
+    id: component
+    attributes:
+      label: Affected Component
+      description: Select the crate(s) where this bug occurs
+      options:
+        - label: "exchange-connectors"
+        - label: "arbitrage-engine"
+        - label: "event-bus"
+        - label: "data-pipeline"
+        - label: "strategy-engine"
+        - label: "neural-engine"
+        - label: "core"
+        - label: "api"
+        - label: "database"
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of the bug
+      placeholder: |
+        Binance.US WebSocket connection drops after exactly 24 hours without reconnecting.
+        The connector enters a failed state and requires manual restart.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Provide step-by-step instructions to reproduce the bug
+      placeholder: |
+        1. Start the application with Binance.US connector enabled
+        2. Subscribe to BTC-USD market stream
+        3. Wait 24 hours (or simulate with system time manipulation)
+        4. Observe WebSocket disconnect without reconnection attempt
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should happen?
+      placeholder: |
+        The WebSocket should automatically reconnect with exponential backoff
+        and resume streaming without data loss.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happens?
+      placeholder: |
+        The WebSocket disconnects and the connector logs an error but does not
+        attempt to reconnect. The stream remains dead until manual restart.
+    validations:
+      required: true
+
+  - type: textarea
+    id: errors
+    attributes:
+      label: Error Messages
+      description: Paste any relevant error messages or stack traces
+      render: shell
+      placeholder: |
+        2025-11-15T12:00:00Z ERROR exchange_connectors::binance_us: WebSocket error: Connection reset by peer
+        2025-11-15T12:00:00Z WARN  exchange_connectors::binance_us: binance.us websocket closed by peer
+
+  - type: textarea
+    id: system
+    attributes:
+      label: System Information
+      description: Provide relevant system details
+      placeholder: |
+        - OS: Ubuntu 22.04
+        - Rust version: 1.80.0
+        - Ninja Gekko version: 2.0.0
+        - Architecture: x86_64
+
+  - type: textarea
+    id: performance
+    attributes:
+      label: Performance Metrics
+      description: If this is a performance issue, provide relevant metrics
+      placeholder: |
+        - Order latency: 250ms (expected: <1ms)
+        - Memory usage: 2GB (expected: <500MB)
+        - CPU utilization: 95% (expected: <50%)
+
+  - type: textarea
+    id: security
+    attributes:
+      label: Security Impact
+      description: Does this bug have security implications?
+      placeholder: |
+        - Potential credential exposure in logs
+        - Authentication bypass possibility
+        - Data integrity concern
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Workaround
+      description: If you have found a workaround, describe it here
+      placeholder: |
+        Manually restart the connector every 23 hours using:
+        `cargo run -- restart-connector binance-us`
+
+  - type: textarea
+    id: related
+    attributes:
+      label: Related Issues
+      description: Link to any related issues or PRs
+      placeholder: |
+        - Related to #123
+        - May be duplicate of #456
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs
+      description: Paste relevant log snippets (sanitize any credentials)
+      render: shell
+      placeholder: |
+        # Use these commands to gather logs:
+        # grep "binance" logs/ninja-gekko.log | tail -100
+        # cargo run -- diagnostics --component exchange-connectors
+
+  - type: checkboxes
+    id: diagnostics
+    attributes:
+      label: Diagnostic Steps Taken
+      description: From AGENTS.md Quick Command Reference
+      options:
+        - label: "Ran `cargo fmt -- --check`"
+        - label: "Ran `cargo clippy --all-targets -- -D warnings`"
+        - label: "Ran `cargo test --all`"
+        - label: "Checked relevant logs"
+        - label: "Verified configuration"
+
+  - type: checkboxes
+    id: validation
+    attributes:
+      label: Submission Checklist
+      description: Confirm you have completed the following
+      options:
+        - label: "I have searched for existing issues to avoid duplicates"
+          required: true
+        - label: "I have sanitized all credentials and sensitive data from logs"
+          required: true
+        - label: "I have provided steps to reproduce the issue"
+          required: true

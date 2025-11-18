@@ -1,0 +1,265 @@
+name: Security Audit
+description: Create a security audit task for Ninja Gekko
+title: "[Security]: "
+labels: ["security", "audit"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Security Audit
+        Use this template to create security audit tasks. Reference AGENTS.md for security requirements
+        and api/tests/integration_security.rs for existing security test patterns.
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Audit Scope
+      description: Select all areas to be audited
+      options:
+        - label: "Exchange Authentication (HMAC-SHA256, bearer tokens)"
+        - label: "API Key Storage (AES-GCM encryption, Argon2 derivation)"
+        - label: "Database Security (connection security, query safety)"
+        - label: "Network Security (TLS, WebSocket, rate limiting)"
+        - label: "Input Validation (SQL injection, XSS, path traversal)"
+        - label: "Rate Limiting (governor, DDoS protection)"
+        - label: "Authorization (capability checks, MCP admin actions)"
+        - label: "Logging (credential sanitization, audit trails)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: audit-type
+    attributes:
+      label: Audit Type
+      description: What type of audit is this?
+      options:
+        - Pre-Production - Before initial deployment
+        - Routine - Scheduled periodic audit
+        - Incident Response - Following a security event
+        - Compliance - Regulatory or policy requirement
+        - Feature - New feature security review
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgent is this audit?
+      options:
+        - Critical - Immediate attention required
+        - High - Complete within 1 week
+        - Medium - Complete within 2 weeks
+        - Low - Complete within 1 month
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: components
+    attributes:
+      label: Components Under Review
+      description: Select all components to be audited
+      options:
+        - label: "exchange-connectors"
+        - label: "arbitrage-engine"
+        - label: "api"
+        - label: "database"
+        - label: "core"
+        - label: "config"
+        - label: "Infrastructure (Docker, CI/CD)"
+        - label: "Dependencies (Cargo.toml)"
+
+  - type: textarea
+    id: concerns
+    attributes:
+      label: Security Concerns
+      description: Describe specific security concerns or areas of focus
+      placeholder: |
+        1. Exchange API keys may be logged during error conditions
+        2. WebSocket connections may not properly validate certificates
+        3. Rate limiting may be bypassable with multiple connections
+        4. Database queries in trade handlers may be vulnerable to injection
+    validations:
+      required: true
+
+  - type: textarea
+    id: threat-model
+    attributes:
+      label: Threat Model
+      description: Describe threat vectors and attack scenarios to consider
+      placeholder: |
+        **Threat Actors:**
+        - External attackers targeting API endpoints
+        - Compromised exchange credentials
+        - Malicious MCP admin actions
+
+        **Attack Scenarios:**
+        1. Credential theft via log exposure
+        2. Order manipulation via parameter tampering
+        3. Denial of service via rate limit bypass
+        4. Unauthorized fund transfers
+
+  - type: textarea
+    id: current-controls
+    attributes:
+      label: Current Security Controls
+      description: Document existing security measures
+      placeholder: |
+        **Authentication:**
+        - HMAC-SHA256 for Binance.US/Coinbase
+        - Bearer tokens for OANDA
+        - JWT for API authentication
+
+        **Encryption:**
+        - AES-GCM for API key storage
+        - Argon2id for password hashing
+        - TLS for all network communication
+
+        **Validation:**
+        - Input validation via api/src/validation.rs
+        - Environment validation via api/src/env_validation.rs
+
+        **Testing:**
+        - Security tests in api/tests/integration_security.rs
+
+  - type: textarea
+    id: gaps
+    attributes:
+      label: Identified Gaps
+      description: Known security gaps or areas needing improvement
+      placeholder: |
+        1. No automated credential rotation
+        2. Incomplete audit logging for MCP actions
+        3. Missing rate limiting on WebSocket connections
+        4. No intrusion detection system
+
+  - type: textarea
+    id: recommendations
+    attributes:
+      label: Preliminary Recommendations
+      description: Initial recommendations for security improvements
+      placeholder: |
+        1. Implement credential rotation with configurable interval
+        2. Add comprehensive audit logging for all admin actions
+        3. Extend rate limiting to WebSocket message handling
+        4. Add anomaly detection for trading patterns
+        5. Implement secrets management with HashiCorp Vault
+
+  - type: checkboxes
+    id: compliance
+    attributes:
+      label: Compliance Requirements
+      description: Select applicable compliance frameworks
+      options:
+        - label: "SOX (Sarbanes-Oxley)"
+        - label: "GDPR (Data Protection)"
+        - label: "FINRA (Financial Industry)"
+        - label: "PCI-DSS (Payment Card)"
+        - label: "SOC 2 (Service Organization)"
+        - label: "Internal Security Policy"
+
+  - type: textarea
+    id: testing-approach
+    attributes:
+      label: Testing Approach
+      description: Describe the security testing methodology
+      placeholder: |
+        **Automated Testing:**
+        - SAST: cargo-audit, clippy security lints
+        - DAST: API fuzzing with cargo-fuzz
+        - Dependency scanning: cargo-deny
+
+        **Manual Testing:**
+        - Code review focusing on auth/crypto
+        - Penetration testing of API endpoints
+        - Configuration review
+
+        **Reference:**
+        - Existing tests: api/tests/integration_security.rs
+        - Patterns from docs/overview.md
+
+  - type: textarea
+    id: remediation
+    attributes:
+      label: Remediation Plan
+      description: Steps to address findings (to be updated during audit)
+      placeholder: |
+        **Process:**
+        1. Document all findings with severity rating
+        2. Create issues for each finding
+        3. Prioritize based on risk and effort
+        4. Implement fixes with test coverage
+        5. Verify fixes through re-testing
+        6. Update security documentation
+
+        **Timeline:**
+        - Critical: Fix within 24 hours
+        - High: Fix within 1 week
+        - Medium: Fix within 2 weeks
+        - Low: Fix in next release
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification Approach
+      description: How will fixes be verified?
+      placeholder: |
+        1. Automated test for each vulnerability
+        2. Code review of all security fixes
+        3. Re-run security scanning tools
+        4. Penetration test verification
+        5. Update security test suite in integration_security.rs
+
+  - type: input
+    id: start-date
+    attributes:
+      label: Audit Start Date
+      description: When will this audit begin? (YYYY-MM-DD)
+      placeholder: "2025-11-18"
+    validations:
+      required: true
+
+  - type: input
+    id: end-date
+    attributes:
+      label: Target Completion Date
+      description: When should this audit be complete? (YYYY-MM-DD)
+      placeholder: "2025-12-02"
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Links to relevant documentation and resources
+      placeholder: |
+        Internal:
+        - AGENTS.md - Security and Credential Handling section
+        - api/tests/integration_security.rs - Security test patterns
+        - docs/overview.md - System overview
+        - crates/exchange-connectors/src/lib.rs - RateLimiter implementation
+
+        External:
+        - OWASP Top 10
+        - Rust Security Guidelines
+        - Exchange API Security Best Practices
+
+  - type: checkboxes
+    id: validation
+    attributes:
+      label: Submission Checklist
+      description: Confirm audit planning is complete
+      options:
+        - label: "Audit scope clearly defined"
+          required: true
+        - label: "Threat model documented"
+          required: true
+        - label: "Current controls identified"
+          required: true
+        - label: "Testing approach defined"
+          required: true
+        - label: "Remediation process established"
+          required: true

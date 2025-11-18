@@ -1,0 +1,219 @@
+name: Milestone
+description: Create a development milestone aligned with PLAN.md phases
+title: "[Milestone]: "
+labels: ["milestone", "planning"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Milestone Planning
+        Use this template to create milestones aligned with the production roadmap in PLAN.md.
+
+        Reference: [PLAN.md](../PLAN.md) for phase definitions and [AGENTS.md](../AGENTS.md) for performance targets.
+
+  - type: input
+    id: name
+    attributes:
+      label: Milestone Name
+      description: A clear, descriptive name for this milestone
+      placeholder: "e.g., Core Engine Development, Exchange Connector Completion"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Phase
+      description: Select the PLAN.md phase this milestone belongs to
+      options:
+        - "Phase 0: PR #10 Merge"
+        - "Phase 1: Foundation & Testing Infrastructure"
+        - "Phase 2: Exchange Connector Completion"
+        - "Phase 3: Authentication & Authorization"
+        - "Phase 4: Trading Engine Integration"
+        - "Phase 5: Autonomous Modes Implementation"
+        - "Phase 6: Security Audit & Hardening"
+        - "Phase 7: Production Readiness"
+    validations:
+      required: true
+
+  - type: input
+    id: start-date
+    attributes:
+      label: Start Date
+      description: Expected start date (YYYY-MM-DD)
+      placeholder: "2025-11-18"
+    validations:
+      required: true
+
+  - type: input
+    id: end-date
+    attributes:
+      label: Target End Date
+      description: Target completion date (YYYY-MM-DD)
+      placeholder: "2025-12-02"
+    validations:
+      required: true
+
+  - type: textarea
+    id: objectives
+    attributes:
+      label: Objectives
+      description: List the main goals for this milestone
+      placeholder: |
+        1. Implement comprehensive exchange connector test suite
+        2. Establish end-to-end testing framework
+        3. Document backtesting requirements
+        4. Create property-based tests for risk/portfolio math
+    validations:
+      required: true
+
+  - type: textarea
+    id: success-criteria
+    attributes:
+      label: Success Criteria
+      description: Measurable criteria that define milestone completion
+      placeholder: |
+        - Test coverage > 80% for exchange connectors
+        - All CI pipelines green
+        - Benchmark baselines established
+        - Documentation reviewed and approved
+    validations:
+      required: true
+
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Deliverables
+      description: Specific items that will be delivered
+      placeholder: |
+        - [ ] `crates/exchange-connectors/tests/binance_us_tests.rs`
+        - [ ] `crates/exchange-connectors/tests/oanda_tests.rs`
+        - [ ] `crates/exchange-connectors/tests/coinbase_tests.rs`
+        - [ ] `crates/exchange-connectors/tests/rate_limiting_tests.rs`
+        - [ ] `tests/e2e/trading_flow_tests.rs`
+        - [ ] `tests/e2e/autonomous_modes_tests.rs`
+        - [ ] `docs/TESTING_STRATEGY.md`
+        - [ ] `docs/BACKTESTING_FRAMEWORK.md`
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: List blockers or dependencies from other milestones/issues
+      placeholder: |
+        - Blocked by: PR #10 merge
+        - Depends on: #123 (Exchange config standardization)
+        - External: tokio-tungstenite 0.21 release
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risk Assessment
+      description: Identify risks and mitigation strategies
+      placeholder: |
+        **Risks:**
+        1. Exchange API rate limiting during test development
+        2. Mock complexity for WebSocket scenarios
+        3. CI resource constraints for benchmark tests
+
+        **Mitigations:**
+        1. Use recorded fixtures for API responses
+        2. Create reusable mock infrastructure
+        3. Run benchmarks on dedicated CI runners
+
+  - type: textarea
+    id: performance
+    attributes:
+      label: Performance Targets
+      description: Relevant performance targets from AGENTS.md
+      placeholder: |
+        From AGENTS.md Core Principles:
+        - < 1ms order path latency
+        - < 100μs market data handling
+        - < 10μs basic strategy evaluation
+        - < 500MB footprint for 10 strategies across 50 pairs
+
+        Milestone-specific:
+        - Test execution time < 60s for unit tests
+        - Benchmark overhead < 1ms
+
+  - type: textarea
+    id: testing
+    attributes:
+      label: Testing Requirements
+      description: Specify testing coverage and types required
+      placeholder: |
+        - Unit tests: 90% coverage for new code
+        - Integration tests: All exchange connector operations
+        - Property tests: Risk calculation functions
+        - Benchmarks: Connection, streaming, order placement
+        - Benchmark assertions: Fail on >10% regression
+
+  - type: textarea
+    id: documentation
+    attributes:
+      label: Documentation Updates
+      description: List documentation that needs to be created or updated
+      placeholder: |
+        New documentation:
+        - docs/TESTING_STRATEGY.md
+        - docs/BACKTESTING_FRAMEWORK.md
+
+        Updates:
+        - README.md - Add testing section
+        - AGENTS.md - Update test coverage requirements
+
+  - type: textarea
+    id: security
+    attributes:
+      label: Security Review
+      description: Security considerations for this milestone
+      placeholder: |
+        - Ensure test fixtures do not contain real credentials
+        - Mock authentication should match production patterns
+        - Sanitize all log output in tests
+        - Review error messages for information leakage
+
+  - type: textarea
+    id: deployment
+    attributes:
+      label: Deployment Impact
+      description: How does this milestone affect deployment?
+      placeholder: |
+        - No production deployment changes
+        - CI configuration updates required
+        - New test dependencies in Cargo.toml
+        - GitHub Actions workflow updates
+
+  - type: textarea
+    id: assignments
+    attributes:
+      label: Assignments
+      description: Team members or AI agents responsible for deliverables
+      placeholder: |
+        - Exchange connector tests: @developer1
+        - E2E test framework: @developer2
+        - Documentation: AI-assisted with human review
+        - Code review: @tech-lead
+
+  - type: checkboxes
+    id: validation
+    attributes:
+      label: Submission Checklist
+      description: Confirm milestone planning is complete
+      options:
+        - label: "Objectives align with PLAN.md phase goals"
+          required: true
+        - label: "Success criteria are measurable"
+          required: true
+        - label: "Dependencies have been identified"
+          required: true
+        - label: "Risks have mitigation strategies"
+          required: true
+        - label: "Performance targets reference AGENTS.md"
+          required: true

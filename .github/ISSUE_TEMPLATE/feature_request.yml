@@ -1,0 +1,174 @@
+name: Feature Request
+description: Propose a new feature for Ninja Gekko
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Feature Request
+        Thank you for proposing a new feature. Please provide detailed information to help evaluate and implement this request.
+
+        Reference: [AGENTS.md](../AGENTS.md) for development guidelines and performance targets.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature Category
+      description: Select the primary category for this feature
+      options:
+        - Core Engine
+        - Data Handling
+        - Strategy Implementation
+        - Exchange Integrations
+        - Testing
+        - Security
+        - Backtesting
+        - Monitoring/Observability
+        - Documentation
+    validations:
+      required: true
+
+  - type: input
+    id: title
+    attributes:
+      label: Feature Title
+      description: A concise title for the feature
+      placeholder: "e.g., Add WebSocket reconnection with exponential backoff"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: Describe the problem this feature solves
+      placeholder: |
+        Currently, when a WebSocket connection drops, the connector fails immediately without retry.
+        This causes data loss during temporary network issues and requires manual intervention.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe your proposed implementation approach
+      placeholder: |
+        Implement automatic reconnection with:
+        - Exponential backoff starting at 500ms, capped at 15s
+        - Maximum retry attempts configurable via ExchangeConfig
+        - Event emission for connection state changes
+        - Buffer for messages during reconnection window
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: components
+    attributes:
+      label: Affected Components
+      description: Select all crates/modules that will be modified
+      options:
+        - label: "exchange-connectors"
+        - label: "arbitrage-engine"
+        - label: "event-bus"
+        - label: "data-pipeline"
+        - label: "strategy-engine"
+        - label: "neural-engine"
+        - label: "core"
+        - label: "api"
+        - label: "database"
+        - label: "config"
+
+  - type: textarea
+    id: performance
+    attributes:
+      label: Performance Impact
+      description: |
+        Describe any latency, throughput, or memory impact.
+        Reference targets from AGENTS.md: <1ms order path, <100μs data handling, <500MB footprint.
+      placeholder: |
+        - Expected reconnection overhead: <50ms during handshake
+        - Message buffer size: configurable, default 1000 messages (~1MB)
+        - No impact on hot path during stable connection
+
+  - type: textarea
+    id: security
+    attributes:
+      label: Security Considerations
+      description: Describe any security implications of this feature
+      placeholder: |
+        - Credentials must not be logged during reconnection attempts
+        - Rate limiting must be respected across reconnection cycles
+        - Connection state should not leak timing information
+
+  - type: textarea
+    id: testing
+    attributes:
+      label: Testing Strategy
+      description: Describe how this feature should be tested
+      placeholder: |
+        Unit tests:
+        - Backoff calculation correctness
+        - Retry count limits
+
+        Integration tests:
+        - Simulated connection drops
+        - Message ordering after reconnection
+
+        Benchmarks:
+        - Reconnection latency measurement
+        - Memory usage during buffering
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: List any related issues, PRs, or external dependencies
+      placeholder: |
+        - Depends on #123 (Exchange config refactor)
+        - Related to #456 (Connection health monitoring)
+        - Requires tokio-tungstenite >= 0.20
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Define the conditions that must be met for this feature to be complete
+      placeholder: |
+        - [ ] Automatic reconnection on WebSocket close
+        - [ ] Configurable retry parameters
+        - [ ] No message loss during reconnection
+        - [ ] Unit test coverage > 90%
+        - [ ] Integration test for reconnection scenario
+        - [ ] Benchmark showing <50ms reconnection overhead
+        - [ ] Documentation updated
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Links to relevant documentation, discussions, or external resources
+      placeholder: |
+        - AGENTS.md - Section "Exchange Integration Standards"
+        - docs/arbitrage_architecture.md
+        - https://docs.binance.us/api/websocket
+
+  - type: checkboxes
+    id: validation
+    attributes:
+      label: Submission Checklist
+      description: Confirm you have completed the following
+      options:
+        - label: "I have searched for existing issues to avoid duplicates"
+          required: true
+        - label: "I have reviewed AGENTS.md for alignment with project guidelines"
+          required: true
+        - label: "I have considered the security implications of this feature"
+          required: true
+        - label: "I have defined acceptance criteria with testable conditions"
+          required: true
