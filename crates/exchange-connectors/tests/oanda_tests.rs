@@ -1,17 +1,16 @@
 //! Integration tests for OANDA connector
 //!
-//! Tests streaming, authentication, error handling, and forex-specific functionality.
+//! Tests streaming, authentication, error handling, and Forex-specific functionality.
 //! Uses mock responses to avoid hitting real exchange APIs during testing.
 
 use exchange_connectors::oanda::OandaConnector;
-use exchange_connectors::{ExchangeConfig, ExchangeConnector, ExchangeId};
+use exchange_connectors::{ExchangeConnector, ExchangeId};
 use std::time::Duration;
 
 /// Test connector initialization
 #[tokio::test]
 async fn test_connector_initialization() {
-    let config = create_test_config();
-    let connector = OandaConnector::new(config);
+    let connector = create_test_connector();
 
     assert_eq!(connector.exchange_id(), ExchangeId::Oanda);
     assert!(!connector.is_connected().await);
@@ -20,8 +19,7 @@ async fn test_connector_initialization() {
 /// Test connection state management
 #[tokio::test]
 async fn test_connection_state() {
-    let config = create_test_config();
-    let mut connector = OandaConnector::new(config);
+    let mut connector = create_test_connector();
 
     // Initially disconnected
     assert!(!connector.is_connected().await);
@@ -38,18 +36,7 @@ async fn test_connection_state() {
 /// Test that empty API key is handled
 #[tokio::test]
 async fn test_empty_credentials() {
-    let config = ExchangeConfig {
-        exchange_id: ExchangeId::Oanda,
-        api_key: String::new(),
-        api_secret: String::new(),
-        passphrase: None,
-        sandbox: true,
-        rate_limit_requests_per_second: 10,
-        websocket_url: None,
-        rest_api_url: None,
-    };
-
-    let connector = OandaConnector::new(config);
+    let connector = OandaConnector::with_credentials("", "", true);
     // Connector should still initialize, auth check happens on API calls
     assert_eq!(connector.exchange_id(), ExchangeId::Oanda);
 }
@@ -72,8 +59,7 @@ fn test_forex_symbol_formatting() {
 /// Test that trading operations return appropriate errors when not implemented
 #[tokio::test]
 async fn test_trading_operations_stubbed() {
-    let config = create_test_config();
-    let connector = OandaConnector::new(config);
+    let connector = create_test_connector();
 
     // place_order should fail (stubbed)
     let result = connector
@@ -99,8 +85,7 @@ async fn test_trading_operations_stubbed() {
 /// Test transfer operations return appropriate errors
 #[tokio::test]
 async fn test_transfer_operations_not_supported() {
-    let config = create_test_config();
-    let connector = OandaConnector::new(config);
+    let connector = create_test_connector();
 
     let transfer_request = exchange_connectors::TransferRequest {
         id: uuid::Uuid::new_v4(),
@@ -118,8 +103,7 @@ async fn test_transfer_operations_not_supported() {
 /// Test balance retrieval (stubbed)
 #[tokio::test]
 async fn test_balances_stubbed() {
-    let config = create_test_config();
-    let connector = OandaConnector::new(config);
+    let connector = create_test_connector();
     let balances = connector.get_balances().await.expect("should not error");
     // Stubbed implementation returns empty
     assert!(balances.is_empty());
@@ -128,8 +112,7 @@ async fn test_balances_stubbed() {
 /// Test trading pairs retrieval (stubbed)
 #[tokio::test]
 async fn test_trading_pairs_stubbed() {
-    let config = create_test_config();
-    let connector = OandaConnector::new(config);
+    let connector = create_test_connector();
     let pairs = connector.get_trading_pairs().await.expect("should not error");
     assert!(pairs.is_empty());
 }
@@ -318,26 +301,16 @@ mod position_sizing {
     }
 }
 
-/// Helper function to create test config
-fn create_test_config() -> ExchangeConfig {
-    ExchangeConfig {
-        exchange_id: ExchangeId::Oanda,
-        api_key: "test-api-key".to_string(),
-        api_secret: String::new(), // OANDA uses bearer tokens, not HMAC
-        passphrase: None,
-        sandbox: true,
-        rate_limit_requests_per_second: 10,
-        websocket_url: None,
-        rest_api_url: None,
-    }
+/// Helper function to create test connector
+fn create_test_connector() -> OandaConnector {
+    OandaConnector::with_credentials("test-account-id", "test-api-key", true)
 }
 
 /// Integration test for stream lifecycle (requires network, marked as ignored)
 #[tokio::test]
 #[ignore = "requires network connection to OANDA"]
 async fn test_pricing_stream_lifecycle() {
-    let config = create_test_config();
-    let connector = OandaConnector::new(config);
+    let connector = create_test_connector();
     let symbols = vec!["EUR_USD".to_string()];
 
     let mut rx = connector.start_market_stream(symbols).await.expect("stream should start");

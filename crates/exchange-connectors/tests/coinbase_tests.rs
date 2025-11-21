@@ -3,8 +3,8 @@
 //! Tests REST operations, WebSocket streaming, HMAC authentication, and error handling.
 //! Uses mock responses to avoid hitting real exchange APIs during testing.
 
-use exchange_connectors::coinbase::CoinbaseConnector;
-use exchange_connectors::{ExchangeConfig, ExchangeConnector, ExchangeId, OrderSide, OrderType};
+use exchange_connectors::coinbase::{CoinbaseConfig, CoinbaseConnector};
+use exchange_connectors::{ExchangeConnector, ExchangeId, OrderSide, OrderType};
 use rust_decimal::Decimal;
 use std::time::Duration;
 
@@ -396,16 +396,13 @@ mod advanced_trade {
 }
 
 /// Helper function to create test config
-fn create_test_config() -> ExchangeConfig {
-    ExchangeConfig {
-        exchange_id: ExchangeId::Coinbase,
+fn create_test_config() -> CoinbaseConfig {
+    CoinbaseConfig {
         api_key: "test-api-key".to_string(),
         api_secret: "test-api-secret".to_string(),
-        passphrase: Some("test-passphrase".to_string()),
+        passphrase: "test-passphrase".to_string(),
         sandbox: true,
-        rate_limit_requests_per_second: 10,
-        websocket_url: None,
-        rest_api_url: None,
+        use_advanced_trade: false,
     }
 }
 
