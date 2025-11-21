@@ -128,7 +128,7 @@ pub async fn validate_credentials(email: &str, password: &str) -> Result<User, A
 
 ### High Priority
 
-#### TRADE-001: Binance.US Trading Operations
+#### TRADE-001: Binance.us Trading Operations
 **Location**: `crates/exchange-connectors/src/binance_us.rs`
 **Status**: Returns error for all trading ops
 **Phase**: Phase 2 (Weeks 5-7)
