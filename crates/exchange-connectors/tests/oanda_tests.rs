@@ -29,7 +29,10 @@ async fn test_connection_state() {
     assert!(connector.is_connected().await);
 
     // After disconnect
-    connector.disconnect().await.expect("disconnect should succeed");
+    connector
+        .disconnect()
+        .await
+        .expect("disconnect should succeed");
     assert!(!connector.is_connected().await);
 }
 
@@ -113,7 +116,10 @@ async fn test_balances_stubbed() {
 #[tokio::test]
 async fn test_trading_pairs_stubbed() {
     let connector = create_test_connector();
-    let pairs = connector.get_trading_pairs().await.expect("should not error");
+    let pairs = connector
+        .get_trading_pairs()
+        .await
+        .expect("should not error");
     assert!(pairs.is_empty());
 }
 
@@ -144,7 +150,10 @@ mod message_parsing {
 
         let bids = value["bids"].as_array().unwrap();
         let bid_price = bids[0]["price"].as_str().unwrap();
-        assert_eq!(Decimal::from_str(bid_price).unwrap(), Decimal::from_str("1.08500").unwrap());
+        assert_eq!(
+            Decimal::from_str(bid_price).unwrap(),
+            Decimal::from_str("1.08500").unwrap()
+        );
     }
 
     /// Test parsing HEARTBEAT message
@@ -313,7 +322,10 @@ async fn test_pricing_stream_lifecycle() {
     let connector = create_test_connector();
     let symbols = vec!["EUR_USD".to_string()];
 
-    let mut rx = connector.start_market_stream(symbols).await.expect("stream should start");
+    let mut rx = connector
+        .start_market_stream(symbols)
+        .await
+        .expect("stream should start");
 
     // Wait for at least one message or timeout
     let result = tokio::time::timeout(Duration::from_secs(10), rx.recv()).await;
