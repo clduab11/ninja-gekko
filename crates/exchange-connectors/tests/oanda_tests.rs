@@ -176,8 +176,6 @@ mod message_parsing {
 
 /// Authentication tests
 mod authentication {
-    use super::*;
-
     /// Test bearer token format
     #[test]
     fn test_bearer_token_format() {
@@ -272,7 +270,6 @@ mod forex {
 /// Position sizing tests
 mod position_sizing {
     use rust_decimal::Decimal;
-    use std::str::FromStr;
 
     /// Test lot size conversion
     #[test]

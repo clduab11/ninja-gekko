@@ -325,7 +325,6 @@ mod order_types {
 /// Error handling tests
 mod error_handling {
     use exchange_connectors::ExchangeError;
-    use rust_decimal::Decimal;
 
     #[test]
     fn test_coinbase_api_errors() {
