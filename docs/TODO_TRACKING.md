@@ -137,7 +137,7 @@ pub async fn validate_credentials(email: &str, password: &str) -> Result<User, A
 ```rust
 async fn place_order(&self, ...) -> ExchangeResult<ExchangeOrder> {
     Err(ExchangeError::InvalidRequest(
-        "Trading not implemented for Binance.us connector".to_string(),
+        "Trading not implemented for Binance.US connector".to_string(),
     ))
 }
 ```
@@ -327,7 +327,7 @@ async fn place_order(&self, ...) -> ExchangeResult<ExchangeOrder> {
 ```rust
 async fn start_order_stream(&self) -> ExchangeResult<mpsc::UnboundedReceiver<StreamMessage>> {
     let (_tx, rx) = mpsc::unbounded_channel();
-    warn!("Binance.us private order stream requires authenticated keys; not yet implemented");
+    warn!("Binance.US private order stream requires authenticated keys; not yet implemented");
     Ok(rx)
 }
 ```
