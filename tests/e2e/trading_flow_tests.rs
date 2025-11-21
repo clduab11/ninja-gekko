@@ -52,15 +52,27 @@ async fn test_complete_trading_flow() {
 
     tx.send(TradingEvent::Order(order_event)).await.unwrap();
 
-    // Process events
-    let mut events_processed = 0;
-    while let Ok(event) = tokio::time::timeout(Duration::from_millis(100), rx.recv()).await {
-        if event.is_some() {
-            events_processed += 1;
-        }
+    // Process events with proper channel closure and validation
+    drop(tx); // Close the sender to allow receiver loop to finish cleanly
+
+    let mut received_events = Vec::new();
+    while let Some(event) = rx.recv().await {
+        received_events.push(event);
     }
 
-    assert_eq!(events_processed, 3);
+    assert_eq!(received_events.len(), 3, "Should have processed all 3 events.");
+
+    // Validate event types and content
+    assert!(matches!(received_events[0], TradingEvent::Market(_)), "First event should be Market");
+    assert!(matches!(received_events[1], TradingEvent::Signal(_)), "Second event should be Signal");
+
+    if let Some(TradingEvent::Order(order)) = received_events.last() {
+        assert_eq!(order.order_id, "test-order-123", "Order ID should match");
+        assert_eq!(order.symbol, "BTC-USD", "Symbol should match");
+        assert_eq!(order.status, "pending", "Status should be pending");
+    } else {
+        panic!("Expected the last event to be an Order event.");
+    }
 }
 
 /// Test multi-exchange arbitrage flow
