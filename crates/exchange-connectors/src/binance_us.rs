@@ -173,7 +173,7 @@ fn build_subscription_params(symbols: &[String]) -> Vec<String> {
     params
 }
 
-fn canonical_symbol(symbol: &str) -> String {
+pub fn canonical_symbol(symbol: &str) -> String {
     symbol
         .chars()
         .filter(|c| c.is_ascii_alphanumeric())

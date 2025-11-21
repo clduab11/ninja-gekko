@@ -47,9 +47,8 @@ async fn test_empty_symbols_rejected() {
 /// Test symbol canonicalization
 #[test]
 fn test_symbol_canonicalization() {
-    // These tests verify the internal symbol mapping functions
-    // BTC-USD should become btcusd
-    // ETH_USD should become ethusd
+    use exchange_connectors::binance_us::canonical_symbol;
+    
     let test_cases = vec![
         ("BTC-USD", "btcusd"),
         ("ETH_USD", "ethusd"),
@@ -58,12 +57,7 @@ fn test_symbol_canonicalization() {
     ];
 
     for (input, expected) in test_cases {
-        let canonical: String = input
-            .chars()
-            .filter(|c| c.is_ascii_alphanumeric())
-            .flat_map(|c| c.to_lowercase())
-            .collect();
-        assert_eq!(canonical, expected, "Failed for input: {}", input);
+        assert_eq!(canonical_symbol(input), expected, "Failed for input: {}", input);
     }
 }
 
