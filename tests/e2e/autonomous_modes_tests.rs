@@ -6,7 +6,7 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::{mpsc, RwLock};
-use chrono;
+use chrono::{DateTime, Utc};
 
 /// Test Stealth mode - fragmented order execution
 #[tokio::test]
