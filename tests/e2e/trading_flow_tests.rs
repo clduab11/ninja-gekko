@@ -6,7 +6,6 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
-use chrono::{DateTime, Utc};
 
 /// Test complete trading flow from data ingestion to execution
 #[tokio::test]
