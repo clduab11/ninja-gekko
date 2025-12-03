@@ -28,7 +28,8 @@ const TEST_WASM: &str = r#"(module
 
 fn wasm_eval_benchmark(c: &mut Criterion) {
     let wasm_bytes = parse_wat(TEST_WASM).expect("valid wasm");
-    let module = WasmStrategyModule::from_bytes(&wasm_bytes, &WasmStrategyConfig::default()).unwrap();
+    let module =
+        WasmStrategyModule::from_bytes(&wasm_bytes, &WasmStrategyConfig::default()).unwrap();
     let mut instance = module.instantiate(WasmStrategyConfig::default()).unwrap();
 
     let account_id = String::from("sandbox-account");
