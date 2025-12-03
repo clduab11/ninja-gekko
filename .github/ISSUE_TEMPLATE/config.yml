@@ -2,17 +2,17 @@ blank_issues_enabled: false
 
 contact_links:
   - name: Documentation
-    url: https://github.com/ninja-gekko/ninja-gekko/tree/main/docs
+    url: https://github.com/clduab11/ninja-gekko/tree/main/docs
     about: Read the project documentation before opening an issue
   - name: AGENTS.md Operations Manual
-    url: https://github.com/ninja-gekko/ninja-gekko/blob/main/AGENTS.md
+    url: https://github.com/clduab11/ninja-gekko/blob/main/AGENTS.md
     about: Development guidelines, performance targets, and workflow protocol
   - name: PLAN.md Production Roadmap
-    url: https://github.com/ninja-gekko/ninja-gekko/blob/main/PLAN.md
+    url: https://github.com/clduab11/ninja-gekko/blob/main/PLAN.md
     about: Phased development plan and milestone structure
   - name: Security Issues
     url: mailto:security@ninja-gekko.dev
     about: Report security vulnerabilities privately via email
   - name: Discussions
-    url: https://github.com/ninja-gekko/ninja-gekko/discussions
+    url: https://github.com/clduab11/ninja-gekko/discussions
     about: Ask questions and discuss ideas with the community

@@ -3,8 +3,8 @@
 //! Tests REST operations, WebSocket streaming, HMAC authentication, and error handling.
 //! Uses mock responses to avoid hitting real exchange APIs during testing.
 
-use exchange_connectors::coinbase::CoinbaseConnector;
-use exchange_connectors::{ExchangeConfig, ExchangeConnector, ExchangeId, OrderSide, OrderType};
+use exchange_connectors::coinbase::{CoinbaseConfig, CoinbaseConnector};
+use exchange_connectors::{ExchangeConnector, ExchangeId, OrderSide, OrderType};
 use rust_decimal::Decimal;
 use std::time::Duration;
 
@@ -32,7 +32,10 @@ async fn test_connection_state() {
     assert!(connector.is_connected().await);
 
     // After disconnect
-    connector.disconnect().await.expect("disconnect should succeed");
+    connector
+        .disconnect()
+        .await
+        .expect("disconnect should succeed");
     assert!(!connector.is_connected().await);
 }
 
@@ -92,7 +95,10 @@ async fn test_balances_stubbed() {
 async fn test_trading_pairs_stubbed() {
     let config = create_test_config();
     let connector = CoinbaseConnector::new(config);
-    let pairs = connector.get_trading_pairs().await.expect("should not error");
+    let pairs = connector
+        .get_trading_pairs()
+        .await
+        .expect("should not error");
     assert!(pairs.is_empty());
 }
 
@@ -117,8 +123,8 @@ async fn test_transfer_operations_stubbed() {
 
 /// HMAC-SHA256 authentication tests
 mod authentication {
-    use exchange_connectors::utils;
     use chrono::Utc;
+    use exchange_connectors::utils;
 
     /// Test signature generation
     #[test]
@@ -215,7 +221,10 @@ mod message_parsing {
         assert_eq!(value["product_id"].as_str().unwrap(), "BTC-USD");
 
         let price = value["price"].as_str().unwrap();
-        assert_eq!(Decimal::from_str(price).unwrap(), Decimal::from_str("42000.50").unwrap());
+        assert_eq!(
+            Decimal::from_str(price).unwrap(),
+            Decimal::from_str("42000.50").unwrap()
+        );
     }
 
     /// Test parsing level2 snapshot
@@ -396,16 +405,13 @@ mod advanced_trade {
 }
 
 /// Helper function to create test config
-fn create_test_config() -> ExchangeConfig {
-    ExchangeConfig {
-        exchange_id: ExchangeId::Coinbase,
+fn create_test_config() -> CoinbaseConfig {
+    CoinbaseConfig {
         api_key: "test-api-key".to_string(),
         api_secret: "test-api-secret".to_string(),
-        passphrase: Some("test-passphrase".to_string()),
+        passphrase: "test-passphrase".to_string(),
         sandbox: true,
-        rate_limit_requests_per_second: 10,
-        websocket_url: None,
-        rest_api_url: None,
+        use_advanced_trade: false,
     }
 }
 
@@ -417,7 +423,10 @@ async fn test_market_stream_lifecycle() {
     let connector = CoinbaseConnector::new(config);
     let symbols = vec!["BTC-USD".to_string()];
 
-    let mut rx = connector.start_market_stream(symbols).await.expect("stream should start");
+    let mut rx = connector
+        .start_market_stream(symbols)
+        .await
+        .expect("stream should start");
 
     // Wait for at least one message or timeout
     let result = tokio::time::timeout(Duration::from_secs(10), rx.recv()).await;

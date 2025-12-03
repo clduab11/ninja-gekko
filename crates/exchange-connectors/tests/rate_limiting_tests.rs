@@ -32,7 +32,11 @@ async fn test_basic_rate_limiting() {
 
     let elapsed = start.elapsed();
     // First 5 requests should complete within ~1 second
-    assert!(elapsed < Duration::from_secs(2), "First batch took too long: {:?}", elapsed);
+    assert!(
+        elapsed < Duration::from_secs(2),
+        "First batch took too long: {:?}",
+        elapsed
+    );
 }
 
 /// Test that rate limiter throttles excess requests
@@ -49,7 +53,11 @@ async fn test_throttling() {
 
     let elapsed = start.elapsed();
     // Should take at least 400ms (5 extra requests at 10/sec)
-    assert!(elapsed >= Duration::from_millis(400), "Throttling not working: {:?}", elapsed);
+    assert!(
+        elapsed >= Duration::from_millis(400),
+        "Throttling not working: {:?}",
+        elapsed
+    );
 }
 
 /// Test concurrent access to rate limiter
@@ -236,11 +244,7 @@ mod integration {
     /// Test different rate limits for different exchanges
     #[tokio::test]
     async fn test_multi_exchange_rate_limits() {
-        let configs = vec![
-            ("binance_us", 20),
-            ("coinbase", 10),
-            ("oanda", 120),
-        ];
+        let configs = vec![("binance_us", 20), ("coinbase", 10), ("oanda", 120)];
 
         for (name, rate) in configs {
             let limiter = RateLimiter::new(rate);
@@ -283,9 +287,7 @@ mod error_handling {
 
         for _ in 0..50 {
             let limiter = Arc::clone(&limiter);
-            let handle = tokio::spawn(async move {
-                limiter.acquire().await
-            });
+            let handle = tokio::spawn(async move { limiter.acquire().await });
             handles.push(handle);
         }
 
@@ -358,7 +360,8 @@ mod fairness {
     #[tokio::test]
     async fn test_fair_access() {
         let limiter = Arc::new(RateLimiter::new(100));
-        let counters: Vec<Arc<AtomicUsize>> = (0..5).map(|_| Arc::new(AtomicUsize::new(0))).collect();
+        let counters: Vec<Arc<AtomicUsize>> =
+            (0..5).map(|_| Arc::new(AtomicUsize::new(0))).collect();
 
         let mut handles = vec![];
 

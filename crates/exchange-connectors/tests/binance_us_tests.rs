@@ -29,7 +29,10 @@ async fn test_connection_state() {
     assert!(connector.is_connected().await);
 
     // After disconnect
-    connector.disconnect().await.expect("disconnect should succeed");
+    connector
+        .disconnect()
+        .await
+        .expect("disconnect should succeed");
     assert!(!connector.is_connected().await);
 }
 
@@ -47,9 +50,8 @@ async fn test_empty_symbols_rejected() {
 /// Test symbol canonicalization
 #[test]
 fn test_symbol_canonicalization() {
-    // These tests verify the internal symbol mapping functions
-    // BTC-USD should become btcusd
-    // ETH_USD should become ethusd
+    use exchange_connectors::binance_us::canonical_symbol;
+
     let test_cases = vec![
         ("BTC-USD", "btcusd"),
         ("ETH_USD", "ethusd"),
@@ -58,12 +60,12 @@ fn test_symbol_canonicalization() {
     ];
 
     for (input, expected) in test_cases {
-        let canonical: String = input
-            .chars()
-            .filter(|c| c.is_ascii_alphanumeric())
-            .flat_map(|c| c.to_lowercase())
-            .collect();
-        assert_eq!(canonical, expected, "Failed for input: {}", input);
+        assert_eq!(
+            canonical_symbol(input),
+            expected,
+            "Failed for input: {}",
+            input
+        );
     }
 }
 
@@ -92,7 +94,11 @@ fn test_subscription_params() {
     }
 
     for expected in expected_streams {
-        assert!(params.contains(&expected.to_string()), "Missing: {}", expected);
+        assert!(
+            params.contains(&expected.to_string()),
+            "Missing: {}",
+            expected
+        );
     }
 }
 
@@ -165,7 +171,10 @@ async fn test_balances_empty() {
 #[tokio::test]
 async fn test_trading_pairs_empty() {
     let connector = BinanceUsConnector::new();
-    let pairs = connector.get_trading_pairs().await.expect("should not error");
+    let pairs = connector
+        .get_trading_pairs()
+        .await
+        .expect("should not error");
     assert!(pairs.is_empty());
 }
 
@@ -194,8 +203,14 @@ mod message_parsing {
         let bid = data.get("b").and_then(|v| v.as_str()).unwrap();
         let ask = data.get("a").and_then(|v| v.as_str()).unwrap();
 
-        assert_eq!(Decimal::from_str(bid).unwrap(), Decimal::from_str("42000.50").unwrap());
-        assert_eq!(Decimal::from_str(ask).unwrap(), Decimal::from_str("42001.00").unwrap());
+        assert_eq!(
+            Decimal::from_str(bid).unwrap(),
+            Decimal::from_str("42000.50").unwrap()
+        );
+        assert_eq!(
+            Decimal::from_str(ask).unwrap(),
+            Decimal::from_str("42001.00").unwrap()
+        );
     }
 
     /// Test parsing depth update payload
@@ -319,7 +334,10 @@ async fn test_market_stream_lifecycle() {
     let connector = BinanceUsConnector::new();
     let symbols = vec!["BTC-USD".to_string()];
 
-    let mut rx = connector.start_market_stream(symbols).await.expect("stream should start");
+    let mut rx = connector
+        .start_market_stream(symbols)
+        .await
+        .expect("stream should start");
 
     // Wait for at least one message or timeout
     let result = timeout(Duration::from_secs(10), rx.recv()).await;
