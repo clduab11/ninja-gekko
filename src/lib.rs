@@ -55,7 +55,7 @@
 
 pub mod config;
 pub mod core;
-pub mod mcp;
+// pub mod mcp; // Legacy module disabled in favor of crates/mcp-client
 pub mod neural;
 pub mod swarm;
 pub mod trading;
@@ -64,7 +64,7 @@ pub mod utils;
 /// Re-exports for convenience
 pub mod prelude {
     pub use crate::core::{NinjaGekko, OperationMode};
-    pub use crate::mcp::McpManager;
+    // pub use crate::mcp::McpManager;
     pub use crate::neural::NeuralBackend;
     pub use crate::swarm::SwarmIntelligence;
     pub use crate::trading::{Strategy, TradingEngine};

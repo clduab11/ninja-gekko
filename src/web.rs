@@ -22,15 +22,22 @@ use tracing::{error, info};
 use uuid::Uuid;
 
 /// Composite application state shared across the HTTP handlers.
-#[derive(Clone, Default)]
+use event_bus::EventBus;
+use mcp_client::McpClient;
+use metrics_exporter_prometheus::PrometheusHandle;
+
+#[derive(Clone)]
 struct AppState {
     chat_history: Arc<RwLock<Vec<ChatMessage>>>,
     persona: Arc<RwLock<PersonaSettings>>,
     system_actions: Arc<RwLock<Vec<SystemAction>>>,
+    event_bus: Option<EventBus>, // Optional for now to allow gradual migration
+    mcp_client: Arc<McpClient>,
+    prometheus_handle: PrometheusHandle,
 }
 
 impl AppState {
-    fn new() -> Self {
+    fn new(event_bus: Option<EventBus>, mcp_client: McpClient, prometheus_handle: PrometheusHandle) -> Self {
         let mut system_actions = Vec::new();
         system_actions.push(SystemAction {
             id: Uuid::new_v4(),
@@ -55,21 +62,24 @@ impl AppState {
             chat_history: Arc::new(RwLock::new(Vec::new())),
             persona: Arc::new(RwLock::new(PersonaSettings::default())),
             system_actions: Arc::new(RwLock::new(system_actions)),
+            event_bus,
+            mcp_client: Arc::new(mcp_client),
+            prometheus_handle,
         }
     }
 }
 
 /// Public entry-point for the web server.
-pub fn spawn(addr: SocketAddr) -> tokio::task::JoinHandle<()> {
+pub fn spawn(addr: SocketAddr, event_bus: Option<EventBus>, mcp_client: McpClient, prometheus_handle: PrometheusHandle) -> tokio::task::JoinHandle<()> {
     tokio::spawn(async move {
-        if let Err(err) = run_server(addr).await {
+        if let Err(err) = run_server(addr, event_bus, mcp_client, prometheus_handle).await {
             error!("Failed to launch chat orchestration server: {err:?}");
         }
     })
 }
 
-async fn run_server(addr: SocketAddr) -> anyhow::Result<()> {
-    let state = AppState::new();
+async fn run_server(addr: SocketAddr, event_bus: Option<EventBus>, mcp_client: McpClient, prometheus_handle: PrometheusHandle) -> anyhow::Result<()> {
+    let state = AppState::new(event_bus, mcp_client, prometheus_handle);
 
     let cors = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
@@ -78,6 +88,7 @@ async fn run_server(addr: SocketAddr) -> anyhow::Result<()> {
 
     let app = Router::new()
         .route("/health", get(health))
+        .route("/metrics", get(metrics_handler))
         .route("/api/chat/history", get(chat_history))
         .route("/api/chat/message", post(post_message))
         .route("/api/chat/persona", get(get_persona).post(update_persona))
@@ -100,6 +111,17 @@ async fn run_server(addr: SocketAddr) -> anyhow::Result<()> {
 async fn health() -> impl IntoResponse {
     Json(serde_json::json!({ "status": "ok" }))
 }
+
+async fn metrics_handler(State(state): State<AppState>) -> impl IntoResponse {
+    let metrics = state.prometheus_handle.render();
+    (
+        axum::http::StatusCode::OK,
+        [("content-type", "text/plain; version=0.0.4")],
+        metrics,
+    )
+        .into_response()
+}
+
 
 async fn chat_history(State(state): State<AppState>) -> Json<Vec<ChatMessage>> {
     Json(state.chat_history.read().clone())
@@ -169,74 +191,54 @@ async fn pause_trading(Json(payload): Json<PauseTradingRequest>) -> Json<SystemA
     })
 }
 
-async fn account_snapshot() -> Json<AccountSnapshot> {
-    Json(AccountSnapshot {
-        generated_at: Utc::now(),
-        total_equity: 2_540_000.23,
-        net_exposure: 0.34,
-        brokers: vec![
-            BrokerSnapshot {
-                broker: "OANDA".into(),
-                balance: 1_240_000.0,
-                open_positions: 12,
-                risk_score: 0.42,
-            },
-            BrokerSnapshot {
-                broker: "Coinbase Pro".into(),
-                balance: 780_000.0,
-                open_positions: 5,
-                risk_score: 0.28,
-            },
-            BrokerSnapshot {
-                broker: "Binance.us".into(),
-                balance: 520_000.23,
-                open_positions: 9,
-                risk_score: 0.51,
-            },
-        ],
-    })
+async fn account_snapshot(State(state): State<AppState>) -> impl IntoResponse {
+    match state.mcp_client.get_account_snapshot().await {
+        Ok(snapshot) => Json(snapshot).into_response(),
+        Err(e) => (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to fetch account snapshot: {}", e),
+        )
+            .into_response(),
+    }
 }
 
-async fn latest_news() -> Json<Vec<NewsHeadline>> {
-    Json(vec![
-        NewsHeadline {
-            id: Uuid::new_v4(),
-            title: "Fed minutes flag cautious optimism for Q4".into(),
-            source: "Perplexity Finance".into(),
-            published_at: Utc::now(),
-            url: "https://perplexity.ai/finance/fed-minutes".into(),
-        },
-        NewsHeadline {
-            id: Uuid::new_v4(),
-            title: "Sonar identifies energy sector leadership rotation".into(),
-            source: "Sonar Deep Research".into(),
-            published_at: Utc::now(),
-            url: "https://sonar.perplexity.ai/reports/energy-rotation".into(),
-        },
-    ])
+async fn latest_news(State(state): State<AppState>) -> impl IntoResponse {
+    match state.mcp_client.get_latest_news().await {
+        Ok(news) => Json(news).into_response(),
+        Err(e) => (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to fetch news: {}", e),
+        )
+            .into_response(),
+    }
 }
 
-async fn deep_research(Json(payload): Json<ResearchRequest>) -> Json<ResearchResponse> {
-    Json(ResearchResponse {
-        task_id: Uuid::new_v4(),
-        query: payload.query,
-        summary:
-            "Structured Sonar sweep prepared. Streaming citations available via websocket feed."
-                .into(),
-        citations: vec![Citation::External {
-            title: "Global Macro Outlook".into(),
-            url: "https://sonar.perplexity.ai/macro".into(),
-        }],
-    })
+async fn deep_research(
+    State(state): State<AppState>,
+    Json(payload): Json<ResearchRequest>,
+) -> impl IntoResponse {
+    match state.mcp_client.perform_research(payload.query).await {
+        Ok(response) => Json(response).into_response(),
+        Err(e) => (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to perform research: {}", e),
+        )
+            .into_response(),
+    }
 }
 
-async fn summon_swarm(Json(payload): Json<SwarmRequest>) -> Json<SwarmResponse> {
-    Json(SwarmResponse {
-        swarm_id: Uuid::new_v4(),
-        task: payload.task,
-        status: "initiated".into(),
-        eta_seconds: 42,
-    })
+async fn summon_swarm(
+    State(state): State<AppState>,
+    Json(payload): Json<SwarmRequest>,
+) -> impl IntoResponse {
+    match state.mcp_client.summon_swarm(payload.task).await {
+        Ok(response) => Json(response).into_response(),
+        Err(e) => (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to summon swarm: {}", e),
+        )
+            .into_response(),
+    }
 }
 
 fn synthesize_response(persona: &PersonaSettings, prompt: &str) -> String {

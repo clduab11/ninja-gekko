@@ -8,3 +8,8 @@ description = "MCP client for Ninja Gekko"
 serde = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
+event-bus = { path = "../event-bus" }
+anyhow = "1.0"
+serde_json = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }

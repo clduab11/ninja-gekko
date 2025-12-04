@@ -54,7 +54,7 @@ impl Default for ApiConfig {
         Self {
             bind_address: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 3000),
             database_url: "postgresql://localhost/gordon_gekko".to_string(),
-            jwt_secret: "your-super-secret-jwt-key-change-this-in-production".to_string(),
+            jwt_secret: std::env::var("GG_API_JWT_SECRET").expect("JWT secret must be set via GG_API_JWT_SECRET env variable"),
             environment: "development".to_string(),
             cors_origins: vec!["http://localhost:3000".to_string()],
             rate_limiting: RateLimitingConfig::default(),
@@ -113,7 +113,8 @@ impl ApiConfig {
         info!("API Configuration loaded:");
         info!("  Environment: {}", api_config.environment);
         info!("  Bind Address: {}", api_config.bind_address);
-        info!("  Database: {}", api_config.database_url.split('@').last().unwrap_or("***"));
+        // Do not log database connection secrets or sensitive info
+        info!("  Database: [REDACTED]");
         info!("  CORS Origins: {:?}", api_config.cors_origins);
         info!("  Rate Limiting: {} req/minute", api_config.rate_limiting.requests_per_minute);
         info!("  WebSocket Enabled: {}", api_config.enable_websocket);

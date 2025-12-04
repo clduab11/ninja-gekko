@@ -13,10 +13,15 @@ wasmtime-wasi = "25.0"
 bytes = { workspace = true }
 thiserror = { workspace = true }
 event-bus = { path = "../event-bus" }
+exchange-connectors = { path = "../exchange-connectors" }
 ninja-gekko-core = { path = "../../core" }
 chrono = { workspace = true }
 rust_decimal = { workspace = true }
+rust_decimal_macros = { workspace = true }
 uuid = { workspace = true }
+async-trait = { workspace = true }
+tokio = { workspace = true, features = ["sync"] }
+
 
 [dev-dependencies]
 once_cell = { workspace = true }

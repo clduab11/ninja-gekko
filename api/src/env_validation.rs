@@ -128,11 +128,7 @@ pub struct JwtSecureConfig {
 impl Default for JwtSecureConfig {
     fn default() -> Self {
         Self {
-            secret: std::env::var("JWT_SECRET")
-                .unwrap_or_else(|_| {
-                    eprintln!("WARNING: Using default JWT secret - set JWT_SECRET environment variable!");
-                    "default-secret-change-in-production".to_string()
-                }),
+            secret: std::env::var("JWT_SECRET").expect("JWT_SECRET environment variable must be set"),
             expiration_seconds: std::env::var("JWT_EXPIRATION")
                 .unwrap_or_else(|_| "3600".to_string()) // 1 hour
                 .parse()

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tenno-mcp-router
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tenno-mcp-router
+  template:
+    metadata:
+      labels:
+        app: tenno-mcp-router
+    spec:
+      containers:
+        - name: router
+          image: ghcr.io/ninja-gekko/tenno-mcp:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: tenno-mcp-secrets

@@ -14,6 +14,7 @@ use async_trait::async_trait;
 use exchange_connectors::{ExchangeConnector, ExchangeId, MarketTick};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
+use neural_engine::NeuralEngine;
 use std::collections::HashMap;
 use std::sync::Arc;
 use thiserror::Error;
@@ -199,6 +200,7 @@ pub struct ArbitrageEngine {
     capital_allocator: Arc<CapitalAllocator>,
     opportunity_detector: Arc<OpportunityDetector>,
     execution_engine: Arc<ExecutionEngine>,
+    neural_engine: Option<Arc<NeuralEngine>>,
 
     // State tracking
     active_opportunities: Arc<RwLock<HashMap<Uuid, ArbitrageOpportunity>>>,
@@ -240,7 +242,7 @@ impl ArbitrageEngine {
     ) -> Self {
         let volatility_scanner = Arc::new(VolatilityScanner::new(exchanges.clone()));
         let capital_allocator = Arc::new(CapitalAllocator::new(exchanges.clone()));
-        let opportunity_detector = Arc::new(OpportunityDetector::new(config.clone()));
+        let opportunity_detector = Arc::new(OpportunityDetector::new(config.clone(), None));
         let execution_engine = Arc::new(ExecutionEngine::new(exchanges.clone()));
 
         Self {
@@ -250,10 +252,44 @@ impl ArbitrageEngine {
             capital_allocator,
             opportunity_detector,
             execution_engine,
+            neural_engine: None,
             active_opportunities: Arc::new(RwLock::new(HashMap::new())),
             performance_metrics: Arc::new(RwLock::new(PerformanceMetrics::default())),
             risk_monitor: Arc::new(RwLock::new(RiskMonitor::default())),
         }
+    }
+
+    /// Create a new arbitrage engine with a NeuralEngine for ML-powered confidence scoring
+    pub fn with_neural_engine(
+        config: ArbitrageConfig,
+        exchanges: HashMap<ExchangeId, Arc<dyn ExchangeConnector>>,
+        neural_engine: Arc<NeuralEngine>,
+    ) -> Self {
+        let volatility_scanner = Arc::new(VolatilityScanner::new(exchanges.clone()));
+        let capital_allocator = Arc::new(CapitalAllocator::new(exchanges.clone()));
+        let opportunity_detector = Arc::new(OpportunityDetector::new(
+            config.clone(),
+            Some(Arc::clone(&neural_engine)),
+        ));
+        let execution_engine = Arc::new(ExecutionEngine::new(exchanges.clone()));
+
+        Self {
+            config,
+            exchanges,
+            volatility_scanner,
+            capital_allocator,
+            opportunity_detector,
+            execution_engine,
+            neural_engine: Some(neural_engine),
+            active_opportunities: Arc::new(RwLock::new(HashMap::new())),
+            performance_metrics: Arc::new(RwLock::new(PerformanceMetrics::default())),
+            risk_monitor: Arc::new(RwLock::new(RiskMonitor::default())),
+        }
+    }
+
+    /// Get a reference to the neural engine if available
+    pub fn neural_engine(&self) -> Option<&Arc<NeuralEngine>> {
+        self.neural_engine.as_ref()
     }
 
     /// Start the arbitrage engine with continuous scanning
@@ -344,6 +380,11 @@ impl ArbitrageEngine {
 
         error!("🛡️ Emergency stop complete - all trading halted");
         Ok(())
+    }
+
+    /// Process a market event to update internal state
+    pub async fn process_market_event(&self, event: &exchange_connectors::MarketTick, exchange_id: ExchangeId) {
+        self.opportunity_detector.update_price(event.clone(), exchange_id).await;
     }
 
     // Private implementation methods

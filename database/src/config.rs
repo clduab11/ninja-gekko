@@ -99,8 +99,7 @@ impl Default for SupabaseConfig {
         Self {
             project_url: std::env::var("SUPABASE_URL")
                 .unwrap_or_else(|_| "https://localhost:54321".to_string()),
-            anon_key: std::env::var("SUPABASE_ANON_KEY")
-                .unwrap_or_else(|_| "".to_string()),
+            anon_key: std::env::var("SUPABASE_ANON_KEY").expect("SUPABASE_ANON_KEY env variable must be set and not empty"),
             service_role_key: std::env::var("SUPABASE_SERVICE_ROLE_KEY").ok(),
             database_password: std::env::var("SUPABASE_DB_PASSWORD").ok(),
             enable_rls: true,

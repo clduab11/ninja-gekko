@@ -1,21 +1,25 @@
 //! Core Ninja Gekko system implementation
 
-use crate::mcp::McpManager;
+use mcp_client::{McpClient, McpConfig};
 use crate::neural::NeuralBackend;
+use event_bus::EventBus;
 use std::fmt;
 
 /// Main Ninja Gekko bot struct
-#[derive(Debug)]
+#[derive(Clone)]
 pub struct NinjaGekko {
     /// Operation mode
     pub mode: OperationMode,
     /// Neural network backend
     pub neural_backend: NeuralBackend,
-    /// MCP manager for protocol integrations
-    pub mcp_manager: McpManager,
+    /// MCP client for protocol integrations
+    pub mcp_client: McpClient,
+    /// Event bus for inter-component communication
+    pub event_bus: Option<EventBus>,
     /// Dry run flag
     pub dry_run: bool,
 }
+
 
 /// Operation modes for the trading bot
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -44,6 +48,7 @@ pub struct NinjaGekkoBuilder {
     neural_backend: NeuralBackend,
     mcp_servers: Vec<String>,
     dry_run: bool,
+    event_bus: Option<EventBus>,
 }
 
 impl NinjaGekko {
@@ -54,12 +59,18 @@ impl NinjaGekko {
             neural_backend: NeuralBackend::RuvFann,
             mcp_servers: vec![],
             dry_run: false,
+            event_bus: None,
         }
     }
 
     /// Start the bot
     pub async fn start(&self) -> Result<(), Box<dyn std::error::Error>> {
         tracing::info!("🥷 Starting Ninja Gekko in {:?} mode", self.mode);
+
+        // Start MCP client
+        if let Err(e) = self.mcp_client.start().await {
+            tracing::error!("Failed to start MCP client: {}", e);
+        }
 
         // Initialize components based on mode
         match self.mode {
@@ -88,6 +99,11 @@ impl NinjaGekko {
         // TODO: Implement swarm mode logic
         Ok(())
     }
+
+    /// Get a reference to the MCP client
+    pub fn mcp_client(&self) -> &McpClient {
+        &self.mcp_client
+    }
 }
 
 impl NinjaGekkoBuilder {
@@ -115,14 +131,29 @@ impl NinjaGekkoBuilder {
         self
     }
 
+    /// Set event bus
+    pub fn event_bus(mut self, event_bus: EventBus) -> Self {
+        self.event_bus = Some(event_bus);
+        self
+    }
+
     /// Build the NinjaGekko instance
-    pub async fn build(self) -> Result<NinjaGekko, Box<dyn std::error::Error>> {
-        let mcp_manager = McpManager::new(self.mcp_servers).await?;
+    pub async fn build(self) -> anyhow::Result<NinjaGekko> {
+        let mcp_config = McpConfig {
+            servers: self.mcp_servers,
+        };
+        let mut mcp_client = McpClient::new(mcp_config);
+        
+        // Clone event bus for mcp_client integration if available
+        if let Some(ref bus) = self.event_bus {
+            mcp_client = mcp_client.with_event_bus(bus.clone());
+        }
 
         Ok(NinjaGekko {
             mode: self.mode,
             neural_backend: self.neural_backend,
-            mcp_manager,
+            mcp_client,
+            event_bus: self.event_bus,
             dry_run: self.dry_run,
         })
     }
@@ -131,7 +162,6 @@ impl NinjaGekkoBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mcp::servers;
 
     #[test]
     fn test_operation_mode_display() {
@@ -145,7 +175,7 @@ mod tests {
         let result = NinjaGekko::builder()
             .mode(OperationMode::Stealth)
             .neural_backend(NeuralBackend::RuvFann)
-            .mcp_servers(vec![servers::PLAYWRIGHT.to_string()])
+            .mcp_servers(vec!["playwright".to_string()])
             .dry_run(true)
             .build()
             .await;
@@ -156,3 +186,5 @@ mod tests {
         assert!(bot.dry_run);
     }
 }
+
+

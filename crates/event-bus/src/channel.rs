@@ -189,7 +189,7 @@ impl EventBusBuilder {
 }
 
 /// Central event bus exposing typed senders and receivers for the five core event streams.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EventBus {
     #[cfg(feature = "exchange-integration")]
     market_tx: Sender<MarketEvent>,

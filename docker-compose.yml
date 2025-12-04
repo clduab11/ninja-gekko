@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  trading-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+      - "8787:8787" # Chat orchestration API
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/ninja_gekko
+      - REDIS_URL=redis://redis:6379
+      - RUST_LOG=info
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: frontend/chat-ui
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80" # Map host 5173 to container 80 (nginx)
+    depends_on:
+      - trading-engine
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=ninja_gekko
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    depends_on:
+      - trading-engine
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:

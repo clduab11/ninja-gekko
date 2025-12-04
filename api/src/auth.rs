@@ -243,20 +243,12 @@ impl AuthMiddleware {
 
     /// Get JWT secret from environment
     fn get_jwt_secret() -> String {
-        std::env::var("JWT_SECRET").unwrap_or_else(|_| {
-            // Use a default secret for development - in production this should be set
-            warn!("JWT_SECRET not set, using default (NOT FOR PRODUCTION)");
-            "your-secret-key-change-in-production".to_string()
-        })
+        std::env::var("JWT_SECRET").expect("JWT_SECRET environment variable must be set")
     }
 
     /// Get refresh token secret from environment
     fn get_refresh_secret() -> String {
-        std::env::var("JWT_REFRESH_SECRET").unwrap_or_else(|_| {
-            // Use a default secret for development - in production this should be set
-            warn!("JWT_REFRESH_SECRET not set, using default (NOT FOR PRODUCTION)");
-            "your-refresh-secret-key-change-in-production".to_string()
-        })
+        std::env::var("JWT_REFRESH_SECRET").expect("JWT_REFRESH_SECRET environment variable must be set")
     }
 
     /// Revoke a user's tokens (logout)

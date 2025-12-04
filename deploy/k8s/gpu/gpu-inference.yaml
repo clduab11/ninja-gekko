@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpu-inference
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gpu-inference
+  template:
+    metadata:
+      labels:
+        app: gpu-inference
+    spec:
+      containers:
+        - name: inference
+          image: ghcr.io/ninja-gekko/neural-inference:latest
+          resources:
+            limits:
+              nvidia.com/gpu: 1

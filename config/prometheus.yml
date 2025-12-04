@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'ninja-gekko-trading-engine'
+    static_configs:
+      - targets: ['trading-engine:8787']
+    metrics_path: '/metrics'

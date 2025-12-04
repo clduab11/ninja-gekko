@@ -246,11 +246,11 @@ pub async fn logout_handler(
     Ok(Json(ApiResponse::success(response)))
 }
 
-/// Mock function to validate user credentials
-/// TODO: Replace with actual authentication against user database
-async fn is_valid_credentials(username: &str, password: &str) -> bool {
-    // Mock authentication - replace with actual user authentication
-    username == "admin" && password == "password"
+/// Validate user credentials against secure database
+/// TODO: IMPLEMENT actual authentication: fetch user hash, verify with bcrypt/scrypt/argon2, check status
+async fn is_valid_credentials(_username: &str, _password: &str) -> bool {
+    // Hardcoded credentials removed. Always fails - implement secure DB-backed authentication for production.
+    false
 }
 
 /// Mock function to get user by username

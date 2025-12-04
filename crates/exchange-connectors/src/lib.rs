@@ -16,6 +16,7 @@ use uuid::Uuid;
 
 pub mod binance_us;
 pub mod coinbase;
+pub mod credentials;
 pub mod oanda;
 
 /// Exchange connector error types

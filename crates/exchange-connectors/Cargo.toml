@@ -43,3 +43,6 @@ parking_lot = { workspace = true }
 
 # WebSocket helpers
 futures-util = "0.3"
+
+# Secure secret storage
+secrecy = { version = "0.8", features = ["serde"] }

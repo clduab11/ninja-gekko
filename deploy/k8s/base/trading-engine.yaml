@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trading-engine
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: trading-engine
+  template:
+    metadata:
+      labels:
+        app: trading-engine
+    spec:
+      containers:
+        - name: engine
+          image: ghcr.io/ninja-gekko/trading-engine:latest
+          args: ["--mode", "swarm"]
+          envFrom:
+            - secretRef:
+                name: trading-credentials
