@@ -3,17 +3,17 @@
 //! File-based database migration system with locking, versioning,
 //! and rollback capabilities for PostgreSQL.
 
-use anyhow::{Result, anyhow};
-use serde::{Serialize, Deserialize};
+use anyhow::{anyhow, Result};
+use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use tracing::{debug, error, info, instrument, warn};
 use tokio::fs as async_fs;
 use tokio::sync::Mutex;
-use async_trait::async_trait;
+use tracing::{debug, error, info, instrument, warn};
 
 use crate::config::MigrationConfig;
 
@@ -123,21 +123,18 @@ impl MigrationManager {
 
     /// Create a new migration file
     #[instrument(skip(self))]
-    pub async fn create_migration(
-        &self,
-        name: &str,
-        description: &str,
-    ) -> Result<PathBuf> {
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)?
-            .as_secs();
+    pub async fn create_migration(&self, name: &str, description: &str) -> Result<PathBuf> {
+        let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
 
         let filename = format!("V{:013}__{}.sql", timestamp, name);
         let filepath = self.migration_dir.join(&filename);
 
         // Check if file already exists
         if filepath.exists() {
-            return Err(anyhow!("Migration file already exists: {}", filepath.display()));
+            return Err(anyhow!(
+                "Migration file already exists: {}",
+                filepath.display()
+            ));
         }
 
         let content = format!(
@@ -157,7 +154,9 @@ impl MigrationManager {
 -- Example:
 -- DROP TABLE example;
 "#,
-            name, description, chrono::Utc::now().to_rfc3339()
+            name,
+            description,
+            chrono::Utc::now().to_rfc3339()
         );
 
         async_fs::write(&filepath, content).await?;
@@ -220,7 +219,8 @@ impl MigrationManager {
         }
 
         let version_str = &version_part[1..];
-        let version = version_part[1..].parse::<i64>()
+        let version = version_part[1..]
+            .parse::<i64>()
             .map_err(|e| anyhow!("Invalid version number '{}': {}", version_str, e))?;
 
         let name = name_part
@@ -381,7 +381,10 @@ impl MigrationManager {
         pool: &sqlx::PgPool,
         migration_file: &MigrationFile,
     ) -> Result<()> {
-        debug!("Applying migration: {} - {}", migration_file.version, migration_file.name);
+        debug!(
+            "Applying migration: {} - {}",
+            migration_file.version, migration_file.name
+        );
 
         let start_time = std::time::Instant::now();
 
@@ -429,18 +432,24 @@ impl MigrationManager {
 
                 // Update in-memory cache
                 let mut applied_migrations = self.applied_migrations.lock().await;
-                applied_migrations.insert(migration_file.version, Migration {
-                    version: migration_file.version,
-                    name: migration_file.name.clone(),
-                    description: migration_file.description.clone(),
-                    checksum: migration_file.checksum.clone(),
-                    applied_at: Some(SystemTime::now()),
-                    rolled_back_at: None,
-                    status: MigrationStatus::Applied,
-                    execution_time_ms: Some(execution_time),
-                });
+                applied_migrations.insert(
+                    migration_file.version,
+                    Migration {
+                        version: migration_file.version,
+                        name: migration_file.name.clone(),
+                        description: migration_file.description.clone(),
+                        checksum: migration_file.checksum.clone(),
+                        applied_at: Some(SystemTime::now()),
+                        rolled_back_at: None,
+                        status: MigrationStatus::Applied,
+                        execution_time_ms: Some(execution_time),
+                    },
+                );
 
-                info!("Successfully applied migration: {} - {}", migration_file.version, migration_file.name);
+                info!(
+                    "Successfully applied migration: {} - {}",
+                    migration_file.version, migration_file.name
+                );
                 Ok(())
             }
             Err(e) => {
@@ -461,7 +470,10 @@ impl MigrationManager {
 
                 tx.commit().await?;
 
-                error!("Failed to apply migration {} - {}: {}", migration_file.version, migration_file.name, e);
+                error!(
+                    "Failed to apply migration {} - {}: {}",
+                    migration_file.version, migration_file.name, e
+                );
                 Err(e)
             }
         }
@@ -474,10 +486,14 @@ impl MigrationManager {
         tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
         migration_file: &MigrationFile,
     ) -> Result<()> {
-        debug!("Executing migration SQL for: {} - {}", migration_file.version, migration_file.name);
+        debug!(
+            "Executing migration SQL for: {} - {}",
+            migration_file.version, migration_file.name
+        );
 
         // Split SQL by statements (basic semicolon splitting)
-        let statements: Vec<&str> = migration_file.content
+        let statements: Vec<&str> = migration_file
+            .content
             .split(';')
             .map(|s| s.trim())
             .filter(|s| !s.is_empty() && !s.starts_with("--"))
@@ -485,9 +501,7 @@ impl MigrationManager {
 
         for statement in statements {
             if !statement.is_empty() {
-                sqlx::query(statement)
-                    .execute(&mut **tx)
-                    .await?;
+                sqlx::query(statement).execute(&mut **tx).await?;
             }
         }
 
@@ -508,7 +522,10 @@ impl MigrationManager {
 
         match result {
             Ok(Some(migration)) => {
-                info!("Successfully rolled back migration: {} - {}", migration.version, migration.name);
+                info!(
+                    "Successfully rolled back migration: {} - {}",
+                    migration.version, migration.name
+                );
                 Ok(Some(migration))
             }
             Ok(None) => {
@@ -547,9 +564,7 @@ impl MigrationManager {
 
                         for statement in statements {
                             if !statement.is_empty() {
-                                sqlx::query(statement)
-                                    .execute(&mut *tx)
-                                    .await?;
+                                sqlx::query(statement).execute(&mut *tx).await?;
                             }
                         }
                     }
@@ -647,7 +662,10 @@ impl MigrationManager {
             total_applied: applied_migrations.len(),
             total_pending: pending_migrations.len(),
             applied_migrations: applied_migrations.values().cloned().collect(),
-            pending_migrations: pending_migrations.iter().map(|m| m.to_migration()).collect(),
+            pending_migrations: pending_migrations
+                .iter()
+                .map(|m| m.to_migration())
+                .collect(),
         }
     }
 }
@@ -727,10 +745,9 @@ mod tests {
 
     #[test]
     fn test_parse_migration_filename() {
-        let manager = MigrationManager::new(
-            MigrationConfig::default(),
-            TempDir::new().unwrap().path(),
-        ).unwrap();
+        let manager =
+            MigrationManager::new(MigrationConfig::default(), TempDir::new().unwrap().path())
+                .unwrap();
 
         let result = manager.parse_migration_filename("V0000000000001__create_users_table.sql");
         assert!(result.is_ok());
@@ -742,10 +759,9 @@ mod tests {
 
     #[test]
     fn test_parse_invalid_migration_filename() {
-        let manager = MigrationManager::new(
-            MigrationConfig::default(),
-            TempDir::new().unwrap().path(),
-        ).unwrap();
+        let manager =
+            MigrationManager::new(MigrationConfig::default(), TempDir::new().unwrap().path())
+                .unwrap();
 
         let result = manager.parse_migration_filename("invalid_filename.sql");
         assert!(result.is_ok());

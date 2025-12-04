@@ -3,19 +3,17 @@
 //! Bridges the Event Bus `MarketEvent` stream to `StrategyExecutor` implementations.
 //! Manages market data buffering and signal publication.
 
-use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
 use chrono::Utc;
 use event_bus::{
     EventBusError, EventHandler, EventSender, MarketEvent, MarketPayload, PublishMode, SignalEvent,
 };
 use ninja_gekko_core::types::AccountId;
+use std::sync::{Arc, Mutex};
 use tracing::{debug, error};
 use uuid::Uuid;
 
-use crate::traits::{
-    MarketSnapshot, StrategyContext, StrategyExecutor, StrategyInitContext,
-};
+use crate::traits::{MarketSnapshot, StrategyContext, StrategyExecutor, StrategyInitContext};
 
 /// Runs a strategy by feeding it market events and publishing resulting signals.
 pub struct StrategyRunner<S, const N: usize> {
@@ -63,17 +61,13 @@ where
             // and put the new one at the end.
             // A ring buffer would be more efficient but requires StrategyContext to handle it.
             // Since N is small (e.g. 8), shifting is fine.
-            
+
             for i in 0..N - 1 {
                 self.snapshots[i] = self.snapshots[i + 1].clone();
             }
 
-            self.snapshots[N - 1] = MarketSnapshot::from_market_event(
-                &tick.symbol,
-                tick.bid,
-                tick.ask,
-                tick.last,
-            );
+            self.snapshots[N - 1] =
+                MarketSnapshot::from_market_event(&tick.symbol, tick.bid, tick.ask, tick.last);
         }
     }
 }
@@ -86,19 +80,21 @@ where
     async fn handle(&self, _event: MarketEvent) -> Result<(), EventBusError> {
         // We need mutable access to the strategy and snapshots.
         // Since EventHandler::handle takes &self, we would typically need internal mutability (Mutex/RwLock).
-        // However, for this implementation, let's assume the StrategyRunner is wrapped in an Arc<Mutex<...>> 
+        // However, for this implementation, let's assume the StrategyRunner is wrapped in an Arc<Mutex<...>>
         // or we change the design to use a channel receiver loop instead of EventHandler trait if mutability is hard.
-        
-        // Actually, the EventHandler trait is designed for shared access. 
+
+        // Actually, the EventHandler trait is designed for shared access.
         // If we need state, we should use interior mutability.
         // Let's wrap the mutable parts in a Mutex.
         // But wait, StrategyRunner definition above doesn't have Mutex.
         // I should probably redesign this to be a struct that holds an Arc<Mutex<State>>.
-        
+
         // Let's do that refactor in a moment. For now, I'll implement the logic assuming I can get mutability,
         // which means I need to change the struct definition.
-        
-        Err(EventBusError::Upstream("StrategyRunner requires interior mutability refactor".into()))
+
+        Err(EventBusError::Upstream(
+            "StrategyRunner requires interior mutability refactor".into(),
+        ))
     }
 }
 
@@ -163,8 +159,11 @@ where
         // But here we don't await inside the lock except maybe for publishing?
         // No, publishing is async if we use async send, but we use Try or Blocking.
         // Let's use std::sync::Mutex and be careful not to await inside.
-        
-        let mut state = self.state.lock().map_err(|_| EventBusError::Upstream("Mutex poisoned".into()))?;
+
+        let mut state = self
+            .state
+            .lock()
+            .map_err(|_| EventBusError::Upstream("Mutex poisoned".into()))?;
 
         // Initialize if needed
         if !state.initialized {
@@ -184,24 +183,20 @@ where
             for i in 0..N - 1 {
                 state.snapshots[i] = state.snapshots[i + 1].clone();
             }
-            state.snapshots[N - 1] = MarketSnapshot::from_market_event(
-                &tick.symbol,
-                tick.bid,
-                tick.ask,
-                tick.last,
-            );
+            state.snapshots[N - 1] =
+                MarketSnapshot::from_market_event(&tick.symbol, tick.bid, tick.ask, tick.last);
         }
 
         // Split borrows to avoid simultaneous mutable and immutable borrow of state
-        let RunnerState { ref snapshots, ref mut strategy, .. } = *state;
+        let RunnerState {
+            ref snapshots,
+            ref mut strategy,
+            ..
+        } = *state;
 
         // Evaluate strategy
-        let ctx = StrategyContext::new(
-            &self.account_id,
-            snapshots,
-            Uuid::new_v4(),
-            Utc::now(),
-        ).with_events(std::slice::from_ref(&event));
+        let ctx = StrategyContext::new(&self.account_id, snapshots, Uuid::new_v4(), Utc::now())
+            .with_events(std::slice::from_ref(&event));
 
         match strategy.evaluate(ctx) {
             Ok(decision) => {
@@ -216,9 +211,9 @@ where
                         event_bus::EventSource::new("strategy_engine"),
                         signal_payload.priority,
                     );
-                    
+
                     let signal_event = SignalEvent::new(metadata, signal_payload);
-                    
+
                     // Use Try publish to avoid blocking
                     if let Err(e) = self.signal_sender.publish(signal_event, PublishMode::Try) {
                         error!("Failed to publish strategy signal: {}", e);

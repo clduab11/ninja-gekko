@@ -4,7 +4,7 @@
 //! transaction support, and query building capabilities.
 
 use anyhow::Result;
-use sqlx::{PgPool, postgres::PgPoolOptions, types::Json, Transaction, Postgres};
+use sqlx::{postgres::PgPoolOptions, types::Json, PgPool, Postgres, Transaction};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{debug, error, info, instrument, warn};
@@ -49,11 +49,7 @@ impl DatabaseManager {
 
     /// Execute a query and return typed results
     #[instrument(skip(self, params), fields(query = %query))]
-    pub async fn execute_query<T>(
-        &self,
-        query: &str,
-        params: &[Json<T>]
-    ) -> Result<Vec<T>>
+    pub async fn execute_query<T>(&self, query: &str, params: &[Json<T>]) -> Result<Vec<T>>
     where
         T: for<'de> serde::Deserialize<'de> + Send + Unpin,
     {
@@ -66,9 +62,7 @@ impl DatabaseManager {
             query_builder = query_builder.bind(param);
         }
 
-        let rows = query_builder
-            .fetch_all(&self.pool)
-            .await?;
+        let rows = query_builder.fetch_all(&self.pool).await?;
 
         debug!("Query returned {} rows", rows.len());
         Ok(rows)
@@ -79,20 +73,14 @@ impl DatabaseManager {
     pub async fn execute_raw(&self, query: &str) -> Result<()> {
         debug!("Executing raw query: {}", query);
 
-        sqlx::query(query)
-            .execute(&self.pool)
-            .await?;
+        sqlx::query(query).execute(&self.pool).await?;
 
         Ok(())
     }
 
     /// Execute a query with a single result
     #[instrument(skip(self, params), fields(query = %query))]
-    pub async fn execute_query_one<T>(
-        &self,
-        query: &str,
-        params: &[Json<T>]
-    ) -> Result<Option<T>>
+    pub async fn execute_query_one<T>(&self, query: &str, params: &[Json<T>]) -> Result<Option<T>>
     where
         T: for<'de> serde::Deserialize<'de> + Send + Unpin,
     {
@@ -105,9 +93,7 @@ impl DatabaseManager {
             query_builder = query_builder.bind(param);
         }
 
-        let result = query_builder
-            .fetch_optional(&self.pool)
-            .await?;
+        let result = query_builder.fetch_optional(&self.pool).await?;
 
         Ok(result)
     }

@@ -99,7 +99,8 @@ impl Default for SupabaseConfig {
         Self {
             project_url: std::env::var("SUPABASE_URL")
                 .unwrap_or_else(|_| "https://localhost:54321".to_string()),
-            anon_key: std::env::var("SUPABASE_ANON_KEY").expect("SUPABASE_ANON_KEY env variable must be set and not empty"),
+            anon_key: std::env::var("SUPABASE_ANON_KEY")
+                .expect("SUPABASE_ANON_KEY env variable must be set and not empty"),
             service_role_key: std::env::var("SUPABASE_SERVICE_ROLE_KEY").ok(),
             database_password: std::env::var("SUPABASE_DB_PASSWORD").ok(),
             enable_rls: true,
@@ -207,8 +208,8 @@ impl Default for DatabaseLayerConfig {
 impl DatabaseLayerConfig {
     /// Load configuration from environment variables
     pub fn from_env() -> anyhow::Result<Self> {
-        let environment = std::env::var("ENVIRONMENT")
-            .unwrap_or_else(|_| "development".to_string());
+        let environment =
+            std::env::var("ENVIRONMENT").unwrap_or_else(|_| "development".to_string());
 
         let enable_query_logging = match environment.as_str() {
             "development" => true,
@@ -232,7 +233,9 @@ impl DatabaseLayerConfig {
 
         // Validate connection pool sizes
         if self.database.max_connections < self.database.min_connections {
-            return Err(anyhow::anyhow!("Max connections must be >= min connections"));
+            return Err(anyhow::anyhow!(
+                "Max connections must be >= min connections"
+            ));
         }
 
         // Validate Supabase configuration

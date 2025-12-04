@@ -37,7 +37,11 @@ struct AppState {
 }
 
 impl AppState {
-    fn new(event_bus: Option<EventBus>, mcp_client: McpClient, prometheus_handle: PrometheusHandle) -> Self {
+    fn new(
+        event_bus: Option<EventBus>,
+        mcp_client: McpClient,
+        prometheus_handle: PrometheusHandle,
+    ) -> Self {
         let mut system_actions = Vec::new();
         system_actions.push(SystemAction {
             id: Uuid::new_v4(),
@@ -70,7 +74,12 @@ impl AppState {
 }
 
 /// Public entry-point for the web server.
-pub fn spawn(addr: SocketAddr, event_bus: Option<EventBus>, mcp_client: McpClient, prometheus_handle: PrometheusHandle) -> tokio::task::JoinHandle<()> {
+pub fn spawn(
+    addr: SocketAddr,
+    event_bus: Option<EventBus>,
+    mcp_client: McpClient,
+    prometheus_handle: PrometheusHandle,
+) -> tokio::task::JoinHandle<()> {
     tokio::spawn(async move {
         if let Err(err) = run_server(addr, event_bus, mcp_client, prometheus_handle).await {
             error!("Failed to launch chat orchestration server: {err:?}");
@@ -78,7 +87,12 @@ pub fn spawn(addr: SocketAddr, event_bus: Option<EventBus>, mcp_client: McpClien
     })
 }
 
-async fn run_server(addr: SocketAddr, event_bus: Option<EventBus>, mcp_client: McpClient, prometheus_handle: PrometheusHandle) -> anyhow::Result<()> {
+async fn run_server(
+    addr: SocketAddr,
+    event_bus: Option<EventBus>,
+    mcp_client: McpClient,
+    prometheus_handle: PrometheusHandle,
+) -> anyhow::Result<()> {
     let state = AppState::new(event_bus, mcp_client, prometheus_handle);
 
     let cors = CorsLayer::new()
@@ -121,7 +135,6 @@ async fn metrics_handler(State(state): State<AppState>) -> impl IntoResponse {
     )
         .into_response()
 }
-
 
 async fn chat_history(State(state): State<AppState>) -> Json<Vec<ChatMessage>> {
     Json(state.chat_history.read().clone())

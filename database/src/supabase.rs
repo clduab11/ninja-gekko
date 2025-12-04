@@ -3,14 +3,14 @@
 //! Cloud database integration with Supabase using MCP (Model Context Protocol)
 //! for project management, authentication, and database operations.
 
-use anyhow::{Result, anyhow};
-use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
-use tracing::{debug, error, info, instrument, warn};
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use tokio::sync::Mutex;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::sync::Mutex;
+use tracing::{debug, error, info, instrument, warn};
 
 use crate::config::SupabaseConfig;
 
@@ -105,9 +105,11 @@ impl SupabaseManager {
         info!("Creating new Supabase project: {}", name);
 
         if self.mcp_available {
-            self.create_project_via_mcp(name, organization_id, region).await
+            self.create_project_via_mcp(name, organization_id, region)
+                .await
         } else {
-            self.create_project_via_api(name, organization_id, region).await
+            self.create_project_via_api(name, organization_id, region)
+                .await
         }
     }
 
@@ -132,10 +134,16 @@ impl SupabaseManager {
             region: region.to_string(),
             status: ProjectStatus::Creating,
             created_at: chrono::Utc::now().to_rfc3339(),
-            database_url: format!("postgresql://postgres:{}@{}.supabase.co:5432/postgres", "password", name),
+            database_url: format!(
+                "postgresql://postgres:{}@{}.supabase.co:5432/postgres",
+                "password", name
+            ),
             api_url: format!("https://{}.supabase.co", name),
             anon_key: format!("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.{}", "fake_anon_key"),
-            service_role_key: format!("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.{}", "fake_service_key"),
+            service_role_key: format!(
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.{}",
+                "fake_service_key"
+            ),
         };
 
         // Simulate project creation time
@@ -171,14 +179,23 @@ impl SupabaseManager {
             region: region.to_string(),
             status: ProjectStatus::Active,
             created_at: chrono::Utc::now().to_rfc3339(),
-            database_url: format!("postgresql://postgres:{}@{}.supabase.co:5432/postgres", "password", name),
+            database_url: format!(
+                "postgresql://postgres:{}@{}.supabase.co:5432/postgres",
+                "password", name
+            ),
             api_url: format!("https://{}.supabase.co", name),
             anon_key: format!("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.{}", "fake_anon_key"),
-            service_role_key: format!("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.{}", "fake_service_key"),
+            service_role_key: format!(
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.{}",
+                "fake_service_key"
+            ),
         };
 
         self.project = Some(project.clone());
-        info!("Successfully created Supabase project via API: {}", project.id);
+        info!(
+            "Successfully created Supabase project via API: {}",
+            project.id
+        );
 
         Ok(project)
     }
@@ -204,7 +221,9 @@ impl SupabaseManager {
         // For now, return mock data
 
         let cost = ProjectCost {
-            project_id: self.project.as_ref()
+            project_id: self
+                .project
+                .as_ref()
                 .map(|p| p.id.clone())
                 .unwrap_or_default(),
             monthly_cost: 25.0,
@@ -232,7 +251,9 @@ impl SupabaseManager {
         // For demonstration, return mock data
 
         let cost = ProjectCost {
-            project_id: self.project.as_ref()
+            project_id: self
+                .project
+                .as_ref()
                 .map(|p| p.id.clone())
                 .unwrap_or_default(),
             monthly_cost: 25.0,
@@ -451,7 +472,10 @@ impl SupabaseManager {
 
     /// Update project settings
     #[instrument(skip(self, settings))]
-    pub async fn update_project_settings(&mut self, settings: HashMap<String, String>) -> Result<()> {
+    pub async fn update_project_settings(
+        &mut self,
+        settings: HashMap<String, String>,
+    ) -> Result<()> {
         info!("Updating project settings");
 
         if let Some(ref mut project) = self.project {
@@ -473,7 +497,7 @@ impl SupabaseManager {
     async fn update_settings_via_mcp(
         &self,
         project: &SupabaseProject,
-        settings: &HashMap<String, String>
+        settings: &HashMap<String, String>,
     ) -> Result<()> {
         debug!("Updating settings via MCP for project: {}", project.id);
 
@@ -488,7 +512,7 @@ impl SupabaseManager {
     async fn update_settings_via_api(
         &self,
         project: &SupabaseProject,
-        settings: &HashMap<String, String>
+        settings: &HashMap<String, String>,
     ) -> Result<()> {
         debug!("Updating settings via API for project: {}", project.id);
 
