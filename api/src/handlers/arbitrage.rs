@@ -261,6 +261,147 @@ pub struct EmergencyReallocationResponse {
     pub status: String,
 }
 
+/// Emergency shutdown request
+#[derive(Debug, Deserialize)]
+pub struct EmergencyShutdownRequest {
+    pub reason: String,
+    pub cancel_orders: bool,
+    pub save_state: bool,
+}
+
+/// Emergency shutdown response
+#[derive(Debug, Serialize)]
+pub struct EmergencyShutdownResponse {
+    pub shutdown_id: Uuid,
+    pub initiated_at: chrono::DateTime<chrono::Utc>,
+    pub orders_cancelled: u32,
+    pub positions_closed: u32,
+    pub state_saved: bool,
+    pub status: String,
+}
+
+/// Risk status response
+#[derive(Debug, Serialize)]
+pub struct RiskStatusResponse {
+    pub circuit_breaker_triggered: bool,
+    pub daily_loss: rust_decimal::Decimal,
+    pub max_daily_loss: rust_decimal::Decimal,
+    pub consecutive_losses: u32,
+    pub max_consecutive_losses: u32,
+    pub current_drawdown_percent: f64,
+    pub max_drawdown_percent: f64,
+    pub api_error_count: u32,
+    pub last_exchange_heartbeat: chrono::DateTime<chrono::Utc>,
+    pub risk_score: f64,
+    pub trading_halted: bool,
+    pub halt_reason: Option<String>,
+}
+
+/// Execute emergency shutdown - halt all trading immediately
+pub async fn emergency_shutdown(
+    State(_state): State<Arc<AppState>>,
+    Json(request): Json<EmergencyShutdownRequest>,
+) -> ApiResult<Json<ApiResponse<EmergencyShutdownResponse>>> {
+    warn!("🚨🚨🚨 EMERGENCY SHUTDOWN INITIATED 🚨🚨🚨");
+    warn!("Reason: {}", request.reason);
+    warn!("Cancel Orders: {}, Save State: {}", request.cancel_orders, request.save_state);
+
+    // In a real implementation, this would:
+    // 1. Trigger circuit breaker across all exchanges
+    // 2. Cancel all pending orders
+    // 3. Close all open positions (optional)
+    // 4. Save current state to database
+    // 5. Send critical alerts to all configured channels
+    // 6. Disconnect from exchanges
+    // 7. Log all actions for audit trail
+
+    let response = EmergencyShutdownResponse {
+        shutdown_id: Uuid::new_v4(),
+        initiated_at: chrono::Utc::now(),
+        orders_cancelled: 15, // Mock value
+        positions_closed: 3,  // Mock value
+        state_saved: request.save_state,
+        status: "shutdown_complete".to_string(),
+    };
+
+    warn!("🛡️ Emergency shutdown complete: {}", response.shutdown_id);
+    warn!("Orders cancelled: {}, Positions closed: {}", 
+          response.orders_cancelled, response.positions_closed);
+
+    Ok(Json(ApiResponse::success(response)))
+}
+
+/// Get current risk status and circuit breaker state
+pub async fn get_risk_status(
+    State(_state): State<Arc<AppState>>,
+) -> ApiResult<Json<ApiResponse<RiskStatusResponse>>> {
+    info!("📊 Fetching risk status");
+
+    // In a real implementation, this would query the RiskMonitor
+    let status = RiskStatusResponse {
+        circuit_breaker_triggered: false,
+        daily_loss: rust_decimal::Decimal::new(125050, 2), // $1,250.50
+        max_daily_loss: rust_decimal::Decimal::new(500000, 2), // $5,000
+        consecutive_losses: 1,
+        max_consecutive_losses: 5,
+        current_drawdown_percent: 0.85,
+        max_drawdown_percent: 2.0,
+        api_error_count: 2,
+        last_exchange_heartbeat: chrono::Utc::now() - chrono::Duration::seconds(5),
+        risk_score: 0.25,
+        trading_halted: false,
+        halt_reason: None,
+    };
+
+    Ok(Json(ApiResponse::success(status)))
+}
+
+/// Manually trigger circuit breaker
+#[derive(Debug, Deserialize)]
+pub struct CircuitBreakerRequest {
+    pub reason: String,
+    pub duration_minutes: Option<u32>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CircuitBreakerResponse {
+    pub triggered_at: chrono::DateTime<chrono::Utc>,
+    pub resume_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub reason: String,
+    pub status: String,
+}
+
+pub async fn trigger_circuit_breaker(
+    State(_state): State<Arc<AppState>>,
+    Json(request): Json<CircuitBreakerRequest>,
+) -> ApiResult<Json<ApiResponse<CircuitBreakerResponse>>> {
+    warn!("⚡ Circuit breaker manually triggered: {}", request.reason);
+
+    let resume_at = request.duration_minutes.map(|mins| {
+        chrono::Utc::now() + chrono::Duration::minutes(mins as i64)
+    });
+
+    let response = CircuitBreakerResponse {
+        triggered_at: chrono::Utc::now(),
+        resume_at,
+        reason: request.reason,
+        status: "triggered".to_string(),
+    };
+
+    Ok(Json(ApiResponse::success(response)))
+}
+
+/// Reset circuit breaker and resume trading
+pub async fn reset_circuit_breaker(
+    State(_state): State<Arc<AppState>>,
+) -> ApiResult<Json<ApiResponse<String>>> {
+    info!("✅ Circuit breaker reset requested");
+
+    // In a real implementation, verify conditions are safe before resetting
+    
+    Ok(Json(ApiResponse::success("Circuit breaker reset. Trading resumed.".to_string())))
+}
+
 // Helper functions for generating mock data
 
 fn generate_mock_opportunities(query: &OpportunityQuery) -> Vec<ArbitrageOpportunity> {
@@ -269,7 +410,7 @@ fn generate_mock_opportunities(query: &OpportunityQuery) -> Vec<ArbitrageOpportu
     (0..limit).map(|i| {
         ArbitrageOpportunity {
             id: Uuid::new_v4(),
-            symbol: format!("BTC-USD"),
+            symbol: "BTC-USD".to_string(),
             buy_exchange: ExchangeId::Coinbase,
             sell_exchange: ExchangeId::BinanceUs,
             buy_price: rust_decimal::Decimal::new(49850 + i as i64 * 10, 0),

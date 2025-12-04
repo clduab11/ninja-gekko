@@ -1,17 +1,25 @@
 //! Integration tests using testcontainers for database connectivity
 
-use testcontainers::{clients::Cli, images::postgres::Postgres, RunnableImage};
+use testcontainers::{clients::Cli, Container, GenericImage};
 
 #[tokio::test]
+#[ignore = "requires docker"]
 async fn test_postgres_connection() {
     let docker = Cli::default();
-    let postgres = Postgres::default();
+    let postgres = GenericImage::new("postgres", "15")
+        .with_env_var("POSTGRES_PASSWORD", "postgres")
+        .with_env_var("POSTGRES_USER", "postgres")
+        .with_env_var("POSTGRES_DB", "postgres")
+        .with_exposed_port(5432);
     let node = docker.run(postgres);
 
     let connection_string = format!(
         "postgres://postgres:postgres@127.0.0.1:{}/postgres",
         node.get_host_port_ipv4(5432)
     );
+
+    // Wait for postgres to be ready
+    tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
 
     let pool = sqlx::PgPool::connect(&connection_string).await.unwrap();
 
@@ -28,15 +36,23 @@ async fn test_postgres_connection() {
 }
 
 #[tokio::test]
+#[ignore = "requires docker"]
 async fn test_postgres_table_creation() {
     let docker = Cli::default();
-    let postgres = Postgres::default();
+    let postgres = GenericImage::new("postgres", "15")
+        .with_env_var("POSTGRES_PASSWORD", "postgres")
+        .with_env_var("POSTGRES_USER", "postgres")
+        .with_env_var("POSTGRES_DB", "postgres")
+        .with_exposed_port(5432);
     let node = docker.run(postgres);
 
     let connection_string = format!(
         "postgres://postgres:postgres@127.0.0.1:{}/postgres",
         node.get_host_port_ipv4(5432)
     );
+
+    // Wait for postgres to be ready
+    tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
 
     let pool = sqlx::PgPool::connect(&connection_string).await.unwrap();
 

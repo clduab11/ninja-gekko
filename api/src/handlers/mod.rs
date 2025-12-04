@@ -37,7 +37,8 @@ pub use strategies::{list_strategies, create_strategy, get_strategy, update_stra
 pub use arbitrage::{
     start_arbitrage_strategy, stop_arbitrage_strategy, get_arbitrage_opportunities,
     get_volatility_scores, get_arbitrage_performance, get_balance_distribution,
-    emergency_capital_reallocation
+    emergency_capital_reallocation, emergency_shutdown, get_risk_status,
+    trigger_circuit_breaker, reset_circuit_breaker
 };
 
 /// Health check endpoint

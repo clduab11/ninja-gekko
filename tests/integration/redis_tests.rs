@@ -1,18 +1,23 @@
 //! Integration tests using testcontainers for Redis connectivity
 
-use testcontainers::{clients::Cli, images::redis::Redis};
+use testcontainers::{clients::Cli, GenericImage};
 
 #[tokio::test]
+#[ignore = "requires docker"]
 async fn test_redis_connection() {
     let docker = Cli::default();
-    let redis_image = Redis::default();
+    let redis_image = GenericImage::new("redis", "7")
+        .with_exposed_port(6379);
     let node = docker.run(redis_image);
 
     let host_port = node.get_host_port_ipv4(6379);
     let connection_string = format!("redis://127.0.0.1:{}", host_port);
 
+    // Wait for redis to be ready
+    tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
     let client = redis::Client::open(connection_string.as_str()).unwrap();
-    let mut con = client.get_tokio_connection().await.unwrap();
+    let mut con = client.get_multiplexed_tokio_connection().await.unwrap();
 
     // Test SET command
     redis::cmd("SET")
@@ -33,16 +38,21 @@ async fn test_redis_connection() {
 }
 
 #[tokio::test]
+#[ignore = "requires docker"]
 async fn test_redis_hash_operations() {
     let docker = Cli::default();
-    let redis_image = Redis::default();
+    let redis_image = GenericImage::new("redis", "7")
+        .with_exposed_port(6379);
     let node = docker.run(redis_image);
 
     let host_port = node.get_host_port_ipv4(6379);
     let connection_string = format!("redis://127.0.0.1:{}", host_port);
 
+    // Wait for redis to be ready
+    tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
     let client = redis::Client::open(connection_string.as_str()).unwrap();
-    let mut con = client.get_tokio_connection().await.unwrap();
+    let mut con = client.get_multiplexed_tokio_connection().await.unwrap();
 
     // Test HSET command
     redis::cmd("HSET")
