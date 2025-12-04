@@ -33,7 +33,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: engine
-          image: ghcr.io/clduab11/ninja-gekko:latest
+          image: ghcr.io/clduab11/ninja-gekko:v2.0.0
           imagePullPolicy: Always
           args: ["--mode", "swarm", "--config", "/etc/ninja-gekko/arbitrage.toml"]
           ports:

@@ -402,15 +402,20 @@ pub async fn reset_circuit_breaker(
     Ok(Json(ApiResponse::success("Circuit breaker reset. Trading resumed.".to_string())))
 }
 
+// Constants for mock data generation
+const DEFAULT_MOCK_SYMBOL: &str = "BTC-USD";
+const MOCK_SYMBOLS: [&str; 5] = ["BTC-USD", "ETH-USD", "ADA-USD", "SOL-USD", "AVAX-USD"];
+
 // Helper functions for generating mock data
 
 fn generate_mock_opportunities(query: &OpportunityQuery) -> Vec<ArbitrageOpportunity> {
     let limit = query.limit.unwrap_or(10);
+    let symbol = query.symbol.as_deref().unwrap_or(DEFAULT_MOCK_SYMBOL);
     
     (0..limit).map(|i| {
         ArbitrageOpportunity {
             id: Uuid::new_v4(),
-            symbol: "BTC-USD".to_string(),
+            symbol: symbol.to_string(),
             buy_exchange: ExchangeId::Coinbase,
             sell_exchange: ExchangeId::BinanceUs,
             buy_price: rust_decimal::Decimal::new(49850 + i as i64 * 10, 0),
@@ -431,11 +436,11 @@ fn generate_mock_opportunities(query: &OpportunityQuery) -> Vec<ArbitrageOpportu
 
 fn generate_mock_volatility_scores(query: &VolatilityQuery) -> Vec<VolatilityScore> {
     let limit = query.limit.unwrap_or(20);
-    let symbols = ["BTC-USD", "ETH-USD", "ADA-USD", "SOL-USD", "AVAX-USD"];
     let exchanges = [ExchangeId::Coinbase, ExchangeId::BinanceUs];
     
     (0..limit).map(|i| {
-        let symbol = symbols[i % symbols.len()];
+        let symbol = query.symbol.as_deref()
+            .unwrap_or(MOCK_SYMBOLS[i % MOCK_SYMBOLS.len()]);
         let exchange = exchanges[i % exchanges.len()];
         
         VolatilityScore {
