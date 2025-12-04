@@ -91,7 +91,11 @@ impl MomentumStrategy {
     }
 
     /// Generate signal based on momentum
-    fn generate_signal(&self, snapshot: &MarketSnapshot, momentum: Decimal) -> Option<StrategySignal> {
+    fn generate_signal(
+        &self,
+        snapshot: &MarketSnapshot,
+        momentum: Decimal,
+    ) -> Option<StrategySignal> {
         let (side, confidence) = if momentum > self.config.momentum_threshold {
             // Strong upward momentum - buy signal
             let confidence = (momentum / self.config.momentum_threshold)
@@ -149,7 +153,7 @@ impl StrategyExecutor<8> for MomentumStrategy {
         let mut logs = Vec::new();
 
         let snapshots = ctx.snapshots();
-        
+
         if snapshots.is_empty() {
             return Ok(StrategyDecision {
                 signals,
@@ -191,10 +195,7 @@ impl StrategyExecutor<8> for MomentumStrategy {
                         signal,
                     };
                     signals.push(payload);
-                    logs.push(format!(
-                        "Momentum {:.4} triggered signal",
-                        momentum
-                    ));
+                    logs.push(format!("Momentum {:.4} triggered signal", momentum));
                 } else {
                     logs.push(format!(
                         "Momentum {:.4} within threshold, no signal",
@@ -217,8 +218,8 @@ impl StrategyExecutor<8> for MomentumStrategy {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ninja_gekko_core::types::AccountId;
     use chrono::Utc;
+    use ninja_gekko_core::types::AccountId;
 
     fn create_snapshots(prices: &[Decimal]) -> [MarketSnapshot; 8] {
         let mut arr: [MarketSnapshot; 8] = std::array::from_fn(|_| MarketSnapshot {
@@ -228,7 +229,7 @@ mod tests {
             last: dec!(0),
             timestamp: Utc::now(),
         });
-        
+
         for (i, price) in prices.iter().take(8).enumerate() {
             arr[i] = MarketSnapshot {
                 symbol: "BTC-USD".to_string(),
@@ -252,11 +253,17 @@ mod tests {
     fn test_momentum_calculation() {
         let strategy = MomentumStrategy::with_defaults("test");
         let prices = [
-            dec!(100), dec!(101), dec!(102), dec!(103),
-            dec!(104), dec!(105), dec!(106), dec!(107),
+            dec!(100),
+            dec!(101),
+            dec!(102),
+            dec!(103),
+            dec!(104),
+            dec!(105),
+            dec!(106),
+            dec!(107),
         ];
         let snapshots = create_snapshots(&prices);
-        
+
         let momentum = strategy.calculate_momentum(&snapshots);
         assert!(momentum.is_some());
         // 7% increase over 5 periods
@@ -271,7 +278,7 @@ mod tests {
             ..Default::default()
         };
         let strategy = MomentumStrategy::new("test", config);
-        
+
         let snapshot = MarketSnapshot {
             symbol: "BTC-USD".to_string(),
             bid: dec!(990),
@@ -279,7 +286,7 @@ mod tests {
             last: dec!(1000),
             timestamp: Utc::now(),
         };
-        
+
         // 5% momentum > 1% threshold = buy
         let signal = strategy.generate_signal(&snapshot, dec!(0.05));
         assert!(signal.is_some());
@@ -293,7 +300,7 @@ mod tests {
             ..Default::default()
         };
         let strategy = MomentumStrategy::new("test", config);
-        
+
         let snapshot = MarketSnapshot {
             symbol: "BTC-USD".to_string(),
             bid: dec!(990),
@@ -301,7 +308,7 @@ mod tests {
             last: dec!(1000),
             timestamp: Utc::now(),
         };
-        
+
         // -5% momentum > 1% threshold = sell
         let signal = strategy.generate_signal(&snapshot, dec!(-0.05));
         assert!(signal.is_some());
@@ -315,7 +322,7 @@ mod tests {
             ..Default::default()
         };
         let strategy = MomentumStrategy::new("test", config);
-        
+
         let snapshot = MarketSnapshot {
             symbol: "BTC-USD".to_string(),
             bid: dec!(990),
@@ -323,7 +330,7 @@ mod tests {
             last: dec!(1000),
             timestamp: Utc::now(),
         };
-        
+
         // 0.5% momentum < 1% threshold = no signal
         let signal = strategy.generate_signal(&snapshot, dec!(0.005));
         assert!(signal.is_none());

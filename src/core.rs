@@ -1,8 +1,8 @@
 //! Core Ninja Gekko system implementation
 
-use mcp_client::{McpClient, McpConfig};
 use crate::neural::NeuralBackend;
 use event_bus::EventBus;
+use mcp_client::{McpClient, McpConfig};
 use std::fmt;
 
 /// Main Ninja Gekko bot struct
@@ -19,7 +19,6 @@ pub struct NinjaGekko {
     /// Dry run flag
     pub dry_run: bool,
 }
-
 
 /// Operation modes for the trading bot
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -143,7 +142,7 @@ impl NinjaGekkoBuilder {
             servers: self.mcp_servers,
         };
         let mut mcp_client = McpClient::new(mcp_config);
-        
+
         // Clone event bus for mcp_client integration if available
         if let Some(ref bus) = self.event_bus {
             mcp_client = mcp_client.with_event_bus(bus.clone());
@@ -186,5 +185,3 @@ mod tests {
         assert!(bot.dry_run);
     }
 }
-
-

@@ -4,23 +4,23 @@
 //! Provides enterprise-grade database operations with connection pooling, caching,
 //! migrations, and transaction support.
 
-pub mod config;
-pub mod database;
 pub mod cache;
-pub mod supabase;
-pub mod migrations;
+pub mod config;
 pub mod connection;
+pub mod database;
 pub mod error;
+pub mod migrations;
+pub mod supabase;
 pub mod types;
 
 // Re-export commonly used types
-pub use config::*;
-pub use database::*;
 pub use cache::*;
-pub use supabase::*;
-pub use migrations::*;
+pub use config::*;
 pub use connection::*;
+pub use database::*;
 pub use error::*;
+pub use migrations::*;
+pub use supabase::*;
 pub use types::*;
 
 // Version information

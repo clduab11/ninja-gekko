@@ -1,45 +1,61 @@
 //! Integration tests using testcontainers for database connectivity
 
-use testcontainers::{clients::Cli, images::postgres::Postgres, RunnableImage};
+use testcontainers::{clients::Cli, Container, GenericImage};
 
 #[tokio::test]
+#[ignore = "requires docker"]
 async fn test_postgres_connection() {
     let docker = Cli::default();
-    let postgres = Postgres::default();
+    let postgres = GenericImage::new("postgres", "15")
+        .with_env_var("POSTGRES_PASSWORD", "postgres")
+        .with_env_var("POSTGRES_USER", "postgres")
+        .with_env_var("POSTGRES_DB", "postgres")
+        .with_exposed_port(5432);
     let node = docker.run(postgres);
-    
+
     let connection_string = format!(
         "postgres://postgres:postgres@127.0.0.1:{}/postgres",
         node.get_host_port_ipv4(5432)
     );
-    
+
+    // Wait for postgres to be ready
+    tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
+
     let pool = sqlx::PgPool::connect(&connection_string).await.unwrap();
-    
+
     // Test basic query
     let row: (i64,) = sqlx::query_as("SELECT $1")
         .bind(42_i64)
         .fetch_one(&pool)
         .await
         .unwrap();
-    
+
     assert_eq!(row.0, 42);
-    
+
     pool.close().await;
 }
 
 #[tokio::test]
+#[ignore = "requires docker"]
 async fn test_postgres_table_creation() {
     let docker = Cli::default();
-    let postgres = Postgres::default();
+    let postgres = GenericImage::new("postgres", "15")
+        .with_env_var("POSTGRES_PASSWORD", "postgres")
+        .with_env_var("POSTGRES_USER", "postgres")
+        .with_env_var("POSTGRES_DB", "postgres")
+        .with_exposed_port(5432);
     let node = docker.run(postgres);
-    
+
     let connection_string = format!(
         "postgres://postgres:postgres@127.0.0.1:{}/postgres",
         node.get_host_port_ipv4(5432)
     );
-    
+
+    // Wait for postgres to be ready
+    tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
+
     let pool = sqlx::PgPool::connect(&connection_string).await.unwrap();
-    
+
     // Create a test table
     sqlx::query(
         r#"
@@ -50,12 +66,12 @@ async fn test_postgres_table_creation() {
             quantity DECIMAL(12, 8) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-        "#
+        "#,
     )
     .execute(&pool)
     .await
     .unwrap();
-    
+
     // Insert a test row
     sqlx::query("INSERT INTO test_trades (symbol, price, quantity) VALUES ($1, $2, $3)")
         .bind("BTC-USD")
@@ -64,14 +80,14 @@ async fn test_postgres_table_creation() {
         .execute(&pool)
         .await
         .unwrap();
-    
+
     // Verify insertion
     let count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM test_trades")
         .fetch_one(&pool)
         .await
         .unwrap();
-    
+
     assert_eq!(count.0, 1);
-    
+
     pool.close().await;
 }

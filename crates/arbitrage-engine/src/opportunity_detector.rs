@@ -4,8 +4,7 @@
 //! AI/ML models to identify profitable cross-exchange trading opportunities.
 
 use crate::{
-    ArbitrageConfig, ArbitrageOpportunity, ArbitrageResult, ExecutionComplexity,
-    TimeSensitivity,
+    ArbitrageConfig, ArbitrageOpportunity, ArbitrageResult, ExecutionComplexity, TimeSensitivity,
 };
 use chrono::Utc;
 use exchange_connectors::{ExchangeId, MarketTick};
@@ -285,6 +284,3 @@ mod tests {
         assert!((market_data.volume - 50000.0).abs() < 0.1);
     }
 }
-
-// Import ArbitrageConfig from parent module
-use crate::ArbitrageConfig;

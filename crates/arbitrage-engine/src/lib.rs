@@ -12,9 +12,9 @@
 
 use async_trait::async_trait;
 use exchange_connectors::{ExchangeConnector, ExchangeId, MarketTick};
+use neural_engine::NeuralEngine;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use neural_engine::NeuralEngine;
 use std::collections::HashMap;
 use std::sync::Arc;
 use thiserror::Error;
@@ -383,8 +383,14 @@ impl ArbitrageEngine {
     }
 
     /// Process a market event to update internal state
-    pub async fn process_market_event(&self, event: &exchange_connectors::MarketTick, exchange_id: ExchangeId) {
-        self.opportunity_detector.update_price(event.clone(), exchange_id).await;
+    pub async fn process_market_event(
+        &self,
+        event: &exchange_connectors::MarketTick,
+        exchange_id: ExchangeId,
+    ) {
+        self.opportunity_detector
+            .update_price(event.clone(), exchange_id)
+            .await;
     }
 
     // Private implementation methods

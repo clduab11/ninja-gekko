@@ -32,7 +32,10 @@ impl std::fmt::Debug for ExchangeCredentials {
             .field("exchange_id", &self.exchange_id)
             .field("api_key", &"[REDACTED]")
             .field("api_secret", &"[REDACTED]")
-            .field("passphrase", &self.passphrase.as_ref().map(|_| "[REDACTED]"))
+            .field(
+                "passphrase",
+                &self.passphrase.as_ref().map(|_| "[REDACTED]"),
+            )
             .field("account_id", &self.account_id)
             .field("sandbox", &self.sandbox)
             .finish()
@@ -75,13 +78,13 @@ impl ExchangeCredentials {
                 Some("COINBASE_API_PASSPHRASE"),
                 None,
             ),
-            ExchangeId::BinanceUs => (
-                "BINANCE_US_API_KEY",
-                "BINANCE_US_API_SECRET",
+            ExchangeId::BinanceUs => ("BINANCE_US_API_KEY", "BINANCE_US_API_SECRET", None, None),
+            ExchangeId::Oanda => (
+                "OANDA_API_KEY",
+                "OANDA_API_KEY",
                 None,
-                None,
+                Some("OANDA_ACCOUNT_ID"),
             ),
-            ExchangeId::Oanda => ("OANDA_API_KEY", "OANDA_API_KEY", None, Some("OANDA_ACCOUNT_ID")),
         };
 
         let api_key = env::var(key_var).map_err(|_| {

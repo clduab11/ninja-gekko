@@ -3,16 +3,16 @@
 //! Enterprise-grade connection pool management with read/write splitting,
 //! failover capabilities, circuit breaker patterns, and comprehensive monitoring.
 
-use anyhow::{Result, anyhow};
-use serde::{Serialize, Deserialize};
+use anyhow::{anyhow, Result};
+use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::future::Future;
+use std::pin::Pin;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tokio::sync::{Mutex, RwLock};
 use tracing::{debug, error, info, instrument, warn};
-use async_trait::async_trait;
-use std::pin::Pin;
-use std::future::Future;
 
 use crate::config::ConnectionPoolConfig;
 
@@ -38,9 +38,9 @@ pub struct ConnectionPoolStats {
 /// Circuit breaker state
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CircuitBreakerState {
-    Closed,     // Normal operation
-    Open,       // Circuit is open, failing fast
-    HalfOpen,   // Testing if service has recovered
+    Closed,   // Normal operation
+    Open,     // Circuit is open, failing fast
+    HalfOpen, // Testing if service has recovered
 }
 
 /// Connection endpoint configuration
@@ -191,9 +191,10 @@ impl ConnectionManager {
                     let mut stats = self.stats.write().await;
                     if let Some(pool_stats) = stats.get_mut(pool_name) {
                         pool_stats.successful_connections += 1;
-                        pool_stats.average_wait_time_ms = (pool_stats.average_wait_time_ms +
-                            connection_time as f64) / 2.0;
-                        pool_stats.max_wait_time_ms = pool_stats.max_wait_time_ms.max(connection_time);
+                        pool_stats.average_wait_time_ms =
+                            (pool_stats.average_wait_time_ms + connection_time as f64) / 2.0;
+                        pool_stats.max_wait_time_ms =
+                            pool_stats.max_wait_time_ms.max(connection_time);
                         pool_stats.total_connection_time_ms += connection_time;
                         pool_stats.pool_efficiency = pool_stats.calculate_efficiency();
                     }
@@ -237,7 +238,11 @@ impl ConnectionManager {
                 Ok(result) => return Ok(result),
                 Err(e) => {
                     last_error = Some(e);
-                    warn!("Operation failed on attempt {}: {:?}", attempt + 1, last_error);
+                    warn!(
+                        "Operation failed on attempt {}: {:?}",
+                        attempt + 1,
+                        last_error
+                    );
 
                     if attempt < max_retries - 1 {
                         // Exponential backoff
@@ -253,7 +258,11 @@ impl ConnectionManager {
             }
         }
 
-        Err(anyhow!("Operation failed after {} retries: {:?}", max_retries, last_error))
+        Err(anyhow!(
+            "Operation failed after {} retries: {:?}",
+            max_retries,
+            last_error
+        ))
     }
 
     /// Get connection pool statistics
@@ -358,7 +367,10 @@ impl ConnectionPoolImpl {
     /// Initialize minimum connections
     #[instrument(skip(self))]
     async fn initialize_connections(&self) -> Result<()> {
-        debug!("Initializing {} minimum connections", self.config.min_connections);
+        debug!(
+            "Initializing {} minimum connections",
+            self.config.min_connections
+        );
 
         for _ in 0..self.config.min_connections {
             if let Ok(connection) = self.create_connection().await {
@@ -375,10 +387,8 @@ impl ConnectionPoolImpl {
     async fn create_connection(&self) -> Result<PooledConnection> {
         let endpoint = self.endpoint_manager.select_endpoint().await?;
 
-        let connection = PooledConnection::new(
-            endpoint.clone(),
-            Arc::clone(&self.connection_counter),
-        ).await?;
+        let connection =
+            PooledConnection::new(endpoint.clone(), Arc::clone(&self.connection_counter)).await?;
 
         Ok(connection)
     }
@@ -472,7 +482,8 @@ impl ConnectionPoolImpl {
         let mut valid_connections = Vec::new();
 
         for connection in connections.drain(..) {
-            if now.elapsed() < Duration::from_secs(300) { // 5 minute timeout
+            if now.elapsed() < Duration::from_secs(300) {
+                // 5 minute timeout
                 valid_connections.push(connection);
             }
         }
@@ -593,7 +604,10 @@ pub struct PooledConnection {
 
 impl PooledConnection {
     /// Create a new pooled connection
-    async fn new(endpoint: ConnectionEndpoint, connection_counter: Arc<Mutex<u64>>) -> Result<Self> {
+    async fn new(
+        endpoint: ConnectionEndpoint,
+        connection_counter: Arc<Mutex<u64>>,
+    ) -> Result<Self> {
         let connection_id = {
             let mut counter = connection_counter.lock().await;
             *counter += 1;
@@ -685,15 +699,16 @@ impl ConnectionPoolStats {
         if self.total_connections == 0 {
             0.0
         } else {
-            (self.successful_connections as f64) /
-            (self.successful_connections + self.failed_connections) as f64
+            (self.successful_connections as f64)
+                / (self.successful_connections + self.failed_connections) as f64
         }
     }
 
     /// Check if circuit breaker should be tripped
     fn should_trip_circuit_breaker(&self) -> bool {
         let failure_rate = if self.successful_connections + self.failed_connections > 0 {
-            self.failed_connections as f64 / (self.successful_connections + self.failed_connections) as f64
+            self.failed_connections as f64
+                / (self.successful_connections + self.failed_connections) as f64
         } else {
             0.0
         };
@@ -771,10 +786,22 @@ mod tests {
 
     #[test]
     fn test_load_balancing_strategies() {
-        assert!(matches!(LoadBalancingStrategy::RoundRobin, LoadBalancingStrategy::RoundRobin));
-        assert!(matches!(LoadBalancingStrategy::WeightedRandom, LoadBalancingStrategy::WeightedRandom));
-        assert!(matches!(LoadBalancingStrategy::LeastConnections, LoadBalancingStrategy::LeastConnections));
-        assert!(matches!(LoadBalancingStrategy::PriorityBased, LoadBalancingStrategy::PriorityBased));
+        assert!(matches!(
+            LoadBalancingStrategy::RoundRobin,
+            LoadBalancingStrategy::RoundRobin
+        ));
+        assert!(matches!(
+            LoadBalancingStrategy::WeightedRandom,
+            LoadBalancingStrategy::WeightedRandom
+        ));
+        assert!(matches!(
+            LoadBalancingStrategy::LeastConnections,
+            LoadBalancingStrategy::LeastConnections
+        ));
+        assert!(matches!(
+            LoadBalancingStrategy::PriorityBased,
+            LoadBalancingStrategy::PriorityBased
+        ));
     }
 
     #[test]

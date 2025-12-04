@@ -3,11 +3,11 @@
 //! This crate provides the client implementation for the Model Context Protocol (MCP),
 //! allowing the trading bot to interact with external tools and resources.
 
-use event_bus::{EventBus, EventSource, EventKind, EventMetadata, Priority, EventFrame};
+use event_bus::{EventBus, EventFrame, EventKind, EventMetadata, EventSource, Priority};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{info, error, warn};
+use tracing::{error, info, warn};
 
 /// MCP Client configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -40,8 +40,11 @@ impl McpClient {
 
     /// Start the MCP client
     pub async fn start(&self) -> anyhow::Result<()> {
-        info!("🎭 Starting MCP Client with servers: {:?}", self.config.servers);
-        
+        info!(
+            "🎭 Starting MCP Client with servers: {:?}",
+            self.config.servers
+        );
+
         // Placeholder: Simulate connection to servers
         for server in &self.config.servers {
             info!("🔗 Connecting to MCP server: {}", server);
@@ -111,7 +114,7 @@ impl McpClient {
                 "source": "Sonar Deep Research",
                 "published_at": chrono::Utc::now(),
                 "url": "https://sonar.perplexity.ai/reports/energy-rotation"
-            })
+            }),
         ])
     }
 

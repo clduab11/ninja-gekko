@@ -4,13 +4,13 @@
 //! automatic serialization/deserialization, and cache management features.
 
 use anyhow::Result;
-use redis::{Client, Connection, Commands, RedisResult, ConnectionManager, AsyncCommands};
-use serde::{Serialize, Deserialize};
+use redis::{AsyncCommands, Client, Commands, Connection, ConnectionManager, RedisResult};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
 use tracing::{debug, error, info, instrument, warn};
-use std::collections::HashMap;
-use std::sync::Arc;
 
 use crate::config::CacheConfig;
 
@@ -169,10 +169,14 @@ impl CacheManager {
         // Get all values in one request
         let values: Vec<Option<Vec<u8>>> = conn.get(keys.to_vec()).await?;
 
-        let results = keys.iter().zip(values.into_iter()).map(|(key, data)| {
-            let value = data.and_then(|bytes| serde_json::from_slice::<T>(&bytes).ok());
-            (key.clone(), value)
-        }).collect();
+        let results = keys
+            .iter()
+            .zip(values.into_iter())
+            .map(|(key, data)| {
+                let value = data.and_then(|bytes| serde_json::from_slice::<T>(&bytes).ok());
+                (key.clone(), value)
+            })
+            .collect();
 
         debug!("Retrieved {} values from cache", results.len());
         Ok(results)
@@ -198,7 +202,12 @@ impl CacheManager {
         let mut conn = self.manager.lock().await;
         let expired: bool = conn.expire(key, ttl.as_secs() as i64).await?;
 
-        debug!("Set expiration for {} to {}s: {}", key, ttl.as_secs(), expired);
+        debug!(
+            "Set expiration for {} to {}s: {}",
+            key,
+            ttl.as_secs(),
+            expired
+        );
         Ok(expired)
     }
 
@@ -212,28 +221,50 @@ impl CacheManager {
         let info: HashMap<String, String> = conn.info().await?;
 
         let stats = CacheStats {
-            connected_clients: info.get("connected_clients")
-                .and_then(|s| s.parse().ok()).unwrap_or(0),
-            used_memory: info.get("used_memory")
-                .and_then(|s| s.parse().ok()).unwrap_or(0),
-            used_memory_peak: info.get("used_memory_peak")
-                .and_then(|s| s.parse().ok()).unwrap_or(0),
-            mem_fragmentation_ratio: info.get("mem_fragmentation_ratio")
-                .and_then(|s| s.parse().ok()).unwrap_or(0.0),
-            total_connections_received: info.get("total_connections_received")
-                .and_then(|s| s.parse().ok()).unwrap_or(0),
-            total_commands_processed: info.get("total_commands_processed")
-                .and_then(|s| s.parse().ok()).unwrap_or(0),
-            instantaneous_ops_per_sec: info.get("instantaneous_ops_per_sec")
-                .and_then(|s| s.parse().ok()).unwrap_or(0),
-            rejected_connections: info.get("rejected_connections")
-                .and_then(|s| s.parse().ok()).unwrap_or(0),
-            evicted_keys: info.get("evicted_keys")
-                .and_then(|s| s.parse().ok()).unwrap_or(0),
-            keyspace_hits: info.get("keyspace_hits")
-                .and_then(|s| s.parse().ok()).unwrap_or(0),
-            keyspace_misses: info.get("keyspace_misses")
-                .and_then(|s| s.parse().ok()).unwrap_or(0),
+            connected_clients: info
+                .get("connected_clients")
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0),
+            used_memory: info
+                .get("used_memory")
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0),
+            used_memory_peak: info
+                .get("used_memory_peak")
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0),
+            mem_fragmentation_ratio: info
+                .get("mem_fragmentation_ratio")
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0.0),
+            total_connections_received: info
+                .get("total_connections_received")
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0),
+            total_commands_processed: info
+                .get("total_commands_processed")
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0),
+            instantaneous_ops_per_sec: info
+                .get("instantaneous_ops_per_sec")
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0),
+            rejected_connections: info
+                .get("rejected_connections")
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0),
+            evicted_keys: info
+                .get("evicted_keys")
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0),
+            keyspace_hits: info
+                .get("keyspace_hits")
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0),
+            keyspace_misses: info
+                .get("keyspace_misses")
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0),
         };
 
         info!("Cache stats: {:?}", stats);
@@ -282,7 +313,9 @@ impl CacheManager {
             Ok(())
         } else {
             error!("Cache health check failed");
-            Err(anyhow::anyhow!("Cache health check returned unexpected result"))
+            Err(anyhow::anyhow!(
+                "Cache health check returned unexpected result"
+            ))
         }
     }
 
@@ -413,7 +446,7 @@ mod tests {
     fn test_cache_stats_display() {
         let stats = CacheStats {
             connected_clients: 5,
-            used_memory: 1048576, // 1MB
+            used_memory: 1048576,      // 1MB
             used_memory_peak: 2097152, // 2MB
             instantaneous_ops_per_sec: 100,
             keyspace_hits: 50,

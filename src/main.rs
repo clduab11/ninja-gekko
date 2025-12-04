@@ -57,20 +57,21 @@ async fn main() -> Result<()> {
     info!("✅ Configuration loaded successfully");
 
     // Initialize Prometheus metrics recorder
-    let recorder = metrics_exporter_prometheus::PrometheusBuilder::new()
-        .build_recorder();
+    let recorder = metrics_exporter_prometheus::PrometheusBuilder::new().build_recorder();
     let metrics_handle = recorder.handle();
-    metrics::set_boxed_recorder(Box::new(recorder))
-        .expect("Failed to set metrics recorder");
+    metrics::set_boxed_recorder(Box::new(recorder)).expect("Failed to set metrics recorder");
     info!("✅ Prometheus metrics recorder initialized");
 
     // Load configuration - using placeholder for now
     // In a real implementation, these would come from the config crate or environment variables
     let _db_url = Secret::new("postgres://user:password@localhost:5432/db".to_string());
     let _api_key = Secret::new("sk_test_123456789".to_string());
-    
+
     info!("✅ Configuration loaded successfully (secrets protected in memory)");
-    info!("🔒 Database connection established: {}", _db_url.expose_secret().replace("password", "*****"));
+    info!(
+        "🔒 Database connection established: {}",
+        _db_url.expose_secret().replace("password", "*****")
+    );
 
     // Initialize Event Bus
     let event_bus = event_bus::EventBusBuilder::default()
@@ -88,15 +89,18 @@ async fn main() -> Result<()> {
 
     // Initialize Order Manager
     let risk_manager = Box::new(ninja_gekko_core::order_manager::DefaultRiskValidator::new(
-        rust_decimal::Decimal::new(10000, 0), // Max order size
-        rust_decimal::Decimal::new(50000, 0), // Max position size
+        rust_decimal::Decimal::new(10000, 0),  // Max order size
+        rust_decimal::Decimal::new(50000, 0),  // Max position size
         rust_decimal::Decimal::new(100000, 0), // Max portfolio exposure
     ));
     let fee_calculator = Box::new(ninja_gekko_core::order_manager::DefaultFeeCalculator::new(
         rust_decimal::Decimal::new(1, 3), // 0.1% maker
         rust_decimal::Decimal::new(2, 3), // 0.2% taker
     ));
-    let order_manager = std::sync::Arc::new(ninja_gekko_core::order_manager::OrderManager::new(risk_manager, fee_calculator));
+    let order_manager = std::sync::Arc::new(ninja_gekko_core::order_manager::OrderManager::new(
+        risk_manager,
+        fee_calculator,
+    ));
 
     // Initialize Signal Bridge
     let signal_bridge = std::sync::Arc::new(event_bus::core_bridges::SignalToOrderBridge::new(
@@ -110,7 +114,7 @@ async fn main() -> Result<()> {
         .on_market(strategy_runner)
         .on_signal(signal_bridge)
         .build();
-    
+
     let _dispatcher_controller = dispatcher.controller();
     let dispatcher_handle = tokio::spawn(async move {
         if let Err(e) = dispatcher.run().await {
@@ -131,7 +135,7 @@ async fn main() -> Result<()> {
         .event_bus(event_bus.clone())
         .build()
         .await?;
-    
+
     info!("✅ Ninja Gekko initialized");
 
     // Get a reference to the MCP client for the web layer
@@ -139,7 +143,12 @@ async fn main() -> Result<()> {
 
     let api_addr: SocketAddr = "0.0.0.0:8787".parse()?;
     // Pass the event bus to the web layer
-    let api_handle = web::spawn(api_addr, Some(event_bus.clone()), mcp_client, metrics_handle);
+    let api_handle = web::spawn(
+        api_addr,
+        Some(event_bus.clone()),
+        mcp_client,
+        metrics_handle,
+    );
     info!("🌐 Chat orchestration API live at http://{api_addr}");
 
     // Start the bot in the background
