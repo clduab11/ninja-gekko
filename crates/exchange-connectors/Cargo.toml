@@ -35,6 +35,11 @@ tracing = { workspace = true }
 hmac = "0.12"
 sha2 = "0.10"
 base64 = "0.22"
+jsonwebtoken = "9"
+rand = "0.8"
+p256 = { version = "0.11", features = ["ecdsa", "pem"] }
+base64ct = "=1.6.0"
+sec1 = { version = "0.3", features = ["pem"] }
 
 # Rate limiting
 tokio-util = { version = "0.7", features = ["time"] }

@@ -2,13 +2,7 @@
 //!
 //! Implements the ExchangeConnector trait for Coinbase Pro and Advanced Trade APIs.
 //! Supports:
-//! - REST API for order management and account queries
-//! - WebSocket streaming for real-time market data and order updates
-//! - HMAC-SHA256 authentication
-//! - Rate limiting and error handling
-
 use crate::{
-    utils::{hmac_sha256_signature, timestamp},
     Balance, ExchangeConnector, ExchangeError, ExchangeId, ExchangeOrder, ExchangeResult, Fill,
     MarketTick, OrderSide, OrderStatus, OrderType, RateLimiter, StreamMessage, TradingPair,
     TransferRequest, TransferStatus,
@@ -25,6 +19,11 @@ use tokio::time::{sleep, Duration};
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 use tracing::{debug, error, info, warn};
 use url::Url;
+use rand::Rng;
+use p256::ecdsa::{SigningKey, signature::{Signer, Signature}};
+use p256::pkcs8::DecodePrivateKey;
+use sec1::DecodeEcPrivateKey;
+use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 
 /// Coinbase Pro API URLs
 const COINBASE_PRO_API_URL: &str = "https://api.pro.coinbase.com";
@@ -38,9 +37,8 @@ const COINBASE_ADVANCED_WS_URL: &str = "wss://advanced-trade-ws.coinbase.com";
 
 #[derive(Debug, Clone)]
 pub struct CoinbaseConfig {
-    pub api_key: String,
-    pub api_secret: String,
-    pub passphrase: String,
+    pub api_key_name: String,
+    pub private_key: String,
     pub sandbox: bool,
     pub use_advanced_trade: bool, // Use Advanced Trade API vs Pro API
 }
@@ -86,28 +84,103 @@ impl CoinbaseConnector {
         }
     }
 
-    /// Create authenticated request for Coinbase Pro API
+    /// Generate JWT for Coinbase CDP API
+    fn generate_jwt(&self, method: &str, path: &str) -> ExchangeResult<String> {
+        let key_name = &self.config.api_key_name;
+        // Handle potential double-escaped newlines from .env
+        let private_key_pem = self.config.private_key
+            .replace("\\n", "\n")
+            .replace("\"", ""); // Remove quotes if they were included in the value
+            
+        let private_key_pem = private_key_pem.trim();
+        
+        if private_key_pem.len() > 20 {
+            debug!("PEM start: '{}'", &private_key_pem[..20]);
+        } else {
+            debug!("PEM too short: '{}'", private_key_pem);
+        }
+
+        // 1. Create Header
+        let nonce = rand::thread_rng().gen::<u64>().to_string();
+        let header = json!({
+            "alg": "ES256",
+            "kid": key_name,
+            "nonce": nonce,
+            "typ": "JWT"
+        });
+
+        // 2. Create Claims
+        let uri = format!("{} {}{}", method, self.base_url.trim_start_matches("https://"), path);
+        
+        let base_url_parsed = Url::parse(&self.base_url)
+            .map_err(|e| ExchangeError::Configuration(format!("Invalid base URL: {}", e)))?;
+        
+        let host = base_url_parsed.host_str().unwrap_or("api.coinbase.com");
+        let full_path = format!("{}{}", base_url_parsed.path().trim_end_matches('/'), path);
+        
+        let jwt_uri = format!("{} {}{}", method, host, full_path);
+
+        let now = chrono::Utc::now().timestamp();
+        
+        let claims = json!({
+            "iss": "coinbase-cloud",
+            "nbf": now,
+            "exp": now + 120, // 2 minutes
+            "sub": key_name,
+            "uri": jwt_uri,
+        });
+
+        // 3. Encode Header and Claims
+        let header_json = serde_json::to_string(&header)
+            .map_err(|e| ExchangeError::Configuration(format!("Failed to serialize header: {}", e)))?;
+        let claims_json = serde_json::to_string(&claims)
+            .map_err(|e| ExchangeError::Configuration(format!("Failed to serialize claims: {}", e)))?;
+
+        let header_b64 = URL_SAFE_NO_PAD.encode(header_json);
+        let claims_b64 = URL_SAFE_NO_PAD.encode(claims_json);
+
+        let message = format!("{}.{}", header_b64, claims_b64);
+
+        // 4. Sign
+        // Try parsing as SEC1 (EC PRIVATE KEY) first, then PKCS#8
+        debug!("Parsing private key PEM (len: {})", private_key_pem.len());
+        let signing_key = SigningKey::from_sec1_pem(private_key_pem)
+            .or_else(|e| {
+                debug!("Failed to parse as SEC1: {}", e);
+                SigningKey::from_pkcs8_pem(private_key_pem)
+            })
+            .map_err(|e| ExchangeError::Authentication(format!("Invalid private key: {}", e)))?;
+
+        let signature: p256::ecdsa::Signature = signing_key.sign(message.as_bytes());
+        let signature_b64 = URL_SAFE_NO_PAD.encode(signature.as_bytes());
+
+        Ok(format!("{}.{}", message, signature_b64))
+    }
+
+    /// Create authenticated request for Coinbase CDP API
     fn create_authenticated_request(
         &self,
         method: Method,
         path: &str,
-        body: &str,
+        _body: &str, // Body is not used in JWT signature for CDP, but might be needed for legacy if we kept it
     ) -> RequestBuilder {
-        let timestamp = timestamp();
-
-        // Create message for signature: timestamp + method + path + body
-        let message = format!("{}{}{}{}", timestamp, method.as_str(), path, body);
-        let signature = hmac_sha256_signature(&self.config.api_secret, &message);
-
         let url = format!("{}{}", self.base_url, path);
-
-        self.client
-            .request(method, &url)
-            .header("CB-ACCESS-KEY", &self.config.api_key)
-            .header("CB-ACCESS-SIGN", signature)
-            .header("CB-ACCESS-TIMESTAMP", timestamp)
-            .header("CB-ACCESS-PASSPHRASE", &self.config.passphrase)
-            .header("Content-Type", "application/json")
+        
+        // Generate JWT
+        match self.generate_jwt(method.as_str(), path) {
+            Ok(token) => {
+                self.client
+                    .request(method, &url)
+                    .header("Authorization", format!("Bearer {}", token))
+                    .header("Content-Type", "application/json")
+            },
+            Err(e) => {
+                error!("Failed to generate JWT: {}", e);
+                // Return a builder that will likely fail, or we should have returned Result<RequestBuilder>
+                // Since the signature is RequestBuilder, we'll log error and return a request that will fail auth
+                self.client.request(method, &url)
+            }
+        }
     }
 
     /// Handle API response and convert errors
@@ -856,9 +929,8 @@ mod tests {
     #[test]
     fn test_coinbase_connector_creation() {
         let config = CoinbaseConfig {
-            api_key: "test_key".to_string(),
-            api_secret: "test_secret".to_string(),
-            passphrase: "test_passphrase".to_string(),
+            api_key_name: "test_key".to_string(),
+            private_key: "test_private_key".to_string(),
             sandbox: true,
             use_advanced_trade: false,
         };

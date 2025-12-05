@@ -3,6 +3,7 @@
 use crate::neural::NeuralBackend;
 use event_bus::EventBus;
 use mcp_client::{McpClient, McpConfig};
+use exchange_connectors::ExchangeConnector;
 use std::fmt;
 
 /// Main Ninja Gekko bot struct
@@ -89,6 +90,33 @@ impl NinjaGekko {
 
     async fn start_precision_mode(&self) -> Result<(), Box<dyn std::error::Error>> {
         tracing::info!("⚡ Initializing precision operations...");
+        
+        // Initialize Coinbase Connector
+        let api_key_name = std::env::var("COINBASE_API_KEY_NAME")
+            .or_else(|_| std::env::var("COINBASE_API_KEY"))
+            .unwrap_or_default();
+        let private_key = std::env::var("COINBASE_PRIVATE_KEY")
+            .or_else(|_| std::env::var("COINBASE_API_SECRET"))
+            .unwrap_or_default();
+        
+        if !api_key_name.is_empty() && !private_key.is_empty() {
+            tracing::info!("Found Coinbase credentials, attempting connection...");
+             let config = exchange_connectors::coinbase::CoinbaseConfig {
+                api_key_name,
+                private_key: private_key.replace("\\n", "\n"),
+                sandbox: false, 
+                use_advanced_trade: true,
+            };
+            
+            let mut connector = exchange_connectors::coinbase::CoinbaseConnector::new(config);
+            match connector.connect().await {
+                Ok(_) => tracing::info!("Successfully connected to Coinbase"),
+                Err(e) => tracing::error!("Failed to connect to Coinbase: {}", e),
+            }
+        } else {
+            tracing::warn!("Coinbase credentials not found in environment");
+        }
+
         // TODO: Implement precision mode logic
         Ok(())
     }

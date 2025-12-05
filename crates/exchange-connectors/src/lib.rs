@@ -48,6 +48,9 @@ pub enum ExchangeError {
 
     #[error("Order not found: {0}")]
     OrderNotFound(String),
+
+    #[error("Configuration error: {0}")]
+    Configuration(String),
 }
 
 pub type ExchangeResult<T> = Result<T, ExchangeError>;

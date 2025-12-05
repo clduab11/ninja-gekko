@@ -41,6 +41,7 @@ struct Args {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    dotenv::dotenv().ok();
     let args = Args::parse();
 
     // Initialize tracing subscriber

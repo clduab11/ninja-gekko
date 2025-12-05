@@ -5,9 +5,17 @@
 
 use crate::{ExchangeError, ExchangeId};
 use secrecy::{ExposeSecret, Secret};
-use serde::{Deserialize, Serialize};
 use std::env;
 use tracing::{debug, warn};
+
+/// Authentication style for Coinbase connectors
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CoinbaseAuthScheme {
+    /// Coinbase Advanced Trade / CDP keypair (api_key_name + private key)
+    AdvancedKeypair,
+    /// Legacy Coinbase Pro HMAC (api_key + api_secret + passphrase)
+    LegacyHmac,
+}
 
 /// Secure exchange credentials with protected secrets
 #[derive(Clone)]
@@ -16,7 +24,7 @@ pub struct ExchangeCredentials {
     pub exchange_id: ExchangeId,
     /// API key (public identifier)
     pub api_key: Secret<String>,
-    /// API secret (private key - never log or expose)
+    /// API secret or signing key (never log or expose)
     pub api_secret: Secret<String>,
     /// Passphrase for Coinbase Pro API
     pub passphrase: Option<Secret<String>>,
@@ -24,6 +32,8 @@ pub struct ExchangeCredentials {
     pub account_id: Option<String>,
     /// Whether to use sandbox/testnet endpoints
     pub sandbox: bool,
+    /// Coinbase auth scheme (None for non-Coinbase exchanges)
+    pub coinbase_auth: Option<CoinbaseAuthScheme>,
 }
 
 impl std::fmt::Debug for ExchangeCredentials {
@@ -38,6 +48,7 @@ impl std::fmt::Debug for ExchangeCredentials {
             )
             .field("account_id", &self.account_id)
             .field("sandbox", &self.sandbox)
+            .field("coinbase_auth", &self.coinbase_auth)
             .finish()
     }
 }
@@ -51,6 +62,7 @@ impl ExchangeCredentials {
         passphrase: Option<String>,
         account_id: Option<String>,
         sandbox: bool,
+        coinbase_auth: Option<CoinbaseAuthScheme>,
     ) -> Self {
         Self {
             exchange_id,
@@ -59,45 +71,77 @@ impl ExchangeCredentials {
             passphrase: passphrase.map(Secret::new),
             account_id,
             sandbox,
+            coinbase_auth,
         }
+    }
+
+    fn missing_env(var: &str) -> ExchangeError {
+        ExchangeError::Authentication(format!("Missing environment variable: {}", var))
     }
 
     /// Load credentials from environment variables
     ///
     /// Environment variable naming convention:
-    /// - Coinbase: COINBASE_API_KEY, COINBASE_API_SECRET, COINBASE_API_PASSPHRASE
+    /// - Coinbase Advanced: COINBASE_API_KEY_NAME, COINBASE_PRIVATE_KEY
+    /// - Coinbase Pro (legacy): COINBASE_API_KEY, COINBASE_API_SECRET, COINBASE_API_PASSPHRASE
     /// - Binance.us: BINANCE_US_API_KEY, BINANCE_US_API_SECRET
     /// - OANDA: OANDA_API_KEY, OANDA_ACCOUNT_ID
     pub fn from_env(exchange_id: ExchangeId) -> Result<Self, ExchangeError> {
         debug!("Loading credentials for {:?} from environment", exchange_id);
 
-        let (key_var, secret_var, passphrase_var, account_var) = match exchange_id {
-            ExchangeId::Coinbase => (
-                "COINBASE_API_KEY",
-                "COINBASE_API_SECRET",
-                Some("COINBASE_API_PASSPHRASE"),
+        let (api_key, api_secret, passphrase, account_id, coinbase_auth) = match exchange_id {
+            ExchangeId::Coinbase => {
+                let key_name = env::var("COINBASE_API_KEY_NAME");
+                let private_key = env::var("COINBASE_PRIVATE_KEY");
+
+                match (key_name, private_key) {
+                    (Ok(api_key), Ok(api_secret)) => (
+                        api_key,
+                        api_secret,
+                        None,
+                        None,
+                        Some(CoinbaseAuthScheme::AdvancedKeypair),
+                    ),
+                    (Ok(_), Err(_)) => return Err(Self::missing_env("COINBASE_PRIVATE_KEY")),
+                    (Err(_), Ok(_)) => return Err(Self::missing_env("COINBASE_API_KEY_NAME")),
+                    (Err(_), Err(_)) => {
+                        let api_key = env::var("COINBASE_API_KEY")
+                            .map_err(|_| Self::missing_env("COINBASE_API_KEY"))?;
+                        let api_secret = env::var("COINBASE_API_SECRET")
+                            .map_err(|_| Self::missing_env("COINBASE_API_SECRET"))?;
+                        let passphrase = env::var("COINBASE_API_PASSPHRASE")
+                            .map_err(|_| Self::missing_env("COINBASE_API_PASSPHRASE"))?;
+
+                        (
+                            api_key,
+                            api_secret,
+                            Some(passphrase),
+                            None,
+                            Some(CoinbaseAuthScheme::LegacyHmac),
+                        )
+                    }
+                }
+            }
+            ExchangeId::BinanceUs => (
+                env::var("BINANCE_US_API_KEY")
+                    .map_err(|_| Self::missing_env("BINANCE_US_API_KEY"))?,
+                env::var("BINANCE_US_API_SECRET")
+                    .map_err(|_| Self::missing_env("BINANCE_US_API_SECRET"))?,
+                None,
+                None,
                 None,
             ),
-            ExchangeId::BinanceUs => ("BINANCE_US_API_KEY", "BINANCE_US_API_SECRET", None, None),
             ExchangeId::Oanda => (
-                "OANDA_API_KEY",
-                "OANDA_API_KEY",
+                env::var("OANDA_API_KEY").map_err(|_| Self::missing_env("OANDA_API_KEY"))?,
+                env::var("OANDA_API_KEY").map_err(|_| Self::missing_env("OANDA_API_KEY"))?,
                 None,
-                Some("OANDA_ACCOUNT_ID"),
+                Some(
+                    env::var("OANDA_ACCOUNT_ID")
+                        .map_err(|_| Self::missing_env("OANDA_ACCOUNT_ID"))?,
+                ),
+                None,
             ),
         };
-
-        let api_key = env::var(key_var).map_err(|_| {
-            ExchangeError::Authentication(format!("Missing environment variable: {}", key_var))
-        })?;
-
-        let api_secret = env::var(secret_var).map_err(|_| {
-            ExchangeError::Authentication(format!("Missing environment variable: {}", secret_var))
-        })?;
-
-        let passphrase = passphrase_var.and_then(|var| env::var(var).ok());
-
-        let account_id = account_var.and_then(|var| env::var(var).ok());
 
         // Check for sandbox mode
         let sandbox = env::var("EXCHANGE_SANDBOX")
@@ -111,6 +155,7 @@ impl ExchangeCredentials {
             passphrase,
             account_id,
             sandbox,
+            coinbase_auth,
         );
 
         credentials.validate()?;
@@ -138,8 +183,24 @@ impl ExchangeCredentials {
         // Exchange-specific validation
         match self.exchange_id {
             ExchangeId::Coinbase => {
-                if self.passphrase.is_none() {
-                    warn!("Coinbase credentials missing passphrase - some operations may fail");
+                let auth_scheme = self
+                    .coinbase_auth
+                    .unwrap_or(CoinbaseAuthScheme::LegacyHmac);
+
+                match auth_scheme {
+                    CoinbaseAuthScheme::AdvancedKeypair => {
+                        let signing_key = self.api_secret.expose_secret();
+                        if !signing_key.contains("PRIVATE KEY") {
+                            warn!("Coinbase Advanced Trade credentials should be PEM formatted");
+                        }
+                    }
+                    CoinbaseAuthScheme::LegacyHmac => {
+                        if self.passphrase.is_none() {
+                            return Err(ExchangeError::Authentication(
+                                "Coinbase credentials require COINBASE_API_PASSPHRASE".to_string(),
+                            ));
+                        }
+                    }
                 }
             }
             ExchangeId::Oanda => {
@@ -176,6 +237,30 @@ impl ExchangeCredentials {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::env;
+    use std::sync::{Mutex, OnceLock};
+
+    static ENV_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+
+    fn lock_env() -> std::sync::MutexGuard<'static, ()> {
+        ENV_LOCK.get_or_init(|| Mutex::new(())).lock().unwrap()
+    }
+
+    fn snapshot_env(keys: &[&str]) -> Vec<(String, Option<String>)> {
+        keys.iter()
+            .map(|key| ((*key).to_string(), env::var(key).ok()))
+            .collect()
+    }
+
+    fn restore_env(snapshot: Vec<(String, Option<String>)>) {
+        for (key, value) in snapshot {
+            if let Some(value) = value {
+                env::set_var(&key, value);
+            } else {
+                env::remove_var(&key);
+            }
+        }
+    }
 
     #[test]
     fn test_credentials_creation() {
@@ -186,6 +271,7 @@ mod tests {
             Some("test_passphrase".to_string()),
             None,
             true,
+            Some(CoinbaseAuthScheme::LegacyHmac),
         );
 
         assert_eq!(creds.exchange_id, ExchangeId::Coinbase);
@@ -204,12 +290,108 @@ mod tests {
             None,
             None,
             false,
+            None,
         );
 
         let debug_output = format!("{:?}", creds);
         assert!(!debug_output.contains("super_secret_key"));
         assert!(!debug_output.contains("super_secret_value"));
         assert!(debug_output.contains("[REDACTED]"));
+    }
+
+    #[test]
+    fn test_from_env_coinbase_advanced_keypair() {
+        let _guard = lock_env();
+        let snapshot = snapshot_env(&[
+            "COINBASE_API_KEY_NAME",
+            "COINBASE_PRIVATE_KEY",
+            "COINBASE_API_KEY",
+            "COINBASE_API_SECRET",
+            "COINBASE_API_PASSPHRASE",
+            "EXCHANGE_SANDBOX",
+        ]);
+
+        env::set_var(
+            "COINBASE_API_KEY_NAME",
+            "organizations/test-org/apiKeys/key123",
+        );
+        env::set_var(
+            "COINBASE_PRIVATE_KEY",
+            "-----BEGIN EC PRIVATE KEY-----\nTEST\n-----END EC PRIVATE KEY-----",
+        );
+        env::set_var("EXCHANGE_SANDBOX", "true");
+        env::remove_var("COINBASE_API_KEY");
+        env::remove_var("COINBASE_API_SECRET");
+        env::remove_var("COINBASE_API_PASSPHRASE");
+
+        let creds = ExchangeCredentials::from_env(ExchangeId::Coinbase).unwrap();
+
+        assert_eq!(
+            creds.coinbase_auth,
+            Some(CoinbaseAuthScheme::AdvancedKeypair)
+        );
+        assert_eq!(creds.api_key(), "organizations/test-org/apiKeys/key123");
+        assert!(creds.api_secret().contains("PRIVATE KEY"));
+        assert_eq!(creds.passphrase(), None);
+        assert!(creds.sandbox);
+
+        restore_env(snapshot);
+    }
+
+    #[test]
+    fn test_from_env_coinbase_legacy_hmac() {
+        let _guard = lock_env();
+        let snapshot = snapshot_env(&[
+            "COINBASE_API_KEY_NAME",
+            "COINBASE_PRIVATE_KEY",
+            "COINBASE_API_KEY",
+            "COINBASE_API_SECRET",
+            "COINBASE_API_PASSPHRASE",
+            "EXCHANGE_SANDBOX",
+        ]);
+
+        env::remove_var("COINBASE_API_KEY_NAME");
+        env::remove_var("COINBASE_PRIVATE_KEY");
+        env::set_var("COINBASE_API_KEY", "legacy-key");
+        env::set_var("COINBASE_API_SECRET", "legacy-secret");
+        env::set_var("COINBASE_API_PASSPHRASE", "legacy-pass");
+        env::remove_var("EXCHANGE_SANDBOX");
+
+        let creds = ExchangeCredentials::from_env(ExchangeId::Coinbase).unwrap();
+
+        assert_eq!(creds.api_key(), "legacy-key");
+        assert_eq!(creds.api_secret(), "legacy-secret");
+        assert_eq!(creds.passphrase(), Some("legacy-pass"));
+        assert_eq!(
+            creds.coinbase_auth,
+            Some(CoinbaseAuthScheme::LegacyHmac)
+        );
+
+        restore_env(snapshot);
+    }
+
+    #[test]
+    fn test_from_env_coinbase_legacy_missing_passphrase_errors() {
+        let _guard = lock_env();
+        let snapshot = snapshot_env(&[
+            "COINBASE_API_KEY_NAME",
+            "COINBASE_PRIVATE_KEY",
+            "COINBASE_API_KEY",
+            "COINBASE_API_SECRET",
+            "COINBASE_API_PASSPHRASE",
+            "EXCHANGE_SANDBOX",
+        ]);
+
+        env::remove_var("COINBASE_API_KEY_NAME");
+        env::remove_var("COINBASE_PRIVATE_KEY");
+        env::set_var("COINBASE_API_KEY", "legacy-key");
+        env::set_var("COINBASE_API_SECRET", "legacy-secret");
+        env::remove_var("COINBASE_API_PASSPHRASE");
+
+        let result = ExchangeCredentials::from_env(ExchangeId::Coinbase);
+        assert!(result.is_err());
+
+        restore_env(snapshot);
     }
 
     #[test]
@@ -221,6 +403,7 @@ mod tests {
             None,
             None,
             false,
+            Some(CoinbaseAuthScheme::AdvancedKeypair),
         );
 
         assert!(creds.validate().is_err());
@@ -235,6 +418,7 @@ mod tests {
             None,
             None, // Missing account_id
             false,
+            None,
         );
 
         assert!(creds.validate().is_err());
@@ -249,6 +433,7 @@ mod tests {
             None,
             Some("account-123".to_string()),
             false,
+            None,
         );
 
         assert!(creds.validate().is_ok());

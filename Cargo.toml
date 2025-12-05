@@ -103,6 +103,7 @@ governor = "0.6"
 url = "2.5"
 tokio-util = { version = "0.7", features = ["time"] }
 futures-util = "0.3"
+dotenv = "0.15"
 
 # Concurrency primitives and serialization
 crossbeam-channel = "0.5"
@@ -141,6 +142,7 @@ once_cell = { workspace = true }
 parking_lot = { workspace = true }
 rust_decimal = { workspace = true }
 secrecy = { workspace = true }
+dotenv = { workspace = true }
 
 # Exchange connectors and arbitrage engine
 exchange-connectors = { path = "crates/exchange-connectors" }
