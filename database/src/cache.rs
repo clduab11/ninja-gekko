@@ -4,7 +4,7 @@
 //! automatic serialization/deserialization, and cache management features.
 
 use anyhow::Result;
-use redis::{AsyncCommands, Client, Commands, Connection, RedisResult};
+use redis::{AsyncCommands, Client};
 use redis::aio::ConnectionManager;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

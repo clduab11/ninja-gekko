@@ -4,13 +4,11 @@
 //! and rollback capabilities for PostgreSQL.
 
 use anyhow::{anyhow, Result};
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs::{self, File};
-use std::io::Read;
+use std::fs::{self};
 use std::path::{Path, PathBuf};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::fs as async_fs;
 use tokio::sync::Mutex;
 use tracing::{debug, error, info, instrument, warn};
@@ -745,6 +743,7 @@ pub enum MigrationError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Duration;
     use tempfile::TempDir;
 
     #[test]

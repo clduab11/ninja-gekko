@@ -8,6 +8,8 @@ services:
     ports:
       - "8080:8080"
       - "8787:8787" # Chat orchestration API
+    env_file:
+      - .env
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/ninja_gekko
       - REDIS_URL=redis://redis:6379
@@ -17,16 +19,28 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     deploy:
       resources:
         limits:
           cpus: '2.00'
           memory: 4G
+        reservations:
+          cpus: '0.50'
+          memory: 512M
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+    networks:
+      - backend
+      - frontend
     restart: unless-stopped
 
   frontend:
@@ -110,3 +124,9 @@ volumes:
   postgres_data:
   prometheus_data:
   grafana_data:
+
+networks:
+  backend:
+    driver: bridge
+  frontend:
+    driver: bridge

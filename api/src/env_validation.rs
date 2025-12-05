@@ -99,14 +99,16 @@ impl DatabaseConfig {
 
     fn create_ssl_mode_error(&self, mode: &str) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
-        let error = validator::ValidationError::new(&format!("Invalid SSL mode: {}", mode));
+        let mut error = validator::ValidationError::new("invalid_ssl_mode");
+        error.message = Some(std::borrow::Cow::from(format!("Invalid SSL mode: {}", mode)));
         errors.add("ssl_mode", error);
         errors
     }
 
     fn create_pool_size_error(&self, size: u32) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
-        let error = validator::ValidationError::new(&format!("Invalid pool size: {} (must be 1-100)", size));
+        let mut error = validator::ValidationError::new("invalid_pool_size");
+        error.message = Some(std::borrow::Cow::from(format!("Invalid pool size: {} (must be 1-100)", size)));
         errors.add("pool_size", error);
         errors
     }
@@ -128,7 +130,13 @@ pub struct JwtSecureConfig {
 impl Default for JwtSecureConfig {
     fn default() -> Self {
         Self {
-            secret: std::env::var("JWT_SECRET").expect("JWT_SECRET environment variable must be set"),
+            secret: std::env::var("JWT_SECRET").unwrap_or_else(|_| {
+                if cfg!(test) {
+                    "test-secret-at-least-32-characters-long-for-testing".to_string()
+                } else {
+                    panic!("JWT_SECRET environment variable must be set")
+                }
+            }),
             expiration_seconds: std::env::var("JWT_EXPIRATION")
                 .unwrap_or_else(|_| "3600".to_string()) // 1 hour
                 .parse()
@@ -184,7 +192,8 @@ impl JwtSecureConfig {
 
     fn create_weak_secret_error(&self, length: usize) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
-        let error = validator::ValidationError::new(&format!("JWT secret too short: {} characters (minimum 32)", length));
+        let mut error = validator::ValidationError::new("jwt_secret_too_short");
+        error.message = Some(std::borrow::Cow::from(format!("JWT secret too short: {} characters (minimum 32)", length)));
         errors.add("secret_length", error);
         errors
     }
@@ -198,21 +207,24 @@ impl JwtSecureConfig {
 
     fn create_invalid_expiration_error(&self, expiration: i64) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
-        let error = validator::ValidationError::new(&format!("Invalid JWT expiration: {} seconds (must be 300-86400)", expiration));
+        let mut error = validator::ValidationError::new("invalid_jwt_expiration");
+        error.message = Some(std::borrow::Cow::from(format!("Invalid JWT expiration: {} seconds (must be 300-86400)", expiration)));
         errors.add("expiration", error);
         errors
     }
 
     fn create_invalid_refresh_error(&self, refresh: i64, access: i64) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
-        let error = validator::ValidationError::new(&format!("Refresh token ({}) must expire after access token ({})", refresh, access));
+        let mut error = validator::ValidationError::new("invalid_refresh_expiration");
+        error.message = Some(std::borrow::Cow::from(format!("Refresh token ({}) must expire after access token ({})", refresh, access)));
         errors.add("refresh_expiration", error);
         errors
     }
 
     fn create_invalid_algorithm_error(&self, algorithm: &str) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
-        let error = validator::ValidationError::new(&format!("Unsupported JWT algorithm: {}", algorithm));
+        let mut error = validator::ValidationError::new("unsupported_jwt_algorithm");
+        error.message = Some(std::borrow::Cow::from(format!("Unsupported JWT algorithm: {}", algorithm)));
         errors.add("algorithm", error);
         errors
     }
@@ -282,14 +294,16 @@ impl ApiSecureConfig {
 
     fn create_invalid_port_error(&self, port: u16) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
-        let error = validator::ValidationError::new(&format!("Invalid port number: {} (must be 1-65535)", port));
+        let mut error = validator::ValidationError::new("invalid_port");
+        error.message = Some(std::borrow::Cow::from(format!("Invalid port number: {} (must be 1-65535)", port)));
         errors.add("port", error);
         errors
     }
 
     fn create_invalid_cors_error(&self, origin: &str) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
-        let error = validator::ValidationError::new(&format!("Invalid CORS origin format: {}", origin));
+        let mut error = validator::ValidationError::new("invalid_cors_origin");
+        error.message = Some(std::borrow::Cow::from(format!("Invalid CORS origin format: {}", origin)));
         errors.add("cors_origins", error);
         errors
     }
@@ -598,20 +612,20 @@ impl Default for EncryptionConfig {
 
 /// Environment validator for comprehensive configuration validation
 pub struct EnvironmentValidator {
-    security_validator: SecurityValidator,
+    _security_validator: SecurityValidator,
 }
 
 impl EnvironmentValidator {
     /// Create new environment validator
     pub fn new() -> Self {
         Self {
-            security_validator: SecurityValidator::new(),
+            _security_validator: SecurityValidator::new(),
         }
     }
 
     /// Validate all environment variables and configuration
     pub fn validate_all(&self) -> ValidationResult<SecureConfig> {
-        let mut config = SecureConfig::default();
+        let config = SecureConfig::default();
 
         // Validate each component
         config.database.validate()?;
@@ -674,7 +688,8 @@ impl EnvironmentValidator {
 
     fn create_missing_env_vars_error(&self, missing: &[String]) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
-        let error = validator::ValidationError::new(&format!("Missing required environment variables: {:?}", missing));
+        let mut error = validator::ValidationError::new("missing_required_env_vars");
+        error.message = Some(std::borrow::Cow::from(format!("Missing required environment variables: {:?}", missing)));
         errors.add("environment", error);
         errors
     }
