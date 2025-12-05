@@ -166,10 +166,23 @@ impl NinjaGekkoBuilder {
 
     /// Build the NinjaGekko instance
     pub async fn build(self) -> anyhow::Result<NinjaGekko> {
+        // Configure Discord if available
+        let discord_config = std::env::var("DISCORD_WEBHOOK_URL")
+            .ok()
+            .map(|url| mcp_client::discord_webhook::DiscordConfig {
+                webhook_url: secrecy::Secret::new(url),
+                authorized_server_id: std::env::var("DISCORD_SERVER_ID").ok(),
+                bot_name: "Gordon".to_string(),
+            });
+
         let mcp_config = McpConfig {
             servers: self.mcp_servers,
         };
+        
         let mut mcp_client = McpClient::new(mcp_config);
+        
+        // Pass Discord config
+        mcp_client = mcp_client.with_discord_config(discord_config);
 
         // Clone event bus for mcp_client integration if available
         if let Some(ref bus) = self.event_bus {

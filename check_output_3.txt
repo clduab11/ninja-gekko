@@ -1,0 +1,392 @@
+warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   C:\ai-playground\projects\ninja-gekko\ninja-gekko\api\Cargo.toml
+workspace: C:\ai-playground\projects\ninja-gekko\ninja-gekko\Cargo.toml
+    Checking ninja-gekko-database v0.1.0 (C:\ai-playground\projects\ninja-gekko\ninja-gekko\database)
+warning: unused imports: `Connection` and `RedisResult`
+ --> database\src\cache.rs:7:46
+  |
+7 | use redis::{AsyncCommands, Client, Commands, Connection, RedisResult};
+  |                                              ^^^^^^^^^^  ^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `async_trait::async_trait`
+ --> database\src\connection.rs:7:5
+  |
+7 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `UNIX_EPOCH`
+  --> database\src\connection.rs:13:48
+   |
+13 | use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+   |                                                ^^^^^^^^^^
+
+warning: unused import: `error`
+  --> database\src\connection.rs:15:22
+   |
+15 | use tracing::{debug, error, info, instrument, warn};
+   |                      ^^^^^
+
+warning: unused import: `std::sync::Arc`
+ --> database\src\database.rs:8:5
+  |
+8 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `tokio::sync::Mutex`
+ --> database\src\database.rs:9:5
+  |
+9 | use tokio::sync::Mutex;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `async_trait::async_trait`
+ --> database\src\migrations.rs:7:5
+  |
+7 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `File`
+  --> database\src\migrations.rs:10:21
+   |
+10 | use std::fs::{self, File};
+   |                     ^^^^
+
+warning: unused import: `std::io::Read`
+  --> database\src\migrations.rs:11:5
+   |
+11 | use std::io::Read;
+   |     ^^^^^^^^^^^^^
+
+warning: unused import: `async_trait::async_trait`
+ --> database\src\supabase.rs:7:5
+  |
+7 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::sync::Arc`
+  --> database\src\supabase.rs:10:5
+   |
+10 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+
+warning: unused import: `tokio::sync::Mutex`
+  --> database\src\supabase.rs:12:5
+   |
+12 | use tokio::sync::Mutex;
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::time::Duration`
+   --> database\src\supabase.rs:344:9
+    |
+344 |     use std::time::Duration;
+    |         ^^^^^^^^^^^^^^^^^^^
+
+warning: this function depends on never type fallback being `()`
+   --> database\src\cache.rs:133:5
+    |
+133 | /     pub async fn set_multiple<T>(&self, items: &[(String, T, Option<Duration>)]) -> Result<()>
+134 | |     where
+135 | |         T: Serialize + Send + Sync,
+    | |___________________________________^
+    |
+    = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in Rust 2024 and in a future release in all editions!
+    = note: for more information, see issue #123748 <https://github.com/rust-lang/rust/issues/123748>
+    = help: specify the types explicitly
+note: in edition 2024, the requirement `!: FromRedisValue` will fail
+   --> database\src\cache.rs:154:14
+    |
+154 |         pipe.query_async(&mut *conn).await?;
+    |              ^^^^^^^^^^^
+    = note: `#[warn(dependency_on_unit_never_type_fallback)]` on by default
+
+error[E0282]: type annotations needed
+   --> database\src\cache.rs:173:13
+    |
+173 |         let results = keys
+    |             ^^^^^^^
+...
+182 |         debug!("Retrieved {} values from cache", results.len());
+    |                                                  ------- type must be known at this point
+    |
+help: consider giving `results` an explicit type
+    |
+173 |         let results: Vec<_> = keys
+    |                    ++++++++
+
+error[E0599]: no method named `ping` found for struct `tokio::sync::MutexGuard<'_, redis::aio::ConnectionManager>` in the current scope
+    --> database\src\cache.rs:310:33
+     |
+310  |         let pong: String = conn.ping().await?;
+     |                                 ^^^^
+     |
+help: there is a method `xpending` with a similar name, but with different arguments
+    --> C:\Users\CLD's Tower\.cargo\registry\src\index.crates.io-6f17d22bba15001f\redis-0.25.4\src\commands\mod.rs:131:1
+     |
+131  | / implement_commands! {
+132  | |     'a
+133  | |     // most common operations
+...    |
+1967 | |     }
+1968 | | }
+     | |_^
+     = note: this error originates in the macro `implement_commands` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0382]: borrow of moved value: `config`
+   --> database\src\connection.rs:320:59
+    |
+306 |             config,
+    |             ------ value moved here
+...
+320 |         info!("Connection pool created successfully: {}", config.name);
+    |                                                           ^^^^^^^^^^^ value borrowed here after move
+    |
+    = note: move occurs because `config` has type `ConnectionPool`, which does not implement the `Copy` trait
+    = note: this error originates in the macro `$crate::__macro_support::format_args` which comes from the expansion of the macro `info` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: variable does not need to be mutable
+   --> database\src\connection.rs:281:13
+    |
+281 |         let mut circuit_breaker = self.global_circuit_breaker.lock().await;
+    |             ----^^^^^^^^^^^^^^^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` on by default
+
+error[E0277]: the trait bound `for<'r> T: FromRow<'r, _>` is not satisfied
+   --> database\src\database.rs:58:53
+    |
+58  |         let mut query_builder = sqlx::query_as::<_, T>(query);
+    |                                                     ^ the trait `for<'r> FromRow<'r, _>` is not implemented for `T`
+    |
+    = help: the following other types implement trait `FromRow<'r, R>`:
+              `()` implements `FromRow<'r, R>`
+              `(T1, T2)` implements `FromRow<'r, R>`
+              `(T1, T2, T3)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4, T5)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4, T5, T6)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4, T5, T6, T7)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4, T5, T6, T7, T8)` implements `FromRow<'r, R>`
+            and 15 others
+note: required by a bound in `sqlx::query_as`
+   --> C:\Users\CLD's Tower\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlx-core-0.8.6\src\query_as.rs:345:8
+    |
+342 | pub fn query_as<'q, DB, O>(sql: &'q str) -> QueryAs<'q, DB, O, <DB as Database>::Arguments<'q>>
+    |        -------- required by a bound in this function
+...
+345 |     O: for<'r> FromRow<'r, DB::Row>,
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `query_as`
+
+error[E0277]: the trait bound `T: serde::Serialize` is not satisfied
+  --> database\src\database.rs:62:48
+   |
+62 |             query_builder = query_builder.bind(param);
+   |                                           ---- ^^^^^ the trait `Serialize` is not implemented for `T`
+   |                                           |
+   |                                           required by a bound introduced by this call
+   |
+   = note: for local types consider adding `#[derive(serde::Serialize)]` to your `T` type
+   = note: for types from other crates check whether the crate offers a `serde` feature flag
+   = note: required for `sqlx::types::Json<T>` to implement `sqlx::Encode<'_, Postgres>`
+   = note: 1 redundant requirement hidden
+   = note: required for `&sqlx::types::Json<T>` to implement `sqlx::Encode<'_, Postgres>`
+note: required by a bound in `QueryAs::<'q, DB, O, <DB as sqlx::Database>::Arguments<'q>>::bind`
+  --> C:\Users\CLD's Tower\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlx-core-0.8.6\src\query_as.rs:54:25
+   |
+54 |     pub fn bind<T: 'q + Encode<'q, DB> + Type<DB>>(mut self, value: T) -> Self {
+   |                         ^^^^^^^^^^^^^^ required by this bound in `QueryAs::<'q, DB, O, <DB as Database>::Arguments<'q>>::bind`
+help: consider further restricting this bound
+   |
+54 |         T: for<'de> serde::Deserialize<'de> + Send + Unpin + cache::_::_serde::Serialize,
+   |                                                            +++++++++++++++++++++++++++++
+
+error[E0599]: the method `fetch_all` exists for struct `QueryAs<'_, Postgres, T, PgArguments>`, but its trait bounds were not satisfied
+  --> database\src\database.rs:65:34
+   |
+65 |         let rows = query_builder.fetch_all(&self.pool).await?;
+   |                                  ^^^^^^^^^ method cannot be called on `QueryAs<'_, Postgres, T, PgArguments>` due to unsatisfied trait bounds
+   |
+   = note: the following trait bounds were not satisfied:
+           `T: FromRow<'r, PgRow>`
+
+error[E0277]: the trait bound `for<'r> T: FromRow<'r, _>` is not satisfied
+   --> database\src\database.rs:89:53
+    |
+89  |         let mut query_builder = sqlx::query_as::<_, T>(query);
+    |                                                     ^ the trait `for<'r> FromRow<'r, _>` is not implemented for `T`
+    |
+    = help: the following other types implement trait `FromRow<'r, R>`:
+              `()` implements `FromRow<'r, R>`
+              `(T1, T2)` implements `FromRow<'r, R>`
+              `(T1, T2, T3)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4, T5)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4, T5, T6)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4, T5, T6, T7)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4, T5, T6, T7, T8)` implements `FromRow<'r, R>`
+            and 15 others
+note: required by a bound in `sqlx::query_as`
+   --> C:\Users\CLD's Tower\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlx-core-0.8.6\src\query_as.rs:345:8
+    |
+342 | pub fn query_as<'q, DB, O>(sql: &'q str) -> QueryAs<'q, DB, O, <DB as Database>::Arguments<'q>>
+    |        -------- required by a bound in this function
+...
+345 |     O: for<'r> FromRow<'r, DB::Row>,
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `query_as`
+
+error[E0277]: the trait bound `T: serde::Serialize` is not satisfied
+  --> database\src\database.rs:93:48
+   |
+93 |             query_builder = query_builder.bind(param);
+   |                                           ---- ^^^^^ the trait `Serialize` is not implemented for `T`
+   |                                           |
+   |                                           required by a bound introduced by this call
+   |
+   = note: for local types consider adding `#[derive(serde::Serialize)]` to your `T` type
+   = note: for types from other crates check whether the crate offers a `serde` feature flag
+   = note: required for `sqlx::types::Json<T>` to implement `sqlx::Encode<'_, Postgres>`
+   = note: 1 redundant requirement hidden
+   = note: required for `&sqlx::types::Json<T>` to implement `sqlx::Encode<'_, Postgres>`
+note: required by a bound in `QueryAs::<'q, DB, O, <DB as sqlx::Database>::Arguments<'q>>::bind`
+  --> C:\Users\CLD's Tower\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlx-core-0.8.6\src\query_as.rs:54:25
+   |
+54 |     pub fn bind<T: 'q + Encode<'q, DB> + Type<DB>>(mut self, value: T) -> Self {
+   |                         ^^^^^^^^^^^^^^ required by this bound in `QueryAs::<'q, DB, O, <DB as Database>::Arguments<'q>>::bind`
+help: consider further restricting this bound
+   |
+85 |         T: for<'de> serde::Deserialize<'de> + Send + Unpin + cache::_::_serde::Serialize,
+   |                                                            +++++++++++++++++++++++++++++
+
+error[E0599]: the method `fetch_optional` exists for struct `QueryAs<'_, Postgres, T, PgArguments>`, but its trait bounds were not satisfied
+  --> database\src\database.rs:96:36
+   |
+96 |         let result = query_builder.fetch_optional(&self.pool).await?;
+   |                                    ^^^^^^^^^^^^^^ method cannot be called on `QueryAs<'_, Postgres, T, PgArguments>` due to unsatisfied trait bounds
+   |
+   = note: the following trait bounds were not satisfied:
+           `T: FromRow<'r, PgRow>`
+
+error[E0308]: mismatched types
+   --> database\src\migrations.rs:106:30
+    |
+106 |                 description: row.description,
+    |                              ^^^^^^^^^^^^^^^ expected `String`, found `Option<String>`
+    |
+    = note: expected struct `std::string::String`
+                 found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+    |
+106 |                 description: row.description.expect("REASON"),
+    |                                             +++++++++++++++++
+
+error[E0609]: no field `lock_timeout_seconds` on type `config::MigrationConfig`
+   --> database\src\migrations.rs:254:78
+    |
+254 |         let expires_at = SystemTime::now() + Duration::from_secs(self.config.lock_timeout_seconds);
+    |                                                                              ^^^^^^^^^^^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `migration_dir`, `enable_locking`, `lock_timeout`, `transactional`, `table_name`
+
+error[E0599]: no method named `execute` found for struct `Map` in the current scope
+   --> database\src\migrations.rs:269:10
+    |
+256 |           let result = sqlx::query!(
+    |  ______________________-
+257 | |             r#"
+258 | |             INSERT INTO schema_migration_locks (lock_id, locked_by, expires_at)
+259 | |             VALUES ($1, $2, $3)
+...   |
+268 | |         )
+269 | |         .execute(pool)
+    | |         -^^^^^^^ method not found in `Map<'_, Postgres, {closure@mod.rs:328:9}, PgArguments>`
+    | |_________|
+    |
+    |
+    = note: the full type name has been written to 'C:\ai-playground\projects\ninja-gekko\ninja-gekko\target\debug\deps\ninja_gekko_database-48239cea7fda8dd7.long-type-17651845395097268577.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+
+warning: unused variable: `path`
+   --> database\src\migrations.rs:615:17
+    |
+615 |             let path = entry.path();
+    |                 ^^^^ help: if this is intentional, prefix it with an underscore: `_path`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `project`
+   --> database\src\supabase.rs:248:21
+    |
+248 |         if let Some(project) = self.project.take() {
+    |                     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_project`
+
+error[E0599]: no method named `echo` found for struct `redis::Connection` in the current scope
+  --> database\src\cache.rs:35:40
+   |
+35 |         let ping_result: String = conn.echo("ping")?;
+   |                                        ^^^^ method not found in `Connection`
+
+error[E0277]: the `?` operator can only be applied to values that implement `Try`
+  --> database\src\cache.rs:41:34
+   |
+41 |         let connection_manager = ConnectionManager::new(client.clone())?;
+   |                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the `?` operator cannot be applied to type `impl std::future::Future<Output = Result<redis::aio::ConnectionManager, RedisError>>`
+   |
+   = note: the full name for the type has been written to 'C:\ai-playground\projects\ninja-gekko\ninja-gekko\target\debug\deps\ninja_gekko_database-48239cea7fda8dd7.long-type-16873118112634055820.txt'
+   = note: consider using `--verbose` to print the full type name to the console
+   = help: the trait `Try` is not implemented for `impl std::future::Future<Output = Result<redis::aio::ConnectionManager, RedisError>>`
+note: this implements `Future` and its output type supports `?`, but the future cannot be awaited in a synchronous function
+  --> database\src\cache.rs:41:72
+   |
+28 |     pub fn new(config: CacheConfig) -> Result<Self> {
+   |     ----------------------------------------------- this is not `async`
+...
+41 |         let connection_manager = ConnectionManager::new(client.clone())?;
+   |                                                                        ^
+
+error[E0308]: mismatched types
+   --> database\src\database.rs:212:9
+    |
+211 |     pub fn idle_connections(&self) -> u32 {
+    |                                       --- expected `u32` because of return type
+212 |         self.pool.num_idle()
+    |         ^^^^^^^^^^^^^^^^^^^^ expected `u32`, found `usize`
+    |
+help: you can convert a `usize` to a `u32` and panic if the converted value doesn't fit
+    |
+212 |         self.pool.num_idle().try_into().unwrap()
+    |                             ++++++++++++++++++++
+
+error[E0308]: mismatched types
+   --> database\src\database.rs:217:41
+    |
+217 |         self.pool.size().saturating_sub(self.pool.num_idle())
+    |                          -------------- ^^^^^^^^^^^^^^^^^^^^ expected `u32`, found `usize`
+    |                          |
+    |                          arguments to this method are incorrect
+    |
+note: method defined here
+   --> /rustc/9fc6b43126469e3858e2fe86cafb4f0fd5068869\library\core\src\num\mod.rs:1199:5
+    = note: this error originates in the macro `uint_impl` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: you can convert a `usize` to a `u32` and panic if the converted value doesn't fit
+    |
+217 |         self.pool.size().saturating_sub(self.pool.num_idle().try_into().unwrap())
+    |                                                             ++++++++++++++++++++
+
+error[E0308]: mismatched types
+   --> database\src\migrations.rs:787:28
+    |
+787 |             migration_dir: temp_dir.path().to_path_buf(),
+    |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `String`, found `PathBuf`
+
+warning: unused import: `Commands`
+ --> database\src\cache.rs:7:36
+  |
+7 | use redis::{AsyncCommands, Client, Commands, Connection, RedisResult};
+  |                                    ^^^^^^^^
+
+Some errors have detailed explanations: E0277, E0282, E0308, E0382, E0599, E0609.
+For more information about an error, try `rustc --explain E0277`.
+warning: `ninja-gekko-database` (lib test) generated 18 warnings
+error: could not compile `ninja-gekko-database` (lib test) due to 17 previous errors; 18 warnings emitted

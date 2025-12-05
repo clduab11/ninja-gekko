@@ -3,6 +3,8 @@
 //! This crate provides the client implementation for the Model Context Protocol (MCP),
 //! allowing the trading bot to interact with external tools and resources.
 
+pub mod discord_webhook;
+
 use event_bus::{EventBus, EventFrame, EventKind, EventMetadata, EventSource, Priority};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -15,11 +17,14 @@ pub struct McpConfig {
     pub servers: Vec<String>,
 }
 
+use crate::discord_webhook::{DiscordConfig, DiscordNotificationService};
+
 /// MCP Client instance
 #[derive(Clone)]
 pub struct McpClient {
     config: McpConfig,
     event_bus: Option<EventBus>,
+    pub discord_service: Option<DiscordNotificationService>,
     // In a real implementation, we would have connections to MCP servers here
 }
 
@@ -29,12 +34,21 @@ impl McpClient {
         Self {
             config,
             event_bus: None,
+            discord_service: None,
         }
     }
 
     /// Set the event bus for the client
     pub fn with_event_bus(mut self, event_bus: EventBus) -> Self {
         self.event_bus = Some(event_bus);
+        self
+    }
+
+    /// Enable private Discord notifications
+    pub fn with_discord_config(mut self, config: Option<DiscordConfig>) -> Self {
+        if let Some(cfg) = config {
+            self.discord_service = Some(DiscordNotificationService::new(cfg));
+        }
         self
     }
 

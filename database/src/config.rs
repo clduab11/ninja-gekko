@@ -139,32 +139,75 @@ impl Default for MigrationConfig {
 /// Connection pool configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnectionPoolConfig {
-    /// Pool size for read operations
-    pub read_pool_size: u32,
-    /// Pool size for write operations
-    pub write_pool_size: u32,
-    /// Connection retry attempts
-    pub retry_attempts: u32,
-    /// Retry delay between attempts
-    pub retry_delay: Duration,
-    /// Circuit breaker threshold
-    pub circuit_breaker_threshold: u32,
-    /// Circuit breaker timeout
-    pub circuit_breaker_timeout: Duration,
-    /// Health check interval
+    /// List of connection pools to initialize
+    pub pools: Vec<ConnectionPool>,
+    /// Global maximum number of connections allowed
+    pub global_max_connections: u32,
+    /// Failure threshold for circuit breaker
+    pub circuit_breaker_failure_threshold: u32,
+    /// Recovery timeout for circuit breaker
+    pub circuit_breaker_recovery_timeout: Duration,
+    /// Enable connection health monitoring
+    pub enable_connection_monitoring: bool,
+    /// Enable automatic failover
+    pub enable_failover: bool,
+}
+
+/// Connection pool details
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConnectionPool {
+    pub name: String,
+    pub min_connections: u32,
+    pub max_connections: u32,
+    pub acquire_timeout: Duration,
+    pub idle_timeout: Duration,
+    pub max_lifetime: Duration,
     pub health_check_interval: Duration,
+    pub circuit_breaker_enabled: bool,
+    pub circuit_breaker_failure_threshold: u32,
+    pub circuit_breaker_recovery_timeout: Duration,
+    pub load_balancing_strategy: LoadBalancingStrategy,
+    pub failover_enabled: bool,
+    pub read_write_splitting: bool,
+    pub endpoints: Vec<ConnectionEndpoint>,
+}
+
+/// Connection endpoint configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConnectionEndpoint {
+    pub host: String,
+    pub port: u16,
+    pub database: String,
+    pub username: String,
+    pub password: String,
+    pub read_only: bool,
+    pub weight: u32,
+    pub priority: u32,
+    pub max_connections: u32,
+    pub connection_timeout: Duration,
+    pub command_timeout: Duration,
+    pub retry_attempts: u32,
+    pub health_check_interval: Duration,
+}
+
+/// Load balancing strategies
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum LoadBalancingStrategy {
+    RoundRobin,
+    WeightedRandom,
+    LeastConnections,
+    PriorityBased,
 }
 
 impl Default for ConnectionPoolConfig {
     fn default() -> Self {
         Self {
-            read_pool_size: 10,
-            write_pool_size: 5,
-            retry_attempts: 3,
-            retry_delay: Duration::from_millis(100),
-            circuit_breaker_threshold: 5,
-            circuit_breaker_timeout: Duration::from_secs(30),
-            health_check_interval: Duration::from_secs(60),
+            pools: Vec::new(),
+            global_max_connections: 100,
+            circuit_breaker_failure_threshold: 5,
+            circuit_breaker_recovery_timeout: Duration::from_secs(30),
+            enable_connection_monitoring: true,
+            enable_failover: true,
         }
     }
 }

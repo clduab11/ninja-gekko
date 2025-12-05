@@ -39,3 +39,6 @@ futures-util = { workspace = true }
 # Collections
 dashmap = { workspace = true }
 indexmap = "2.6"
+
+[dev-dependencies]
+rust_decimal_macros.workspace = true

@@ -14,7 +14,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tokio::sync::{Mutex, RwLock};
 use tracing::{debug, error, info, instrument, warn};
 
-use crate::config::ConnectionPoolConfig;
+use crate::config::{ConnectionEndpoint, ConnectionPool, ConnectionPoolConfig, LoadBalancingStrategy};
 
 /// Connection pool statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -43,52 +43,6 @@ pub enum CircuitBreakerState {
     HalfOpen, // Testing if service has recovered
 }
 
-/// Connection endpoint configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ConnectionEndpoint {
-    pub host: String,
-    pub port: u16,
-    pub database: String,
-    pub username: String,
-    pub password: String,
-    pub read_only: bool,
-    pub weight: u32,
-    pub priority: u32,
-    pub max_connections: u32,
-    pub connection_timeout: Duration,
-    pub command_timeout: Duration,
-    pub retry_attempts: u32,
-    pub health_check_interval: Duration,
-}
-
-/// Connection pool configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ConnectionPool {
-    pub name: String,
-    pub min_connections: u32,
-    pub max_connections: u32,
-    pub acquire_timeout: Duration,
-    pub idle_timeout: Duration,
-    pub max_lifetime: Duration,
-    pub health_check_interval: Duration,
-    pub circuit_breaker_enabled: bool,
-    pub circuit_breaker_failure_threshold: u32,
-    pub circuit_breaker_recovery_timeout: Duration,
-    pub load_balancing_strategy: LoadBalancingStrategy,
-    pub failover_enabled: bool,
-    pub read_write_splitting: bool,
-    pub endpoints: Vec<ConnectionEndpoint>,
-}
-
-/// Load balancing strategies
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum LoadBalancingStrategy {
-    RoundRobin,
-    WeightedRandom,
-    LeastConnections,
-    PriorityBased,
-}
-
 /// Connection pool manager with advanced features
 pub struct ConnectionManager {
     pools: Arc<RwLock<HashMap<String, Arc<ConnectionPoolImpl>>>>,
@@ -103,13 +57,16 @@ impl ConnectionManager {
     pub async fn new(config: ConnectionPoolConfig) -> Result<Self> {
         info!("Initializing advanced connection manager");
 
+        let cb_threshold = config.circuit_breaker_failure_threshold;
+        let cb_timeout = config.circuit_breaker_recovery_timeout;
+
         let manager = Self {
             pools: Arc::new(RwLock::new(HashMap::new())),
             config,
             stats: Arc::new(RwLock::new(HashMap::new())),
             global_circuit_breaker: Arc::new(Mutex::new(CircuitBreaker::new(
-                config.circuit_breaker_failure_threshold,
-                config.circuit_breaker_recovery_timeout,
+                cb_threshold,
+                cb_timeout,
             ))),
         };
 
@@ -346,7 +303,7 @@ impl ConnectionPoolImpl {
         let endpoint_manager = Arc::new(EndpointManager::new(config.endpoints.clone())?);
 
         let pool = Self {
-            config,
+            config: config.clone(),
             connections: Arc::new(RwLock::new(Vec::new())),
             endpoint_manager,
             circuit_breaker: Arc::new(Mutex::new(CircuitBreaker::new(

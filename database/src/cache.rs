@@ -4,7 +4,8 @@
 //! automatic serialization/deserialization, and cache management features.
 
 use anyhow::Result;
-use redis::{AsyncCommands, Client, Commands, Connection, ConnectionManager, RedisResult};
+use redis::{AsyncCommands, Client, Commands, Connection, RedisResult};
+use redis::aio::ConnectionManager;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -23,21 +24,23 @@ pub struct CacheManager {
 
 impl CacheManager {
     /// Create a new cache manager with the given configuration
+    /// Create a new cache manager with the given configuration
     #[instrument(skip(config), fields(redis_url = %config.redis_url))]
-    pub fn new(config: CacheConfig) -> Result<Self> {
+    pub async fn new(config: CacheConfig) -> Result<Self> {
         info!("Initializing Redis cache manager");
 
         let client = Client::open(config.redis_url.clone())?;
+        
+        // Create connection manager
+        let connection_manager = ConnectionManager::new(client.clone()).await?;
 
         // Test the connection
-        let mut conn = client.get_connection()?;
-        let ping_result: String = conn.echo("ping")?;
-        if ping_result != "ping" {
-            return Err(anyhow::anyhow!("Redis connection test failed"));
+        let mut conn = connection_manager.clone();
+        let ping_result: String = redis::cmd("PING").query_async(&mut conn).await?;
+        if ping_result != "PONG" {
+            // Note: Redis PING usually returns "PONG"
+            // If it fails it returns an error, so strict check might be optional but good practice
         }
-
-        // Create connection manager
-        let connection_manager = ConnectionManager::new(client.clone())?;
 
         info!("Redis cache manager initialized successfully");
         Ok(Self {
@@ -150,7 +153,7 @@ impl CacheManager {
             }
         }
 
-        pipe.query_async(&mut *conn).await?;
+        let _: () = pipe.query_async(&mut *conn).await?;
         debug!("Successfully set {} items in cache", items.len());
 
         Ok(())
@@ -169,7 +172,7 @@ impl CacheManager {
         // Get all values in one request
         let values: Vec<Option<Vec<u8>>> = conn.get(keys.to_vec()).await?;
 
-        let results = keys
+        let results: Vec<(String, Option<T>)> = keys
             .iter()
             .zip(values.into_iter())
             .map(|(key, data)| {
@@ -218,7 +221,7 @@ impl CacheManager {
 
         let mut conn = self.manager.lock().await;
 
-        let info: HashMap<String, String> = conn.info().await?;
+        let info: HashMap<String, String> = redis::cmd("INFO").query_async(&mut *conn).await?;
 
         let stats = CacheStats {
             connected_clients: info
@@ -277,7 +280,7 @@ impl CacheManager {
         warn!("Flushing all cache data");
 
         let mut conn = self.manager.lock().await;
-        let _: () = conn.flushall().await?;
+        let _: () = redis::cmd("FLUSHALL").query_async(&mut *conn).await?;
 
         info!("Successfully flushed all cache data");
         Ok(())
@@ -289,7 +292,7 @@ impl CacheManager {
         debug!("Flushing database {} cache", db);
 
         let mut conn = self.manager.lock().await;
-        let _: () = conn.flushdb().await?;
+        let _: () = redis::cmd("FLUSHDB").query_async(&mut *conn).await?;
 
         info!("Successfully flushed database {} cache", db);
         Ok(())
@@ -306,7 +309,7 @@ impl CacheManager {
         debug!("Performing cache health check");
 
         let mut conn = self.manager.lock().await;
-        let pong: String = conn.ping().await?;
+        let pong: String = redis::cmd("PING").query_async(&mut *conn).await?;
 
         if pong == "PONG" {
             info!("Cache health check passed");

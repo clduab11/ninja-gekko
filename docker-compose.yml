@@ -13,8 +13,20 @@ services:
       - REDIS_URL=redis://redis:6379
       - RUST_LOG=info
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '2.00'
+          memory: 4G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
   frontend:
@@ -25,6 +37,8 @@ services:
       - "5173:80" # Map host 5173 to container 80 (nginx)
     depends_on:
       - trading-engine
+    logging:
+      driver: "json-file"
     restart: unless-stopped
 
   postgres:
@@ -37,12 +51,32 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1.00'
+          memory: 1G
     restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
     restart: unless-stopped
 
   prometheus:

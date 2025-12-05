@@ -171,24 +171,58 @@ async fn main() -> Result<()> {
 }
 
 fn init_tracing(log_level: &str) -> Result<()> {
-    let subscriber = tracing_subscriber::FmtSubscriber::builder()
-        .with_max_level(match log_level.to_lowercase().as_str() {
-            "debug" => tracing::Level::DEBUG,
-            "info" => tracing::Level::INFO,
-            "warn" => tracing::Level::WARN,
-            "error" => tracing::Level::ERROR,
-            _ => {
-                warn!("Invalid log level '{}', defaulting to 'info'", log_level);
-                tracing::Level::INFO
-            }
-        })
-        .with_target(false)
-        .with_thread_ids(false)
-        .with_file(false)
-        .with_line_number(false)
-        .finish();
+    use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
 
-    tracing::subscriber::set_global_default(subscriber)?;
+    // Define log file appender (rolling daily)
+    let file_appender = tracing_appender::rolling::daily("logs", "ninja-gekko.log");
+    let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+
+    // Keep the guard alive - in a real app better to return it or store in static
+    // For now we leak it intentionally or handle it better if possible, but 
+    // tracing_appender::non_blocking returns a WorkerGuard that must not be dropped immediately.
+    // Given the function signature, we'll use a globally held guard or simple blocking for now to avoid altering signature too much,
+    // OR we can change the signature to return the guard.
+    // To minimize disruption, let's use the blocking writer for simplicity in this specific context 
+    // or rely on `tracing_appender::rolling` directly if non-blocking isn't strictly required for the MVP 
+    // without refactoring main's return type.
+    // actually, let's just make it robust.
+    
+    // Parse log level
+    let level_filter = match log_level.to_lowercase().as_str() {
+        "debug" => tracing::Level::DEBUG,
+        "warn" => tracing::Level::WARN,
+        "error" => tracing::Level::ERROR,
+        _ => tracing::Level::INFO,
+    };
+
+    // Stdout layer (human readable or json depending on env? User asked for JSON logs)
+    // We will output JSON to both for consistency in prod, or human for stdout and json for file.
+    // User scope: "monitoring and observability (tracing spans... JSON logs with correlation IDs)"
+    
+    let stdout_layer = tracing_subscriber::fmt::layer()
+        .json()
+        .with_current_span(true)
+        .with_span_list(true)
+        .with_filter(EnvFilter::from_default_env().add_directive(level_filter.into()));
+
+    let file_layer = tracing_subscriber::fmt::layer()
+        .json()
+        .with_writer(non_blocking)
+        .with_current_span(true)
+        .with_span_list(true)
+        .with_filter(EnvFilter::from_default_env().add_directive(level_filter.into()));
+
+    // Registry
+    tracing_subscriber::registry()
+        .with(stdout_layer)
+        .with(file_layer)
+        .try_init()?;
+    
+    // We must leak the guard so it lives for the duration of the program, 
+    // or change main to hold it. 
+    // Since we are in a helper function, let's box and leak the guard.
+    Box::leak(Box::new(_guard));
+
     Ok(())
 }
 

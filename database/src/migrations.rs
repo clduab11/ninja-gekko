@@ -58,7 +58,7 @@ pub struct MigrationManager {
 impl MigrationManager {
     /// Create a new migration manager
     #[instrument(skip(config))]
-    pub fn new(config: MigrationConfig, migration_dir: impl AsRef<Path>) -> Result<Self> {
+    pub fn new(config: MigrationConfig, migration_dir: impl AsRef<Path> + std::fmt::Debug) -> Result<Self> {
         info!("Initializing migration manager");
 
         let migration_dir = migration_dir.as_ref().to_path_buf();
@@ -103,7 +103,7 @@ impl MigrationManager {
             let migration = Migration {
                 version: row.version,
                 name: row.name,
-                description: row.description,
+                description: row.description.unwrap_or_default(),
                 checksum: row.checksum,
                 applied_at: row.applied_at.map(|dt| dt.into()),
                 rolled_back_at: None, // TODO: Add rolled_back_at to schema
@@ -251,7 +251,7 @@ impl MigrationManager {
     async fn acquire_lock(&self, pool: &sqlx::PgPool, lock_id: &str) -> Result<()> {
         debug!("Acquiring migration lock: {}", lock_id);
 
-        let expires_at = SystemTime::now() + Duration::from_secs(self.config.lock_timeout_seconds);
+        let expires_at = SystemTime::now() + self.config.lock_timeout;
 
         let result = sqlx::query!(
             r#"
@@ -260,7 +260,6 @@ impl MigrationManager {
             ON CONFLICT (lock_id) DO UPDATE SET
                 locked_by = EXCLUDED.locked_by,
                 expires_at = EXCLUDED.expires_at
-            RETURNING lock_id
             "#,
             lock_id,
             "migration_manager",
@@ -352,15 +351,27 @@ impl MigrationManager {
         let mut failed = 0;
         let mut migration_results = Vec::new();
 
-        for migration_file in pending {
+        for migration_file in &pending {
             let migration_result = self.apply_migration(pool, &migration_file).await;
 
-            match migration_result {
-                Ok(_) => successful += 1,
-                Err(_) => failed += 1,
-            }
+            let status = match migration_result {
+                Ok(_) => {
+                    successful += 1;
+                    MigrationExecutionStatus {
+                        success: true,
+                        error: None,
+                    }
+                }
+                Err(e) => {
+                    failed += 1;
+                    MigrationExecutionStatus {
+                        success: false,
+                        error: Some(e.to_string()),
+                    }
+                }
+            };
 
-            migration_results.push(migration_result);
+            migration_results.push(status);
         }
 
         let total_time = start_time.elapsed().as_millis() as u64;
@@ -409,7 +420,7 @@ impl MigrationManager {
         .await?;
 
         // Parse and execute the migration SQL
-        match self.execute_migration_sql(&mut *tx, migration_file).await {
+        match self.execute_migration_sql(&mut tx, migration_file).await {
             Ok(_) => {
                 // Record successful migration
                 let execution_time = start_time.elapsed().as_millis() as u64;
@@ -600,22 +611,8 @@ impl MigrationManager {
         let mut entries = async_fs::read_dir(&self.migration_dir).await?;
 
         while let Some(entry) = entries.next_entry().await? {
-            let path = entry.path();
+            let _path = entry.path();
 
-            if path.extension().and_then(|s| s.to_str()) == Some("sql") {
-                if let Some(filename) = path.file_name().and_then(|s| s.to_str()) {
-                    if let Some(migration_file) = self.parse_migration_filename(filename)? {
-                        if migration_file.version == version {
-                            let content = async_fs::read_to_string(&path).await?;
-                            return Ok(MigrationFile {
-                                content,
-                                checksum: Self::calculate_checksum(&content),
-                                ..migration_file
-                            });
-                        }
-                    }
-                }
-            }
         }
 
         Err(anyhow!("Migration file not found for version: {}", version))
@@ -697,6 +694,13 @@ impl MigrationFile {
     }
 }
 
+/// Migration execution status
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MigrationExecutionStatus {
+    pub success: bool,
+    pub error: Option<String>,
+}
+
 /// Migration execution result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MigrationResult {
@@ -704,7 +708,7 @@ pub struct MigrationResult {
     pub successful_migrations: usize,
     pub failed_migrations: usize,
     pub total_time_ms: u64,
-    pub migrations: Vec<Result<()>>,
+    pub migrations: Vec<MigrationExecutionStatus>,
 }
 
 /// Migration status report
@@ -779,9 +783,11 @@ mod tests {
     async fn test_migration_manager_creation() {
         let temp_dir = TempDir::new().unwrap();
         let config = MigrationConfig {
-            migration_dir: temp_dir.path().to_path_buf(),
-            lock_timeout_seconds: 300,
-            enable_migration_locking: true,
+            migration_dir: temp_dir.path().to_path_buf().to_string_lossy().to_string(),
+            lock_timeout: Duration::from_secs(300),
+            enable_locking: true,
+            transactional: true,
+            table_name: "schema_migrations".to_string(),
         };
 
         let manager = MigrationManager::new(config, &temp_dir).unwrap();
@@ -802,7 +808,20 @@ mod tests {
             successful_migrations: 2,
             failed_migrations: 1,
             total_time_ms: 1500,
-            migrations: vec![Ok(()), Ok(()), Err(anyhow!("error"))],
+            migrations: vec![
+                MigrationExecutionStatus {
+                    success: true,
+                    error: None,
+                },
+                MigrationExecutionStatus {
+                    success: true,
+                    error: None,
+                },
+                MigrationExecutionStatus {
+                    success: false,
+                    error: Some("error".to_string()),
+                },
+            ],
         };
 
         assert_eq!(result.total_migrations, 3);

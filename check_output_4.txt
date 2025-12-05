@@ -1,0 +1,164 @@
+warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   C:\ai-playground\projects\ninja-gekko\ninja-gekko\api\Cargo.toml
+workspace: C:\ai-playground\projects\ninja-gekko\ninja-gekko\Cargo.toml
+    Checking ninja-gekko-database v0.1.0 (C:\ai-playground\projects\ninja-gekko\ninja-gekko\database)
+warning: unused imports: `Connection` and `RedisResult`
+ --> database\src\cache.rs:7:46
+  |
+7 | use redis::{AsyncCommands, Client, Commands, Connection, RedisResult};
+  |                                              ^^^^^^^^^^  ^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `async_trait::async_trait`
+ --> database\src\connection.rs:7:5
+  |
+7 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `UNIX_EPOCH`
+  --> database\src\connection.rs:13:48
+   |
+13 | use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+   |                                                ^^^^^^^^^^
+
+warning: unused import: `error`
+  --> database\src\connection.rs:15:22
+   |
+15 | use tracing::{debug, error, info, instrument, warn};
+   |                      ^^^^^
+
+warning: unused import: `std::sync::Arc`
+ --> database\src\database.rs:8:5
+  |
+8 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `tokio::sync::Mutex`
+ --> database\src\database.rs:9:5
+  |
+9 | use tokio::sync::Mutex;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `async_trait::async_trait`
+ --> database\src\migrations.rs:7:5
+  |
+7 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `File`
+  --> database\src\migrations.rs:10:21
+   |
+10 | use std::fs::{self, File};
+   |                     ^^^^
+
+warning: unused import: `std::io::Read`
+  --> database\src\migrations.rs:11:5
+   |
+11 | use std::io::Read;
+   |     ^^^^^^^^^^^^^
+
+warning: unused import: `async_trait::async_trait`
+ --> database\src\supabase.rs:7:5
+  |
+7 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::sync::Arc`
+  --> database\src\supabase.rs:10:5
+   |
+10 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+
+warning: unused import: `tokio::sync::Mutex`
+  --> database\src\supabase.rs:12:5
+   |
+12 | use tokio::sync::Mutex;
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::time::Duration`
+   --> database\src\supabase.rs:344:9
+    |
+344 |     use std::time::Duration;
+    |         ^^^^^^^^^^^^^^^^^^^
+
+error[E0308]: mismatched types
+   --> database\src\cache.rs:148:33
+    |
+148 |                     let _: () = pipe.set_ex(key, data, duration.as_secs()).ignore();
+    |                            --   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `()`, found `&mut Pipeline`
+    |                            |
+    |                            expected due to this
+
+error[E0308]: mismatched types
+   --> database\src\cache.rs:151:33
+    |
+151 |                     let _: () = pipe.set(key, data).ignore();
+    |                            --   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `()`, found `&mut Pipeline`
+    |                            |
+    |                            expected due to this
+
+error[E0599]: no method named `ping` found for struct `tokio::sync::MutexGuard<'_, redis::aio::ConnectionManager>` in the current scope
+    --> database\src\cache.rs:312:33
+     |
+312  |         let pong: String = conn.ping().await?;
+     |                                 ^^^^
+     |
+help: there is a method `xpending` with a similar name, but with different arguments
+    --> C:\Users\CLD's Tower\.cargo\registry\src\index.crates.io-6f17d22bba15001f\redis-0.25.4\src\commands\mod.rs:131:1
+     |
+131  | / implement_commands! {
+132  | |     'a
+133  | |     // most common operations
+...    |
+1967 | |     }
+1968 | | }
+     | |_^
+     = note: this error originates in the macro `implement_commands` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: variable does not need to be mutable
+   --> database\src\connection.rs:281:13
+    |
+281 |         let mut circuit_breaker = self.global_circuit_breaker.lock().await;
+    |             ----^^^^^^^^^^^^^^^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` on by default
+
+error[E0599]: no method named `execute` found for struct `Map` in the current scope
+   --> database\src\migrations.rs:269:10
+    |
+256 |           let result = sqlx::query!(
+    |  ______________________-
+257 | |             r#"
+258 | |             INSERT INTO schema_migration_locks (lock_id, locked_by, expires_at)
+259 | |             VALUES ($1, $2, $3)
+...   |
+268 | |         )
+269 | |         .execute(pool)
+    | |         -^^^^^^^ method not found in `Map<'_, Postgres, {closure@mod.rs:328:9}, PgArguments>`
+    | |_________|
+    |
+    |
+    = note: the full type name has been written to 'C:\ai-playground\projects\ninja-gekko\ninja-gekko\target\debug\deps\ninja_gekko_database-48239cea7fda8dd7.long-type-13543894711934112594.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+
+warning: unused variable: `project`
+   --> database\src\supabase.rs:248:21
+    |
+248 |         if let Some(project) = self.project.take() {
+    |                     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_project`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused import: `Commands`
+ --> database\src\cache.rs:7:36
+  |
+7 | use redis::{AsyncCommands, Client, Commands, Connection, RedisResult};
+  |                                    ^^^^^^^^
+
+Some errors have detailed explanations: E0308, E0599.
+For more information about an error, try `rustc --explain E0308`.
+warning: `ninja-gekko-database` (lib test) generated 16 warnings
+error: could not compile `ninja-gekko-database` (lib test) due to 4 previous errors; 16 warnings emitted

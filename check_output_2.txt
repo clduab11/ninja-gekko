@@ -1,0 +1,838 @@
+warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   C:\ai-playground\projects\ninja-gekko\ninja-gekko\api\Cargo.toml
+workspace: C:\ai-playground\projects\ninja-gekko\ninja-gekko\Cargo.toml
+    Checking ninja-gekko-database v0.1.0 (C:\ai-playground\projects\ninja-gekko\ninja-gekko\database)
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+  --> database\src\migrations.rs:84:20
+   |
+84 |           let rows = sqlx::query!(
+   |  ____________________^
+85 | |             r#"
+86 | |             SELECT version, name, description, checksum, applied_at, status, execution_time_ms
+87 | |             FROM schema_migrations
+88 | |             ORDER BY version ASC
+89 | |             "#
+90 | |         )
+   | |_________^
+   |
+   = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+   --> database\src\migrations.rs:256:22
+    |
+256 |           let result = sqlx::query!(
+    |  ______________________^
+257 | |             r#"
+258 | |             INSERT INTO schema_migration_locks (lock_id, locked_by, expires_at)
+259 | |             VALUES ($1, $2, $3)
+...   |
+267 | |             expires_at.duration_since(UNIX_EPOCH)?.as_secs() as i64
+268 | |         )
+    | |_________^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+   --> database\src\migrations.rs:294:29
+    |
+294 |           let rows_affected = sqlx::query!(
+    |  _____________________________^
+295 | |             "DELETE FROM schema_migration_locks WHERE lock_id = $1",
+296 | |             lock_id
+297 | |         )
+    | |_________^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+   --> database\src\migrations.rs:407:9
+    |
+407 | /         sqlx::query!(
+408 | |             r#"
+409 | |             CREATE TABLE IF NOT EXISTS schema_migrations (
+410 | |                 version BIGINT PRIMARY KEY,
+...   |
+418 | |             "#,
+419 | |         )
+    | |_________^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+   --> database\src\migrations.rs:429:17
+    |
+429 | /                 sqlx::query!(
+430 | |                     r#"
+431 | |                     INSERT INTO schema_migrations (version, name, description, checksum, applied_at, status, execution_time_ms)
+432 | |                     VALUES ($1, $2, $3, $4, NOW(), 'applied', $5)
+...   |
+438 | |                     execution_time as i64
+439 | |                 )
+    | |_________________^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+   --> database\src\migrations.rs:469:17
+    |
+469 | /                 sqlx::query!(
+470 | |                     r#"
+471 | |                     INSERT INTO schema_migrations (version, name, description, checksum, applied_at, status, execution_time_ms)
+472 | |                     VALUES ($1, $2, $3, $4, NOW(), 'failed', $5)
+...   |
+478 | |                     start_time.elapsed().as_millis() as i64
+479 | |                 )
+    | |_________________^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+   --> database\src\migrations.rs:585:21
+    |
+585 | /                     sqlx::query!(
+586 | |                         "UPDATE schema_migrations SET status = 'rolled_back', rolled_back_at = NOW() WHERE version = $1",
+587 | |                         latest_version
+588 | |                     )
+    | |_____________________^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0412]: cannot find type `ConnectionManager` in this scope
+  --> database\src\connection.rs:38:6
+   |
+38 | impl ConnectionManager {
+   |      ^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+help: consider importing this struct
+   |
+6  + use redis::aio::ConnectionManager;
+   |
+
+error[E0412]: cannot find type `CircuitBreakerState` in this scope
+   --> database\src\connection.rs:258:50
+    |
+258 |     pub async fn circuit_breaker_state(&self) -> CircuitBreakerState {
+    |                                                  ^^^^^^^^^^^^^^^^^^^ help: a struct with a similar name exists: `CircuitBreaker`
+...
+584 | pub struct CircuitBreaker {
+    | ------------------------- similarly named struct `CircuitBreaker` defined here
+
+error[E0412]: cannot find type `CircuitBreakerState` in this scope
+   --> database\src\connection.rs:589:22
+    |
+589 |     state: Arc<Mutex<CircuitBreakerState>>,
+    |                      ^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: you might be missing a type parameter
+    |
+584 | pub struct CircuitBreaker<CircuitBreakerState> {
+    |                          +++++++++++++++++++++
+
+error[E0412]: cannot find type `CircuitBreakerState` in this scope
+   --> database\src\connection.rs:605:24
+    |
+584 | pub struct CircuitBreaker {
+    | ------------------------- similarly named struct `CircuitBreaker` defined here
+...
+605 |     fn state(&self) -> CircuitBreakerState {
+    |                        ^^^^^^^^^^^^^^^^^^^ help: a struct with a similar name exists: `CircuitBreaker`
+
+error[E0433]: failed to resolve: use of undeclared type `ConnectionManager`
+   --> database\src\connection.rs:724:23
+    |
+724 |         let manager = ConnectionManager::new(config).await.unwrap();
+    |                       ^^^^^^^^^^^^^^^^^ use of undeclared type `ConnectionManager`
+    |
+help: consider importing this struct
+    |
+684 +     use redis::aio::ConnectionManager;
+    |
+
+warning: unused imports: `Connection` and `RedisResult`
+ --> database\src\cache.rs:7:46
+  |
+7 | use redis::{AsyncCommands, Client, Commands, Connection, RedisResult};
+  |                                              ^^^^^^^^^^  ^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `async_trait::async_trait`
+ --> database\src\connection.rs:7:5
+  |
+7 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `UNIX_EPOCH`
+  --> database\src\connection.rs:13:48
+   |
+13 | use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+   |                                                ^^^^^^^^^^
+
+warning: unused import: `error`
+  --> database\src\connection.rs:15:22
+   |
+15 | use tracing::{debug, error, info, instrument, warn};
+   |                      ^^^^^
+
+warning: unused import: `std::sync::Arc`
+ --> database\src\database.rs:8:5
+  |
+8 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `tokio::sync::Mutex`
+ --> database\src\database.rs:9:5
+  |
+9 | use tokio::sync::Mutex;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `async_trait::async_trait`
+ --> database\src\migrations.rs:7:5
+  |
+7 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `File`
+  --> database\src\migrations.rs:10:21
+   |
+10 | use std::fs::{self, File};
+   |                     ^^^^
+
+warning: unused import: `std::io::Read`
+  --> database\src\migrations.rs:11:5
+   |
+11 | use std::io::Read;
+   |     ^^^^^^^^^^^^^
+
+warning: unused import: `async_trait::async_trait`
+ --> database\src\supabase.rs:7:5
+  |
+7 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::sync::Arc`
+  --> database\src\supabase.rs:10:5
+   |
+10 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+
+warning: unused import: `tokio::sync::Mutex`
+  --> database\src\supabase.rs:12:5
+   |
+12 | use tokio::sync::Mutex;
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: ambiguous glob re-exports
+  --> database\src\lib.rs:20:9
+   |
+20 | pub use database::*;
+   |         ^^^^^^^^^^^ the name `DatabaseError` in the type namespace is first re-exported here
+21 | pub use error::*;
+   |         -------- but the name `DatabaseError` in the type namespace is also re-exported here
+   |
+   = note: `#[warn(ambiguous_glob_reexports)]` on by default
+
+warning: this function depends on never type fallback being `()`
+   --> database\src\cache.rs:133:5
+    |
+133 | /     pub async fn set_multiple<T>(&self, items: &[(String, T, Option<Duration>)]) -> Result<()>
+134 | |     where
+135 | |         T: Serialize + Send + Sync,
+    | |___________________________________^
+    |
+    = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in Rust 2024 and in a future release in all editions!
+    = note: for more information, see issue #123748 <https://github.com/rust-lang/rust/issues/123748>
+    = help: specify the types explicitly
+note: in edition 2024, the requirement `!: FromRedisValue` will fail
+   --> database\src\cache.rs:154:14
+    |
+154 |         pipe.query_async(&mut *conn).await?;
+    |              ^^^^^^^^^^^
+    = note: `#[warn(dependency_on_unit_never_type_fallback)]` on by default
+
+error[E0282]: type annotations needed
+   --> database\src\cache.rs:173:13
+    |
+173 |         let results = keys
+    |             ^^^^^^^
+...
+182 |         debug!("Retrieved {} values from cache", results.len());
+    |                                                  ------- type must be known at this point
+    |
+help: consider giving `results` an explicit type
+    |
+173 |         let results: Vec<_> = keys
+    |                    ++++++++
+
+error[E0599]: no method named `info` found for struct `tokio::sync::MutexGuard<'_, ConnectionManager>` in the current scope
+   --> database\src\cache.rs:222:50
+    |
+222 |         let info: HashMap<String, String> = conn.info().await?;
+    |                                                  ^^^^
+    |
+help: there is a method `into` with a similar name
+    |
+222 |         let info: HashMap<String, String> = conn.into().await?;
+    |                                                  ~~~~
+
+error[E0599]: no method named `flushall` found for struct `tokio::sync::MutexGuard<'_, ConnectionManager>` in the current scope
+   --> database\src\cache.rs:281:26
+    |
+281 |         let _: () = conn.flushall().await?;
+    |                          ^^^^^^^^ method not found in `MutexGuard<'_, ConnectionManager>`
+
+error[E0599]: no method named `flushdb` found for struct `tokio::sync::MutexGuard<'_, ConnectionManager>` in the current scope
+   --> database\src\cache.rs:293:26
+    |
+293 |         let _: () = conn.flushdb().await?;
+    |                          ^^^^^^^ method not found in `MutexGuard<'_, ConnectionManager>`
+
+error[E0599]: no method named `ping` found for struct `tokio::sync::MutexGuard<'_, ConnectionManager>` in the current scope
+    --> database\src\cache.rs:310:33
+     |
+310  |         let pong: String = conn.ping().await?;
+     |                                 ^^^^
+     |
+help: there is a method `xpending` with a similar name, but with different arguments
+    --> C:\Users\CLD's Tower\.cargo\registry\src\index.crates.io-6f17d22bba15001f\redis-0.25.4\src\commands\mod.rs:131:1
+     |
+131  | / implement_commands! {
+132  | |     'a
+133  | |     // most common operations
+...    |
+1967 | |     }
+1968 | | }
+     | |_^
+     = note: this error originates in the macro `implement_commands` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0433]: failed to resolve: use of undeclared type `CircuitBreakerState`
+   --> database\src\connection.rs:118:43
+    |
+118 |             if circuit_breaker.state() == CircuitBreakerState::Open {
+    |                                           ^^^^^^^^^^^^^^^^^^^
+    |                                           |
+    |                                           use of undeclared type `CircuitBreakerState`
+    |                                           help: a struct with a similar name exists: `CircuitBreaker`
+
+error[E0382]: borrow of moved value: `config`
+   --> database\src\connection.rs:304:59
+    |
+290 |             config,
+    |             ------ value moved here
+...
+304 |         info!("Connection pool created successfully: {}", config.name);
+    |                                                           ^^^^^^^^^^^ value borrowed here after move
+    |
+    = note: move occurs because `config` has type `ConnectionPool`, which does not implement the `Copy` trait
+    = note: this error originates in the macro `$crate::__macro_support::format_args` which comes from the expansion of the macro `info` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0433]: failed to resolve: use of undeclared type `CircuitBreakerState`
+   --> database\src\connection.rs:345:43
+    |
+345 |             if circuit_breaker.state() == CircuitBreakerState::Open {
+    |                                           ^^^^^^^^^^^^^^^^^^^
+    |                                           |
+    |                                           use of undeclared type `CircuitBreakerState`
+    |                                           help: a struct with a similar name exists: `CircuitBreaker`
+
+error[E0433]: failed to resolve: use of undeclared type `CircuitBreakerState`
+   --> database\src\connection.rs:615:18
+    |
+615 |         *state = CircuitBreakerState::Closed;
+    |                  ^^^^^^^^^^^^^^^^^^^
+    |                  |
+    |                  use of undeclared type `CircuitBreakerState`
+    |                  help: a struct with a similar name exists: `CircuitBreaker`
+
+error[E0433]: failed to resolve: use of undeclared type `CircuitBreakerState`
+   --> database\src\connection.rs:625:22
+    |
+625 |             *state = CircuitBreakerState::Open;
+    |                      ^^^^^^^^^^^^^^^^^^^
+    |                      |
+    |                      use of undeclared type `CircuitBreakerState`
+    |                      help: a struct with a similar name exists: `CircuitBreaker`
+
+error[E0277]: the trait bound `for<'r> T: FromRow<'r, _>` is not satisfied
+   --> database\src\database.rs:58:53
+    |
+58  |         let mut query_builder = sqlx::query_as::<_, T>(query);
+    |                                                     ^ the trait `for<'r> FromRow<'r, _>` is not implemented for `T`
+    |
+    = help: the following other types implement trait `FromRow<'r, R>`:
+              `()` implements `FromRow<'r, R>`
+              `(T1, T2)` implements `FromRow<'r, R>`
+              `(T1, T2, T3)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4, T5)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4, T5, T6)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4, T5, T6, T7)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4, T5, T6, T7, T8)` implements `FromRow<'r, R>`
+            and 15 others
+note: required by a bound in `sqlx::query_as`
+   --> C:\Users\CLD's Tower\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlx-core-0.8.6\src\query_as.rs:345:8
+    |
+342 | pub fn query_as<'q, DB, O>(sql: &'q str) -> QueryAs<'q, DB, O, <DB as Database>::Arguments<'q>>
+    |        -------- required by a bound in this function
+...
+345 |     O: for<'r> FromRow<'r, DB::Row>,
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `query_as`
+
+error[E0277]: the trait bound `T: serde::Serialize` is not satisfied
+  --> database\src\database.rs:62:48
+   |
+62 |             query_builder = query_builder.bind(param);
+   |                                           ---- ^^^^^ the trait `Serialize` is not implemented for `T`
+   |                                           |
+   |                                           required by a bound introduced by this call
+   |
+   = note: for local types consider adding `#[derive(serde::Serialize)]` to your `T` type
+   = note: for types from other crates check whether the crate offers a `serde` feature flag
+   = note: required for `sqlx::types::Json<T>` to implement `sqlx::Encode<'_, Postgres>`
+   = note: 1 redundant requirement hidden
+   = note: required for `&sqlx::types::Json<T>` to implement `sqlx::Encode<'_, Postgres>`
+note: required by a bound in `QueryAs::<'q, DB, O, <DB as sqlx::Database>::Arguments<'q>>::bind`
+  --> C:\Users\CLD's Tower\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlx-core-0.8.6\src\query_as.rs:54:25
+   |
+54 |     pub fn bind<T: 'q + Encode<'q, DB> + Type<DB>>(mut self, value: T) -> Self {
+   |                         ^^^^^^^^^^^^^^ required by this bound in `QueryAs::<'q, DB, O, <DB as Database>::Arguments<'q>>::bind`
+help: consider further restricting this bound
+   |
+54 |         T: for<'de> serde::Deserialize<'de> + Send + Unpin + cache::_::_serde::Serialize,
+   |                                                            +++++++++++++++++++++++++++++
+
+error[E0599]: the method `fetch_all` exists for struct `QueryAs<'_, Postgres, T, PgArguments>`, but its trait bounds were not satisfied
+  --> database\src\database.rs:65:34
+   |
+65 |         let rows = query_builder.fetch_all(&self.pool).await?;
+   |                                  ^^^^^^^^^ method cannot be called on `QueryAs<'_, Postgres, T, PgArguments>` due to unsatisfied trait bounds
+   |
+   = note: the following trait bounds were not satisfied:
+           `T: FromRow<'r, PgRow>`
+
+error[E0277]: the trait bound `for<'r> T: FromRow<'r, _>` is not satisfied
+   --> database\src\database.rs:89:53
+    |
+89  |         let mut query_builder = sqlx::query_as::<_, T>(query);
+    |                                                     ^ the trait `for<'r> FromRow<'r, _>` is not implemented for `T`
+    |
+    = help: the following other types implement trait `FromRow<'r, R>`:
+              `()` implements `FromRow<'r, R>`
+              `(T1, T2)` implements `FromRow<'r, R>`
+              `(T1, T2, T3)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4, T5)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4, T5, T6)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4, T5, T6, T7)` implements `FromRow<'r, R>`
+              `(T1, T2, T3, T4, T5, T6, T7, T8)` implements `FromRow<'r, R>`
+            and 15 others
+note: required by a bound in `sqlx::query_as`
+   --> C:\Users\CLD's Tower\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlx-core-0.8.6\src\query_as.rs:345:8
+    |
+342 | pub fn query_as<'q, DB, O>(sql: &'q str) -> QueryAs<'q, DB, O, <DB as Database>::Arguments<'q>>
+    |        -------- required by a bound in this function
+...
+345 |     O: for<'r> FromRow<'r, DB::Row>,
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `query_as`
+
+error[E0277]: the trait bound `T: serde::Serialize` is not satisfied
+  --> database\src\database.rs:93:48
+   |
+93 |             query_builder = query_builder.bind(param);
+   |                                           ---- ^^^^^ the trait `Serialize` is not implemented for `T`
+   |                                           |
+   |                                           required by a bound introduced by this call
+   |
+   = note: for local types consider adding `#[derive(serde::Serialize)]` to your `T` type
+   = note: for types from other crates check whether the crate offers a `serde` feature flag
+   = note: required for `sqlx::types::Json<T>` to implement `sqlx::Encode<'_, Postgres>`
+   = note: 1 redundant requirement hidden
+   = note: required for `&sqlx::types::Json<T>` to implement `sqlx::Encode<'_, Postgres>`
+note: required by a bound in `QueryAs::<'q, DB, O, <DB as sqlx::Database>::Arguments<'q>>::bind`
+  --> C:\Users\CLD's Tower\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlx-core-0.8.6\src\query_as.rs:54:25
+   |
+54 |     pub fn bind<T: 'q + Encode<'q, DB> + Type<DB>>(mut self, value: T) -> Self {
+   |                         ^^^^^^^^^^^^^^ required by this bound in `QueryAs::<'q, DB, O, <DB as Database>::Arguments<'q>>::bind`
+help: consider further restricting this bound
+   |
+85 |         T: for<'de> serde::Deserialize<'de> + Send + Unpin + cache::_::_serde::Serialize,
+   |                                                            +++++++++++++++++++++++++++++
+
+error[E0599]: the method `fetch_optional` exists for struct `QueryAs<'_, Postgres, T, PgArguments>`, but its trait bounds were not satisfied
+  --> database\src\database.rs:96:36
+   |
+96 |         let result = query_builder.fetch_optional(&self.pool).await?;
+   |                                    ^^^^^^^^^^^^^^ method cannot be called on `QueryAs<'_, Postgres, T, PgArguments>` due to unsatisfied trait bounds
+   |
+   = note: the following trait bounds were not satisfied:
+           `T: FromRow<'r, PgRow>`
+
+error[E0609]: no field `lock_timeout_seconds` on type `config::MigrationConfig`
+   --> database\src\migrations.rs:254:78
+    |
+254 |         let expires_at = SystemTime::now() + Duration::from_secs(self.config.lock_timeout_seconds);
+    |                                                                              ^^^^^^^^^^^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `migration_dir`, `enable_locking`, `lock_timeout`, `transactional`, `table_name`
+
+error[E0382]: borrow of moved value: `pending`
+   --> database\src\migrations.rs:381:31
+    |
+335 |         let pending = self.get_pending_migrations().await?;
+    |             ------- move occurs because `pending` has type `Vec<MigrationFile>`, which does not implement the `Copy` trait
+...
+355 |         for migration_file in pending {
+    |                               ------- `pending` moved due to this implicit call to `.into_iter()`
+...
+381 |             total_migrations: pending.len(),
+    |                               ^^^^^^^ value borrowed here after move
+    |
+note: `into_iter` takes ownership of the receiver `self`, which moves `pending`
+   --> /rustc/9fc6b43126469e3858e2fe86cafb4f0fd5068869\library\core\src\iter\traits\collect.rs:346:18
+help: consider iterating over a slice of the `Vec<MigrationFile>`'s content to avoid moving into the `for` loop
+    |
+355 |         for migration_file in &pending {
+    |                               +
+
+error[E0308]: mismatched types
+   --> database\src\migrations.rs:424:42
+    |
+424 |         match self.execute_migration_sql(&mut *tx, migration_file).await {
+    |                    --------------------- ^^^^^^^^ expected `&mut Transaction<'_, Postgres>`, found `&mut PgConnection`
+    |                    |
+    |                    arguments to this method are incorrect
+    |
+    = note: expected mutable reference `&mut Transaction<'_, Postgres>`
+               found mutable reference `&mut PgConnection`
+note: method defined here
+   --> database\src\migrations.rs:496:14
+    |
+496 |     async fn execute_migration_sql(
+    |              ^^^^^^^^^^^^^^^^^^^^^
+497 |         &self,
+498 |         tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    |         ----------------------------------------------
+
+error[E0382]: borrow of moved value: `content`
+   --> database\src\migrations.rs:624:68
+    |
+621 | ...                   let content = async_fs::read_to_string(&path).await?;
+    |                           ------- move occurs because `content` has type `std::string::String`, which does not implement the `Copy` trait
+622 | ...                   return Ok(MigrationFile {
+623 | ...                       content,
+    |                           ------- value moved here
+624 | ...                       checksum: Self::calculate_checksum(&content),
+    |                                                              ^^^^^^^^ value borrowed here after move
+    |
+help: consider cloning the value if the performance cost is acceptable
+    |
+623 |                                 content: content.clone(),
+    |                                        +++++++++++++++++
+
+error[E0502]: cannot borrow `*self` as immutable because it is also borrowed as mutable
+   --> database\src\supabase.rs:282:17
+    |
+280 |         if let Some(ref mut project) = self.project {
+    |                     --------------- mutable borrow occurs here
+281 |             if self.mcp_available {
+282 |                 self.pause_via_mcp(project).await?;
+    |                 ^^^^               ------- mutable borrow later used here
+    |                 |
+    |                 immutable borrow occurs here
+
+error[E0502]: cannot borrow `*self` as immutable because it is also borrowed as mutable
+   --> database\src\supabase.rs:284:17
+    |
+280 |         if let Some(ref mut project) = self.project {
+    |                     --------------- mutable borrow occurs here
+...
+284 |                 self.pause_via_api(project).await?;
+    |                 ^^^^               ------- mutable borrow later used here
+    |                 |
+    |                 immutable borrow occurs here
+
+error[E0502]: cannot borrow `*self` as immutable because it is also borrowed as mutable
+   --> database\src\supabase.rs:327:17
+    |
+325 |         if let Some(ref mut project) = self.project {
+    |                     --------------- mutable borrow occurs here
+326 |             if self.mcp_available {
+327 |                 self.resume_via_mcp(project).await?;
+    |                 ^^^^                ------- mutable borrow later used here
+    |                 |
+    |                 immutable borrow occurs here
+
+error[E0502]: cannot borrow `*self` as immutable because it is also borrowed as mutable
+   --> database\src\supabase.rs:329:17
+    |
+325 |         if let Some(ref mut project) = self.project {
+    |                     --------------- mutable borrow occurs here
+...
+329 |                 self.resume_via_api(project).await?;
+    |                 ^^^^                ------- mutable borrow later used here
+    |                 |
+    |                 immutable borrow occurs here
+
+error[E0502]: cannot borrow `*self` as immutable because it is also borrowed as mutable
+   --> database\src\supabase.rs:483:17
+    |
+481 |         if let Some(ref mut project) = self.project {
+    |                     --------------- mutable borrow occurs here
+482 |             if self.mcp_available {
+483 |                 self.update_settings_via_mcp(project, &settings).await?;
+    |                 ^^^^                         ------- mutable borrow later used here
+    |                 |
+    |                 immutable borrow occurs here
+
+error[E0502]: cannot borrow `*self` as immutable because it is also borrowed as mutable
+   --> database\src\supabase.rs:485:17
+    |
+481 |         if let Some(ref mut project) = self.project {
+    |                     --------------- mutable borrow occurs here
+...
+485 |                 self.update_settings_via_api(project, &settings).await?;
+    |                 ^^^^                         ------- mutable borrow later used here
+    |                 |
+    |                 immutable borrow occurs here
+
+warning: unused variable: `settings`
+   --> database\src\supabase.rs:500:9
+    |
+500 |         settings: &HashMap<String, String>,
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_settings`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `settings`
+   --> database\src\supabase.rs:515:9
+    |
+515 |         settings: &HashMap<String, String>,
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_settings`
+
+error[E0599]: no method named `echo` found for struct `redis::Connection` in the current scope
+  --> database\src\cache.rs:35:40
+   |
+35 |         let ping_result: String = conn.echo("ping")?;
+   |                                        ^^^^ method not found in `Connection`
+
+error[E0277]: the `?` operator can only be applied to values that implement `Try`
+  --> database\src\cache.rs:41:34
+   |
+41 |         let connection_manager = ConnectionManager::new(client.clone())?;
+   |                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the `?` operator cannot be applied to type `impl std::future::Future<Output = Result<ConnectionManager, RedisError>>`
+   |
+   = help: the trait `Try` is not implemented for `impl std::future::Future<Output = Result<ConnectionManager, RedisError>>`
+note: this implements `Future` and its output type supports `?`, but the future cannot be awaited in a synchronous function
+  --> database\src\cache.rs:41:72
+   |
+28 |     pub fn new(config: CacheConfig) -> Result<Self> {
+   |     ----------------------------------------------- this is not `async`
+...
+41 |         let connection_manager = ConnectionManager::new(client.clone())?;
+   |                                                                        ^
+
+error[E0282]: type annotations needed for `Arc<_, _>`
+  --> database\src\connection.rs:89:13
+   |
+89 |         let pools = Arc::clone(&self.pools);
+   |             ^^^^^
+...
+98 |                 let pools = pools.read().await;
+   |                                   ---- type must be known at this point
+   |
+help: consider giving `pools` an explicit type, where the type for type parameter `T` is specified
+   |
+89 |         let pools: Arc<T, A> = Arc::clone(&self.pools);
+   |                  +++++++++++
+
+error[E0282]: type annotations needed for `Arc<_, _>`
+  --> database\src\connection.rs:90:13
+   |
+90 |         let stats = Arc::clone(&self.stats);
+   |             ^^^^^
+...
+99 |                 let mut stats = stats.write().await;
+   |                                       ----- type must be known at this point
+   |
+help: consider giving `stats` an explicit type, where the type for type parameter `T` is specified
+   |
+90 |         let stats: Arc<T, A> = Arc::clone(&self.stats);
+   |                  +++++++++++
+
+error[E0433]: failed to resolve: use of undeclared type `CircuitBreakerState`
+   --> database\src\connection.rs:600:40
+    |
+600 |             state: Arc::new(Mutex::new(CircuitBreakerState::Closed)),
+    |                                        ^^^^^^^^^^^^^^^^^^^
+    |                                        |
+    |                                        use of undeclared type `CircuitBreakerState`
+    |                                        help: a struct with a similar name exists: `CircuitBreaker`
+
+error[E0433]: failed to resolve: use of undeclared type `CircuitBreakerState`
+   --> database\src\connection.rs:607:9
+    |
+607 |         CircuitBreakerState::Closed
+    |         ^^^^^^^^^^^^^^^^^^^
+    |         |
+    |         use of undeclared type `CircuitBreakerState`
+    |         help: a struct with a similar name exists: `CircuitBreaker`
+
+error[E0433]: failed to resolve: use of undeclared type `CircuitBreakerState`
+   --> database\src\connection.rs:708:20
+    |
+708 |         assert_eq!(CircuitBreakerState::Closed, CircuitBreakerState::Closed);
+    |                    ^^^^^^^^^^^^^^^^^^^
+    |                    |
+    |                    use of undeclared type `CircuitBreakerState`
+    |                    help: a struct with a similar name exists: `CircuitBreaker`
+
+error[E0433]: failed to resolve: use of undeclared type `CircuitBreakerState`
+   --> database\src\connection.rs:708:49
+    |
+708 |         assert_eq!(CircuitBreakerState::Closed, CircuitBreakerState::Closed);
+    |                                                 ^^^^^^^^^^^^^^^^^^^
+    |                                                 |
+    |                                                 use of undeclared type `CircuitBreakerState`
+    |                                                 help: a struct with a similar name exists: `CircuitBreaker`
+
+error[E0433]: failed to resolve: use of undeclared type `CircuitBreakerState`
+   --> database\src\connection.rs:709:20
+    |
+709 |         assert_eq!(CircuitBreakerState::Open, CircuitBreakerState::Open);
+    |                    ^^^^^^^^^^^^^^^^^^^
+    |                    |
+    |                    use of undeclared type `CircuitBreakerState`
+    |                    help: a struct with a similar name exists: `CircuitBreaker`
+
+error[E0433]: failed to resolve: use of undeclared type `CircuitBreakerState`
+   --> database\src\connection.rs:709:47
+    |
+709 |         assert_eq!(CircuitBreakerState::Open, CircuitBreakerState::Open);
+    |                                               ^^^^^^^^^^^^^^^^^^^
+    |                                               |
+    |                                               use of undeclared type `CircuitBreakerState`
+    |                                               help: a struct with a similar name exists: `CircuitBreaker`
+
+error[E0433]: failed to resolve: use of undeclared type `CircuitBreakerState`
+   --> database\src\connection.rs:710:20
+    |
+710 |         assert_eq!(CircuitBreakerState::HalfOpen, CircuitBreakerState::HalfOpen);
+    |                    ^^^^^^^^^^^^^^^^^^^
+    |                    |
+    |                    use of undeclared type `CircuitBreakerState`
+    |                    help: a struct with a similar name exists: `CircuitBreaker`
+
+error[E0433]: failed to resolve: use of undeclared type `CircuitBreakerState`
+   --> database\src\connection.rs:710:51
+    |
+710 |         assert_eq!(CircuitBreakerState::HalfOpen, CircuitBreakerState::HalfOpen);
+    |                                                   ^^^^^^^^^^^^^^^^^^^
+    |                                                   |
+    |                                                   use of undeclared type `CircuitBreakerState`
+    |                                                   help: a struct with a similar name exists: `CircuitBreaker`
+
+error[E0599]: no method named `idle` found for struct `Pool` in the current scope
+   --> database\src\database.rs:212:19
+    |
+212 |         self.pool.idle()
+    |                   ^^^^
+    |
+help: there is a method `num_idle` with a similar name
+    |
+212 |         self.pool.num_idle()
+    |                   ~~~~~~~~
+
+error[E0599]: no method named `idle` found for struct `Pool` in the current scope
+   --> database\src\database.rs:217:51
+    |
+217 |         self.pool.size().saturating_sub(self.pool.idle())
+    |                                                   ^^^^
+    |
+help: there is a method `num_idle` with a similar name
+    |
+217 |         self.pool.size().saturating_sub(self.pool.num_idle())
+    |                                                   ~~~~~~~~
+
+error[E0308]: mismatched types
+   --> database\src\migrations.rs:801:28
+    |
+801 |             migration_dir: temp_dir.path().to_path_buf(),
+    |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `String`, found `PathBuf`
+
+error[E0308]: mismatched types
+   --> database\src\migrations.rs:826:30
+    |
+826 |             migrations: vec![Ok(()), Ok(()), Err(anyhow!("error"))],
+    |                              ^^^^^^ expected `MigrationExecutionStatus`, found `Result<(), _>`
+    |
+    = note: expected struct `MigrationExecutionStatus`
+                 found enum `Result<(), _>`
+
+error[E0308]: mismatched types
+   --> database\src\supabase.rs:634:31
+    |
+634 |             service_role_key: "service_key".to_string(),
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Option<String>`, found `String`
+    |
+    = note: expected enum `std::option::Option<std::string::String>`
+             found struct `std::string::String`
+help: try wrapping the expression in `Some`
+    |
+634 |             service_role_key: Some("service_key".to_string()),
+    |                               +++++                         +
+
+error[E0308]: mismatched types
+   --> database\src\supabase.rs:635:25
+    |
+635 |             jwt_secret: "jwt_secret".to_string(),
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^ expected `Option<String>`, found `String`
+    |
+    = note: expected enum `std::option::Option<std::string::String>`
+             found struct `std::string::String`
+help: try wrapping the expression in `Some`
+    |
+635 |             jwt_secret: Some("jwt_secret".to_string()),
+    |                         +++++                        +
+
+error[E0560]: struct `config::SupabaseConfig` has no field named `database_url`
+   --> database\src\supabase.rs:636:13
+    |
+636 |             database_url: "postgresql://test".to_string(),
+    |             ^^^^^^^^^^^^ `config::SupabaseConfig` does not have this field
+    |
+    = note: available fields are: `database_password`
+
+error[E0560]: struct `config::SupabaseConfig` has no field named `max_connections`
+   --> database\src\supabase.rs:637:13
+    |
+637 |             max_connections: 20,
+    |             ^^^^^^^^^^^^^^^ `config::SupabaseConfig` does not have this field
+    |
+    = note: available fields are: `database_password`
+
+error[E0560]: struct `config::SupabaseConfig` has no field named `connection_timeout`
+   --> database\src\supabase.rs:638:13
+    |
+638 |             connection_timeout: Duration::from_secs(30),
+    |             ^^^^^^^^^^^^^^^^^^ `config::SupabaseConfig` does not have this field
+    |
+    = note: available fields are: `database_password`
+
+error[E0560]: struct `config::SupabaseConfig` has no field named `enable_realtime`
+   --> database\src\supabase.rs:640:13
+    |
+640 |             enable_realtime: true,
+    |             ^^^^^^^^^^^^^^^ `config::SupabaseConfig` does not have this field
+    |
+    = note: available fields are: `database_password`
+
+warning: unused import: `Commands`
+ --> database\src\cache.rs:7:36
+  |
+7 | use redis::{AsyncCommands, Client, Commands, Connection, RedisResult};
+  |                                    ^^^^^^^^
+
+Some errors have detailed explanations: E0277, E0282, E0308, E0382, E0412, E0433, E0502, E0560, E0599...
+For more information about an error, try `rustc --explain E0277`.
+warning: `ninja-gekko-database` (lib test) generated 17 warnings
+error: could not compile `ninja-gekko-database` (lib test) due to 60 previous errors; 17 warnings emitted

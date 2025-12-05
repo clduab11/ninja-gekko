@@ -51,7 +51,7 @@ impl DatabaseManager {
     #[instrument(skip(self, params), fields(query = %query))]
     pub async fn execute_query<T>(&self, query: &str, params: &[Json<T>]) -> Result<Vec<T>>
     where
-        T: for<'de> serde::Deserialize<'de> + Send + Unpin,
+        T: for<'r> sqlx::FromRow<'r, sqlx::postgres::PgRow> + serde::Serialize + for<'de> serde::Deserialize<'de> + Send + Unpin,
     {
         debug!("Executing query: {}", query);
 
@@ -82,7 +82,7 @@ impl DatabaseManager {
     #[instrument(skip(self, params), fields(query = %query))]
     pub async fn execute_query_one<T>(&self, query: &str, params: &[Json<T>]) -> Result<Option<T>>
     where
-        T: for<'de> serde::Deserialize<'de> + Send + Unpin,
+        T: for<'r> sqlx::FromRow<'r, sqlx::postgres::PgRow> + serde::Serialize + for<'de> serde::Deserialize<'de> + Send + Unpin,
     {
         debug!("Executing query for single result: {}", query);
 
@@ -209,12 +209,12 @@ impl DatabaseManager {
 
     /// Get number of idle connections
     pub fn idle_connections(&self) -> u32 {
-        self.pool.idle()
+        self.pool.num_idle() as u32
     }
 
     /// Get number of used connections
     pub fn used_connections(&self) -> u32 {
-        self.pool.size().saturating_sub(self.pool.idle())
+        self.pool.size().saturating_sub(self.pool.num_idle() as u32)
     }
 }
 
@@ -240,36 +240,7 @@ impl std::fmt::Display for DatabaseStats {
     }
 }
 
-/// Database error types
-#[derive(thiserror::Error, Debug)]
-pub enum DatabaseError {
-    #[error("Connection error: {0}")]
-    ConnectionError(String),
 
-    #[error("Query error: {0}")]
-    QueryError(String),
-
-    #[error("Transaction error: {0}")]
-    TransactionError(String),
-
-    #[error("Configuration error: {0}")]
-    ConfigError(String),
-
-    #[error("Migration error: {0}")]
-    MigrationError(String),
-}
-
-impl From<sqlx::Error> for DatabaseError {
-    fn from(err: sqlx::Error) -> Self {
-        match err {
-            sqlx::Error::Io(_) => DatabaseError::ConnectionError(err.to_string()),
-            sqlx::Error::Tls(_) => DatabaseError::ConnectionError(err.to_string()),
-            sqlx::Error::Database(_) => DatabaseError::QueryError(err.to_string()),
-            sqlx::Error::RowNotFound => DatabaseError::QueryError("Row not found".to_string()),
-            _ => DatabaseError::QueryError(err.to_string()),
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {
