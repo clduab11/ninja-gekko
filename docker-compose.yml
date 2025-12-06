@@ -99,6 +99,7 @@ services:
       - "9090:9090"
     volumes:
       - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./config/trading_rules.yml:/etc/prometheus/rules/trading_rules.yml
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'

@@ -1,0 +1,99 @@
+groups:
+  # Recording rules for precomputed metrics
+  - name: trading_metrics
+    rules:
+      - record: trading:opportunities_per_minute
+        expr: rate(trading_opportunities_detected_total[1m]) * 60
+      - record: trading:orders_per_minute
+        expr: rate(trading_orders_placed_total[1m]) * 60
+      - record: trading:success_rate
+        expr: |
+          sum(rate(trading_orders_filled_total[5m])) /
+          sum(rate(trading_orders_placed_total[5m])) * 100
+      - record: trading:pnl_rate
+        expr: rate(trading_pnl_total[1h])
+
+  # Alert rules
+  - name: trading_alerts
+    rules:
+      # Circuit breaker triggered
+      - alert: CircuitBreakerTriggered
+        expr: trading_circuit_breaker_triggered == 1
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Circuit breaker has been triggered"
+          description: "Trading has been halted due to circuit breaker activation"
+
+      # Daily loss exceeded
+      - alert: DailyLossExceeded
+        expr: trading_daily_loss_usd > 5000
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Daily loss threshold exceeded"
+          description: "Daily loss has exceeded $5,000: {{ $value | printf \"%.2f\" }} USD"
+
+      # Low success rate
+      - alert: LowSuccessRate
+        expr: trading:success_rate < 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Trading success rate is below threshold"
+          description: "Success rate is {{ $value | printf \"%.1f\" }}%, below 80% threshold"
+
+      # High drawdown
+      - alert: HighDrawdown
+        expr: trading_max_drawdown_percent > 2
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Maximum drawdown exceeded threshold"
+          description: "Drawdown is {{ $value | printf \"%.2f\" }}%, exceeding 2% threshold"
+
+      # Exchange disconnect
+      - alert: ExchangeDisconnected
+        expr: time() - trading_exchange_last_heartbeat_seconds > 30
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Exchange connection lost"
+          description: "No heartbeat from exchange for over 30 seconds"
+
+      # Consecutive API errors
+      - alert: HighAPIErrorRate
+        expr: increase(trading_api_errors_total[5m]) > 10
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High rate of API errors detected"
+          description: "{{ $value }} API errors in the last 5 minutes"
+
+      # Pod memory high
+      - alert: TradingEnginePodMemoryHigh
+        expr: |
+          container_memory_usage_bytes{container="engine"} /
+          container_spec_memory_limit_bytes{container="engine"} > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Trading engine memory usage is high"
+          description: "Memory usage is above 85% of limit"
+
+      # Pod restart
+      - alert: TradingEnginePodRestart
+        expr: increase(kube_pod_container_status_restarts_total{container="engine"}[15m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Trading engine pod restarted"
+          description: "Pod {{ $labels.pod }} has restarted"
