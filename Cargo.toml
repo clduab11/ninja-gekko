@@ -45,7 +45,7 @@ members = [
     "crates/event-bus",
     "crates/data-pipeline",
     "crates/strategy-engine"
-]
+, "crates/mcp-server-trade"]
 
 [workspace.dependencies]
 # Async runtime and utilities

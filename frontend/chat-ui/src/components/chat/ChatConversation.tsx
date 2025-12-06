@@ -8,7 +8,7 @@ interface Props {
 
 const roleStyles: Record<ChatMessage['role'], string> = {
   user: 'bg-white/5 border border-white/10',
-  assistant: 'bg-accentSoft/10 border border-accentSoft/30',
+  assistant: 'bg-accentSoft/10 border border-accentSoft/30 shadow-[0_0_15px_rgba(73,255,203,0.05)]',
   system: 'bg-panel border border-border/60'
 };
 

@@ -18,3 +18,5 @@ secrecy = { workspace = true }
 bytes = { workspace = true }
 urlencoding = "2.1"
 thiserror = "1.0"
+rust_decimal = { workspace = true }
+async-trait = { workspace = true }

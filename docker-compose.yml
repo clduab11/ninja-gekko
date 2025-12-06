@@ -54,6 +54,8 @@ services:
     logging:
       driver: "json-file"
     restart: unless-stopped
+    networks:
+      - frontend
 
   postgres:
     image: postgres:15-alpine

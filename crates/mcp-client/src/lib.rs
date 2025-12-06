@@ -4,6 +4,7 @@
 //! allowing the trading bot to interact with external tools and resources.
 
 pub mod discord_webhook;
+pub mod execution;
 pub mod perplexity_browser;
 pub mod perplexity_client;
 pub mod rate_limiter;

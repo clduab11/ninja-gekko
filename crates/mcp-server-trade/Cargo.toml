@@ -1,0 +1,22 @@
+[package]
+name = "mcp-server-trade"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "mcp-server-trade"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { workspace = true, features = ["full"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+clap = { version = "4.4", features = ["derive"] }
+async-trait = { workspace = true }
+rust_decimal = { workspace = true }
+
+# Internal dependencies
+exchange-connectors = { path = "../exchange-connectors" }
