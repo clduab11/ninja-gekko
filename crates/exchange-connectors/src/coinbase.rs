@@ -87,15 +87,20 @@ impl CoinbaseConnector {
     /// Generate JWT for Coinbase CDP API
     fn generate_jwt(&self, method: &str, path: &str) -> ExchangeResult<String> {
         let key_name = &self.config.api_key_name;
-        // Handle potential double-escaped newlines from .env
-        let private_key_pem = self.config.private_key
-            .replace("\\n", "\n")
-            .replace("\"", ""); // Remove quotes if they were included in the value
-            
+        // Handle potential double-escaped newlines from .env and surrounding quotes
+        let private_key_pem = self.config.private_key.trim();
+        let private_key_pem = if private_key_pem.starts_with('"') && private_key_pem.ends_with('"') {
+            &private_key_pem[1..private_key_pem.len()-1]
+        } else {
+            private_key_pem
+        };
+        
+        // Unescape newlines: replace literal "\n" with actual newline character
+        let private_key_pem = private_key_pem.replace("\\n", "\n");
         let private_key_pem = private_key_pem.trim();
         
         if private_key_pem.len() > 20 {
-            debug!("PEM start: '{}'", &private_key_pem[..20]);
+            debug!("PEM start: '{}'...", &private_key_pem[..20]);
         } else {
             debug!("PEM too short: '{}'", private_key_pem);
         }

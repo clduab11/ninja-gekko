@@ -11,7 +11,7 @@
 [![WebSocket](https://img.shields.io/badge/WebSocket-Streaming-blue.svg)](#websocket-data-pipeline)
 [![WASM](https://img.shields.io/badge/WASM-Strategies-purple.svg)](#strategy-engine)
 
-[![Rust](https://img.shields.io/badge/rust-1.80+-orange.svg)](https://www.rust-lang.org)
+[![Rust](https://img.shields.io/badge/rust-1.83+-orange.svg)](https://www.rust-lang.org)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
 [![Neural Networks](https://img.shields.io/badge/Neural-ruv--FANN-blue.svg)](https://github.com/ruvnet/ruv-FANN)
 [![Swarm Intelligence](https://img.shields.io/badge/Swarm-flow--nexus-purple.svg)](https://github.com/ruvnet/flow-nexus)
@@ -117,16 +117,50 @@ Native Model Context Protocol integration with 70+ servers, formalized as the **
 
 Tenno-MCP now exposes a **Tool Orchestration Registry** inspired by Claude-Flow, enabling swarm agents to register capabilities, negotiate ownership, and coordinate workflows through consensus-driven leasing contracts.
 
+## **🎭 Gordon Chat Interface**
+
+The **Gordon Chat Interface** provides a conversational control center for managing Ninja Gekko's autonomous trading operations. Built with React + TypeScript and powered by Vite for fast development iteration.
+
+### **Frontend Features**
+- **Real-time Chat**: Conversational interface with Gordon AI persona
+- **Persona Controls**: Adjustable AI tone (witty, direct, analytical) and style
+- **Action Dashboard**: One-click system actions and trading controls
+- **Diagnostics Panel**: Live system health and performance metrics
+- **Insights Panel**: Market analysis and trading recommendations
+- **Responsive Design**: Mobile-friendly interface with Tailwind CSS
+
+### **Gordon AI Capabilities**
+- **Dynamic Personas**: Switch between analytical, witty, or direct communication styles
+- **Context-Aware Responses**: Maintains conversation history and context
+- **System Integration**: Direct control over trading pause, account snapshots, and swarm deployment
+- **Research Integration**: Triggers deep market research and news aggregation
+- **Diagnostic Output**: Provides neural forecasts and risk assessments with each response
+
+### **Frontend Development**
+```bash
+# Navigate to chat UI directory
+cd frontend/chat-ui
+
+# Install dependencies with pnpm (recommended)
+pnpm install
+
+# Start development server with hot reload
+pnpm dev
+
+# Build for production
+pnpm build
+```
+
 ### **🥷 Autonomous Operation Modes**
 
-#### **🌙 Stealth Mode**  
+#### **🌙 Stealth Mode**
 *Execute trades without leaving footprints*
 - Fragmented order execution across multiple venues
-- Dynamic position sizing to avoid detection algorithms  
+- Dynamic position sizing to avoid detection algorithms
 - Advanced market impact minimization techniques
 - Order timing randomization and camouflage patterns
 
-#### **⚡ Precision Mode**  
+#### **⚡ Precision Mode**
 *Microsecond-perfect execution*
 - Neural network price prediction with confidence intervals
 - Multi-timeframe technical analysis integration
@@ -148,6 +182,7 @@ Tenno-MCP now exposes a **Tool Orchestration Registry** inspired by Claude-Flow,
 
 | Feature | **Ninja Gekko** | Neural Trader MCP | Claude-Flow |
 |---------|-----------------|-------------------|-------------|
+| **🤖 Agentic Workflows** | Claude Code + Notion AI integration for automated PR reviews and PM-in-the-loop issue generation | Manual workflow orchestration | Swarm-assisted development |
 | **Neural Forecasting Models** | ruv-FANN, Neuro-Divergent, NHITS, N-BEATSx, LSTM/GRU, WaveNet, TFT preview | NHITS, N-BEATSx, LSTM/GRU | Swarm-assisted inference |
 | **MCP Protocol** | Tenno-MCP with declarative tool manifests and USB-C-style plug-and-play | FastMCP core | Claude MCP/Flow orchestration |
 | **Agentic Swarm Orchestration** | ruv-swarm with tool registry, leasing, and consensus failover | 87+ tool hive-mind | Swarm coordination layer |
@@ -309,8 +344,11 @@ Ninja Gekko is experimental, open-source research software. Automated trading ca
 ### **Prerequisites**
 
 - **Operating System**: macOS 12+ (Apple Silicon optimized) or Linux
-- **Rust**: 1.75 or higher with Cargo package manager
+- **Rust**: 1.83 or higher with Cargo package manager (bookworm recommended)
 - **Docker**: 20.10 or higher
+- **Docker Compose**: 2.0 or higher
+- **Node.js**: 18.0 or higher (for frontend development)
+- **pnpm**: 8.0 or higher (preferred package manager for frontend)
 - **Redis**: 6.0 or higher
 - **GPU Support**: NVIDIA GPU with CUDA 11.8+ (optional but recommended)
 - **Memory**: 16GB RAM minimum, 32GB recommended
@@ -334,52 +372,69 @@ Ninja Gekko is experimental, open-source research software. Automated trading ca
     rustup target add x86_64-unknown-linux-gnu
     ```
 
-3. **Docker Services**
+3. **Environment Setup**
     ```bash
-    # Start core services
-    docker-compose up -d redis postgres
+    # Copy environment template and configure
+    cp .env.template .env
+    # Edit .env with your API keys and configuration
+    ```
+
+4. **Docker Services**
+    ```bash
+    # Start all services (recommended)
+    docker-compose up -d
+
+    # Or start services individually
+    docker-compose up -d postgres redis
 
     # Verify services
     docker-compose ps
     ```
 
-4. **Build the Application**
+5. **Build the Application**
     ```bash
     # Build the Rust application
     cargo build --release
 
     # Run tests to verify installation
-    cargo test
+    cargo test --all
     ```
 
-5. **System Initialization**
+6. **Frontend Development**
     ```bash
-    # Run the autonomous trading bot (precision mode, sandboxed)
+    # Install frontend dependencies
+    cd frontend/chat-ui
+    pnpm install
+
+    # Start development server
+    pnpm dev
+    ```
+
+7. **System Initialization**
+    ```bash
+    # Run the trading engine with API server
     cargo run --release -- \
-      --config config/default.toml \
+      --config config/arbitrage.toml \
       --mode precision \
       --sandbox
 
-    # Configure environment variables
-    cp .env.example .env
-    # Edit .env with your API keys and configuration
-    ```
-
-6. **Launch Telemetry-Only Session**
-    ```bash
-    # Stream metrics without live trading
+    # Or run with telemetry only
     cargo run -- \
-      --config config/default.toml \
+      --config config/arbitrage.toml \
       --mode swarm \
       --log-level debug \
       --sandbox
     ```
 
-7. **Access the System**
+8. **Access the System**
+    - **Talk to Gordon Chat UI**: http://localhost:5173
     - **Chat Orchestration API**: http://localhost:8787/health
-    - **Talk to Gordon UI (dev)**: http://localhost:5173 (run `pnpm install && pnpm dev --filter ninja-gekko-chat-ui` inside `frontend/chat-ui`)
-    - **API Documentation**: http://localhost:8080/docs
+    - **REST API Endpoints**: http://localhost:8787/api/v1/
     - **Legacy Health Check**: http://localhost:8080/health
+    - **Prometheus Metrics**: http://localhost:8787/metrics
+    - **Grafana Dashboard**: http://localhost:3000
+    - **Database**: PostgreSQL on port 5432
+    - **Redis Cache**: Redis on port 6379
 
 ### **Basic Configuration**
 
@@ -430,6 +485,34 @@ RUST_BACKTRACE=1
 5. **[🔌 Milestone 5](specs/5_api_endpoints_integration.md)** - API endpoints and services
 
 ### **🚀 API Documentation**
+
+#### **Core API Endpoints** (Port 8787)
+- **Health Check**: `GET /health` - Service status verification
+- **Chat History**: `GET /api/chat/history` - Retrieve conversation history
+- **Send Message**: `POST /api/chat/message` - Send chat prompts to Gordon
+- **Persona Controls**: `GET/POST /api/chat/persona` - Manage AI persona settings
+- **System Actions**: `GET /api/actions` - List available system actions
+- **Trading Control**: `POST /api/trading/pause` - Pause/resume trading operations
+- **Account Data**: `GET /api/accounts/snapshot` - Get account balances and positions
+- **Market News**: `GET /api/news/headlines` - Fetch latest market news
+- **Deep Research**: `POST /api/research/sonar` - Trigger research tasks
+- **Swarm Control**: `POST /api/agents/swarm` - Launch agent swarms
+
+#### **Trading Engine API** (Port 8787)
+- **Trades**: `GET/POST/PUT/DELETE /api/v1/trades` - Manage trading operations
+- **Portfolio**: `GET /api/v1/portfolio` - Portfolio data and positions
+- **Strategies**: `GET/POST/PUT/DELETE /api/v1/strategies` - Strategy management
+- **Market Data**: `GET /api/v1/market-data` - Real-time market information
+- **Authentication**: `POST /api/v1/auth/login` - JWT token management
+
+#### **Monitoring & Observability**
+- **Metrics**: `GET /metrics` - Prometheus metrics endpoint
+- **Prometheus Dashboard**: http://localhost:9090
+- **Grafana Dashboard**: http://localhost:3000 (admin/admin)
+
+#### **Frontend Development**
+- **Gordon Chat UI**: http://localhost:5173 - React + TypeScript interface
+- **Vite Dev Server**: Hot module reloading during development
 
 - **[📡 REST API Reference](docs/api_reference.md)** - Complete API endpoint documentation
 - **[🔌 MCP Integration Guide](docs/mcp_integration.md)** - External service integration
@@ -770,10 +853,13 @@ risk_management:
 ### **Health Check Commands**
 
 ```bash
-# Check system health
-curl http://localhost:8080/health
+# Check system health (chat orchestration API)
+curl http://localhost:8787/health
 
-# Monitor service status
+# Check trading engine API health
+curl http://localhost:8787/api/v1/health
+
+# Monitor all services
 docker-compose ps
 
 # Check Redis connectivity
@@ -781,6 +867,9 @@ redis-cli ping
 
 # Verify database connection
 psql $DATABASE_URL -c "SELECT 1"
+
+# Check Prometheus metrics
+curl http://localhost:8787/metrics
 ```
 
 ### **Debug Mode Activation**
@@ -790,11 +879,22 @@ psql $DATABASE_URL -c "SELECT 1"
 export LOG_LEVEL=DEBUG
 export DEBUG=true
 
-# Start system with verbose output
-cargo run -- --verbose --debug
+# Start trading engine with verbose output
+cargo run --release -- \
+  --config config/arbitrage.toml \
+  --mode swarm \
+  --log-level debug \
+  --sandbox
 
 # Enable performance profiling
 cargo bench --profile release
+
+# Run comprehensive tests
+cargo test --all
+
+# Check code formatting and linting
+cargo fmt -- --check
+cargo clippy --all-targets -- -D warnings
 ```
 
 ---

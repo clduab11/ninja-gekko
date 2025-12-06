@@ -23,16 +23,39 @@ const DiagnosticsPanel = ({ diagnostics }: Props) => {
   }
 
   return (
-    <section className="rounded-xl border border-border/60 bg-panel/80 p-4 text-sm">
+    <section 
+      className="rounded-xl border border-border/60 bg-panel/80 p-4 text-sm"
+      data-testid="diagnostics-panel"
+      role="region"
+      aria-label="System diagnostics and performance metrics"
+    >
       <header className="text-xs uppercase tracking-[0.35em] text-white/40">Diagnostics</header>
-      <ul className="mt-3 space-y-3">
-        {diagnostics.map((log) => (
-          <li key={log.id} className={`rounded-lg px-3 py-2 text-xs ${colorBySeverity[log.severity]}`}>
+      <ul 
+        className="mt-3 space-y-3"
+        data-testid="diagnostics-list"
+        role="list"
+        aria-live="polite"
+        aria-label="Diagnostic alerts and notifications"
+      >
+        {diagnostics.map((log, index) => (
+          <li 
+            key={log.id} 
+            className={`rounded-lg px-3 py-2 text-xs ${colorBySeverity[log.severity]}`}
+            data-testid={`diagnostic-item-${index}`}
+            data-severity={log.severity}
+            role="listitem"
+            aria-label={`${log.severity} diagnostic: ${log.label}`}
+          >
             <div className="flex items-center gap-2 font-semibold uppercase tracking-[0.3em]">
-              {iconBySeverity[log.severity]}
-              <span>{log.label}</span>
+              <span aria-hidden="true">{iconBySeverity[log.severity]}</span>
+              <span data-testid={`diagnostic-label-${index}`}>{log.label}</span>
             </div>
-            <p className="mt-2 text-[13px] leading-relaxed text-white/80">{log.detail}</p>
+            <p 
+              className="mt-2 text-[13px] leading-relaxed text-white/80"
+              data-testid={`diagnostic-detail-${index}`}
+            >
+              {log.detail}
+            </p>
           </li>
         ))}
       </ul>

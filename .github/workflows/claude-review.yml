@@ -1,0 +1,42 @@
+
+name: Claude Code Review
+
+on:
+  issues:
+    types: [opened, edited]
+  pull_request:
+    types: [opened, synchronize]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  claude-agent:
+    runs-on: ubuntu-latest
+    if: contains(github.event.comment.body, '@claude') || github.event_name == 'pull_request' || github.event_name == 'issues'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Invoke Claude Agent
+        uses: anthropics/claude-code-action@v1 # Placeholder for official action; users may need to adjust based on specific enterprise availability
+        with:
+          api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          context-file: "CLAUDE.md"
+          model: "claude-3-5-sonnet-20241022"
+          instruction: |
+            You are Gordon (the Ninja Gekko lead engineer). 
+            Review the changes or issue content against `CLAUDE.md` guidelines.
+            
+            IF PULL REQUEST:
+            - Focus on: Safety, Performance (allocations), and Type Safety.
+            - Post a review comment with specific refactoring suggestions if any criteria are failed.
+            - If code is perfect, comment: "Alpha confirmed. Merging."
+            
+            IF ISSUE:
+            - Propose a technical implementation plan (files to touch, crates to use).
