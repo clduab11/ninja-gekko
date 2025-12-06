@@ -9,7 +9,7 @@ use event_bus::{
     EventBusError, EventHandler, EventSender, MarketEvent, MarketPayload, PublishMode, SignalEvent,
 };
 use ninja_gekko_core::types::AccountId;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 use tracing::{debug, error};
 use uuid::Uuid;
 

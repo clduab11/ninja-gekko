@@ -5,7 +5,6 @@
 
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
     response::Json,
 };
 use std::sync::Arc;
@@ -15,7 +14,7 @@ use tracing::{info, warn};
 use uuid::Uuid;
 
 use crate::{
-    error::{ApiError, ApiResult},
+    error::ApiResult,
     models::ApiResponse,
     AppState,
 };

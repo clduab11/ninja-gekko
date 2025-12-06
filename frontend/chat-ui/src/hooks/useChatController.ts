@@ -81,7 +81,7 @@ export function useChatController() {
     messages,
     persona,
     diagnostics,
-    isSending: mutation.isLoading,
+    isSending: mutation.isPending,
     isPersonaLoading,
     sendMessage,
     savePersona

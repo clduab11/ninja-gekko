@@ -54,7 +54,13 @@ impl Default for ApiConfig {
         Self {
             bind_address: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 3000),
             database_url: "postgresql://localhost/gordon_gekko".to_string(),
-            jwt_secret: std::env::var("GG_API_JWT_SECRET").expect("JWT secret must be set via GG_API_JWT_SECRET env variable"),
+            jwt_secret: std::env::var("GG_API_JWT_SECRET").unwrap_or_else(|_| {
+                if cfg!(test) {
+                    "test-secret-value-for-unit-tests-do-not-use-in-prod".to_string()
+                } else {
+                    panic!("JWT secret must be set via GG_API_JWT_SECRET env variable")
+                }
+            }),
             environment: "development".to_string(),
             cors_origins: vec!["http://localhost:3000".to_string()],
             rate_limiting: RateLimitingConfig::default(),
@@ -104,7 +110,7 @@ impl ApiConfig {
         }
 
         let config = builder.build()?;
-        let mut api_config: ApiConfig = config.try_deserialize()?;
+        let api_config: ApiConfig = config.try_deserialize()?;
 
         // Validate configuration
         api_config.validate()?;

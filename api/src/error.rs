@@ -1,4 +1,4 @@
-//! Error handling and custom error types for the API
+﻿//! Error handling and custom error types for the API
 //!
 //! This module provides comprehensive error handling with custom error types,
 //! structured error responses, and proper HTTP status code mapping.
@@ -43,6 +43,18 @@ pub enum ApiError {
     /// Market data errors
     #[error("Market data error: {message}")]
     MarketData { message: String },
+
+    /// Portfolio errors
+    #[error("Portfolio error: {message}")]
+    Portfolio { message: String },
+
+    /// Strategy errors
+    #[error("Strategy error: {message}")]
+    Strategy { message: String },
+
+    /// Arbitrage errors
+    #[error("Arbitrage error: {message}")]
+    Arbitrage { message: String },
 
     /// Rate limiting errors
     #[error("Rate limit exceeded: {message}")]
@@ -162,6 +174,9 @@ impl ApiError {
             ApiError::Validation { .. } => StatusCode::BAD_REQUEST,
             ApiError::Trading { .. } => StatusCode::BAD_REQUEST,
             ApiError::MarketData { .. } => StatusCode::BAD_REQUEST,
+            ApiError::Portfolio { .. } => StatusCode::BAD_REQUEST,
+            ApiError::Strategy { .. } => StatusCode::BAD_REQUEST,
+            ApiError::Arbitrage { .. } => StatusCode::BAD_REQUEST,
             ApiError::RateLimit { .. } => StatusCode::TOO_MANY_REQUESTS,
             ApiError::ExternalService { .. } => StatusCode::BAD_GATEWAY,
             ApiError::NotFound { .. } => StatusCode::NOT_FOUND,
@@ -179,6 +194,9 @@ impl ApiError {
             ApiError::Validation { .. } => "VALIDATION_ERROR",
             ApiError::Trading { .. } => "TRADING_ERROR",
             ApiError::MarketData { .. } => "MARKET_DATA_ERROR",
+            ApiError::Portfolio { .. } => "PORTFOLIO_ERROR",
+            ApiError::Strategy { .. } => "STRATEGY_ERROR",
+            ApiError::Arbitrage { .. } => "ARBITRAGE_ERROR",
             ApiError::RateLimit { .. } => "RATE_LIMIT_ERROR",
             ApiError::ExternalService { .. } => "EXTERNAL_SERVICE_ERROR",
             ApiError::Internal { .. } => "INTERNAL_ERROR",
@@ -302,7 +320,7 @@ where
             Ok(data) => Ok(super::models::ApiResponse::success_with_request_id(data, request_id.unwrap_or_default())),
             Err(err) => {
                 let api_error = err.into();
-                let error_response = api_error.to_error_response(request_id);
+                let error_response = api_error.to_error_response(request_id.clone());
                 Ok(super::models::ApiResponse::error_with_request_id(
                     serde_json::to_string(&error_response)
                         .unwrap_or_else(|_| "Failed to serialize error response".to_string()),
@@ -327,6 +345,30 @@ impl IntoResponse for ApiError {
         );
 
         (status_code, Json(error_response)).into_response()
+    }
+}
+
+impl From<jsonwebtoken::errors::Error> for ApiError {
+    fn from(err: jsonwebtoken::errors::Error) -> Self {
+        ApiError::Auth {
+            message: format!("Token error: {}", err),
+        }
+    }
+}
+
+impl From<serde_json::Error> for ApiError {
+    fn from(err: serde_json::Error) -> Self {
+        ApiError::Internal {
+            message: format!("Serialization error: {}", err),
+        }
+    }
+}
+
+impl From<axum::Error> for ApiError {
+    fn from(err: axum::Error) -> Self {
+        ApiError::Internal {
+            message: format!("Server error: {}", err),
+        }
     }
 }
 
@@ -533,8 +575,8 @@ pub enum MarketDataError {
     InvalidTimeRange { reason: String },
 
     /// Data source unavailable
-    #[error("Market data source unavailable: {source}")]
-    DataSourceUnavailable { source: String },
+    #[error("Market data source unavailable: {details}")]
+    DataSourceUnavailable { details: String },
 }
 
 impl MarketDataError {
@@ -556,9 +598,9 @@ impl MarketDataError {
                     message: format!("Invalid time range: {}", reason),
                 }
             }
-            MarketDataError::DataSourceUnavailable { source } => {
+            MarketDataError::DataSourceUnavailable { details } => {
                 ApiError::ExternalService {
-                    service: source,
+                    service: details,
                     message: "Market data source unavailable".to_string(),
                 }
             }

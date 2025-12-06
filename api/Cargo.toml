@@ -10,12 +10,16 @@ categories = ["api-bindings", "web-programming", "finance"]
 # Core dependencies
 ninja-gekko-core = { path = "../core" }
 ninja-gekko-database = { path = "../database" }
+arbitrage-engine = { path = "../crates/arbitrage-engine" }
+exchange-connectors = { path = "../crates/exchange-connectors" }
+strategy-engine = { path = "../crates/strategy-engine" }
+event-bus = { path = "../crates/event-bus" }
 
 # Axum web framework
-axum = { version = "0.7", features = ["ws", "macros", "tracing"] }
+axum = { version = "0.7", features = ["ws", "macros", "tracing", "multipart"] }
 axum-extra = { version = "0.9", features = ["cookie"] }
 tower = { version = "0.4", features = ["util", "timeout", "load-shed", "limit"] }
-tower-http = { version = "0.5", features = ["cors", "trace", "request-id", "util"] }
+tower-http = { version = "0.5", features = ["cors", "trace", "request-id", "util", "limit", "fs"] }
 
 # Async runtime
 tokio = { version = "1.0", features = ["full"] }
@@ -70,8 +74,8 @@ rand = "0.8"
 # Security validation
 regex = "1.10"
 lazy_static = "1.4"
+rust_decimal = { version = "1.35", features = ["serde-with-str"] }
 
-[dev-dependencies]
 # Testing
 criterion = "0.5"
 proptest = "1.0"

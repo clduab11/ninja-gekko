@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { BarChart3, BrainCircuit, HandPalm } from 'lucide-react';
+import { BarChart3, BrainCircuit, Hand } from 'lucide-react';
 
 import { fetchAccountSnapshot, fetchNews, pauseTrading, requestResearch, summonSwarm } from '../../services/api';
 import { AccountSnapshot, NewsHeadline } from '../../types';
@@ -29,7 +29,7 @@ const ActionDashboard = () => {
           className="flex items-center justify-between rounded-lg border border-border/60 bg-panel px-3 py-2 text-left text-sm hover:border-accent"
         >
           <span className="flex items-center gap-2 text-white/80">
-            <HandPalm className="h-4 w-4 text-accent" /> Pause Trading (6h)
+            <Hand className="h-4 w-4 text-accent" /> Pause Trading (6h)
           </span>
           <span className="text-xs text-white/40">OANDA · Coinbase · Binance.us</span>
         </button>

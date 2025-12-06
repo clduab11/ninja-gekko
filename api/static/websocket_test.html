@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WebSocket Test</title>
+  </head>
+  <body>
+    <h1>WebSocket Test</h1>
+    <div id="status">Disconnected</div>
+    <div id="messages"></div>
+    <script>
+      const ws = new WebSocket("ws://localhost:3000/ws");
+      const status = document.getElementById("status");
+      const messages = document.getElementById("messages");
+
+      ws.onopen = () => {
+        status.innerText = "Connected";
+        ws.send(
+          JSON.stringify({
+            type: "subscribe",
+            channel: "market_data",
+            symbols: ["BTC-USD"],
+          })
+        );
+      };
+
+      ws.onmessage = (event) => {
+        const message = document.createElement("div");
+        message.innerText = event.data;
+        messages.appendChild(message);
+      };
+
+      ws.onclose = () => {
+        status.innerText = "Disconnected";
+      };
+    </script>
+  </body>
+</html>

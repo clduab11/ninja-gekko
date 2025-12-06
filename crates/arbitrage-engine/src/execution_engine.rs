@@ -3,7 +3,7 @@
 //! This module implements the execution engine for simultaneous order placement
 //! across multiple exchanges to capture arbitrage opportunities.
 
-use crate::{ArbitrageError, ArbitrageOpportunity, ArbitrageResult};
+use crate::{ArbitrageOpportunity, ArbitrageResult};
 use exchange_connectors::{ExchangeConnector, ExchangeId};
 use std::collections::HashMap;
 use std::sync::Arc;

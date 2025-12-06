@@ -1,0 +1,30 @@
+# Rust build artifacts
+target/
+
+# Frontend node_modules (will be installed in container)
+frontend/chat-ui/node_modules/
+frontend/chat-ui/dist/
+
+# Git
+.git/
+.github/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Environment files (loaded via .env in compose)
+.env
+.env.*
+!.env.template
+
+# Documentation and development files
+docs/
+*.md
+!README.md

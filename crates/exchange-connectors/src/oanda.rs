@@ -344,7 +344,7 @@ fn emit_oanda_price(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    
 
     #[test]
     fn instrument_formatting() {

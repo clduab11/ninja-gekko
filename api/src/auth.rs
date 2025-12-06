@@ -5,16 +5,14 @@
 
 use axum::{
     extract::Request,
-    http::{header, StatusCode},
+    http::header,
     middleware::Next,
-    response::{IntoResponse, Response},
-    body::Body,
+    response::IntoResponse,
 };
 use axum_extra::extract::CookieJar;
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, TokenData, Validation};
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
-use tracing::{info, warn, error};
+use tracing::{info, warn};
 use chrono::{Duration, Utc};
 
 use crate::error::{ApiError, ApiResult};
@@ -119,7 +117,8 @@ impl AuthMiddleware {
     /// Validate JWT token and return claims
     async fn validate_token(token: &str) -> ApiResult<Claims> {
         let decoding_key = DecodingKey::from_secret(Self::get_jwt_secret().as_ref());
-        let validation = Validation::default();
+        let mut validation = Validation::default();
+        validation.set_audience(&["trading-platform"]);
 
         match decode::<Claims>(token, &decoding_key, &validation) {
             Ok(token_data) => {
@@ -195,8 +194,8 @@ impl AuthMiddleware {
         // Generate new access token
         let access_token = Self::generate_access_token(
             &refresh_claims.sub,
-            refresh_claims.roles,
-            refresh_claims.account_ids,
+            refresh_claims.roles.clone(),
+            refresh_claims.account_ids.clone(),
         ).await?;
 
         // Generate new refresh token
@@ -243,12 +242,24 @@ impl AuthMiddleware {
 
     /// Get JWT secret from environment
     fn get_jwt_secret() -> String {
-        std::env::var("JWT_SECRET").expect("JWT_SECRET environment variable must be set")
+        std::env::var("JWT_SECRET").unwrap_or_else(|_| {
+            if cfg!(test) {
+                "test-secret-at-least-32-characters-long-for-testing".to_string()
+            } else {
+                panic!("JWT_SECRET environment variable must be set")
+            }
+        })
     }
 
     /// Get refresh token secret from environment
     fn get_refresh_secret() -> String {
-        std::env::var("JWT_REFRESH_SECRET").expect("JWT_REFRESH_SECRET environment variable must be set")
+        std::env::var("JWT_REFRESH_SECRET").unwrap_or_else(|_| {
+            if cfg!(test) {
+                "test-refresh-secret-at-least-32-characters-long".to_string()
+            } else {
+                panic!("JWT_REFRESH_SECRET environment variable must be set")
+            }
+        })
     }
 
     /// Revoke a user's tokens (logout)

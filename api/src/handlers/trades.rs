@@ -6,12 +6,14 @@
 
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
     response::Json,
 };
 use std::sync::Arc;
 use serde_json::json;
-use tracing::{info, warn, error};
+use tracing::info;
+use rust_decimal::Decimal;
+use rust_decimal::prelude::FromPrimitive;
+use uuid::Uuid;
 
 use ninja_gekko_core::types::{Order, OrderSide, OrderType, OrderStatus};
 use crate::{
@@ -31,7 +33,7 @@ pub async fn list_trades(
 
     // Validate pagination parameters
     let mut pagination = params;
-    pagination.validate().map_err(ApiError::validation)?;
+    pagination.validate().map_err(|e| ApiError::validation(e.to_string(), None))?;
 
     // TODO: Implement actual database query with filtering
     // For now, return mock data
@@ -86,19 +88,20 @@ pub async fn create_trade(
     let order_id = format!("order_{}", chrono::Utc::now().timestamp_millis());
     let order = request.to_order(order_id)
         .map_err(|msg| ApiError::trading(msg))?;
-
     // TODO: Implement actual trade execution through trading engine
     // For now, simulate trade creation
     let created_order = simulate_trade_creation(order);
 
-    let trade_response = TradeResponse::from(created_order);
+    let trade_response = TradeResponse::from(created_order.clone());
     let response = ApiResponse::success(trade_response);
 
     info!("Trade created successfully: {}", created_order.id);
     Ok(Json(response))
 }
 
-/// Get a specific trade by ID
+
+
+/// Get a trade by ID
 pub async fn get_trade(
     State(state): State<Arc<crate::AppState>>,
     Path(trade_id): Path<String>,
@@ -110,47 +113,47 @@ pub async fn get_trade(
     match find_mock_trade(&trade_id) {
         Some(order) => {
             let trade_response = TradeResponse::from(order);
-            let response = ApiResponse::success(trade_response);
-            Ok(Json(response))
+            Ok(Json(ApiResponse::success(trade_response)))
         }
-        None => {
-            Err(ApiError::not_found(format!("Trade {}", trade_id)))
-        }
+        None => Err(ApiError::not_found(format!("Trade {}", trade_id))),
     }
 }
 
-/// Update an existing trade
+/// Update a trade
 pub async fn update_trade(
     State(state): State<Arc<crate::AppState>>,
     Path(trade_id): Path<String>,
     Json(request): Json<UpdateTradeRequest>,
 ) -> ApiResult<Json<ApiResponse<TradeResponse>>> {
-    info!("Updating trade {}: {:?}", trade_id, request);
+    info!("Updating trade: {}", trade_id);
 
-    // Validate the update request
-    request.validate().map_err(|msg| ApiError::validation(msg, None))?;
-
-    // TODO: Implement actual trade lookup and update
-    // For now, return mock data
+    // TODO: Implement actual trade update
+    // For now, simulate update
     match find_mock_trade(&trade_id) {
         Some(mut order) => {
-            // Apply updates (simplified)
-            if let Some(quantity) = request.quantity {
-                order.quantity = quantity;
+            // Check if trade can be updated
+            if order.status == OrderStatus::Filled {
+                return Err(ApiError::trading("Cannot update filled trade"));
             }
+
+            // Update fields
             if let Some(price) = request.price {
-                order.price = price;
+                if let Some(dec_price) = Decimal::from_f64(price) {
+                     order.price = Some(dec_price);
+                }
+            }
+            if let Some(quantity) = request.quantity {
+               if let Some(dec_qty) = Decimal::from_f64(quantity) {
+                    order.quantity = dec_qty;
+               }
             }
 
+            // order.updated_at = chrono::Utc::now(); // Field not available in core Order type
+            
             let trade_response = TradeResponse::from(order);
-            let response = ApiResponse::success(trade_response);
-
-            info!("Trade updated successfully: {}", trade_id);
-            Ok(Json(response))
+            Ok(Json(ApiResponse::success(trade_response)))
         }
-        None => {
-            Err(ApiError::not_found(format!("Trade {}", trade_id)))
-        }
+        None => Err(ApiError::not_found(format!("Trade {}", trade_id))),
     }
 }
 
@@ -259,62 +262,62 @@ pub async fn get_trade_stats(
 // Helper functions for mock data (to be replaced with actual database operations)
 
 /// Create mock trades for testing
+/// Create mock trades for testing
 fn create_mock_trades() -> Vec<Order> {
-    let now = chrono::Utc::now();
-    let one_hour_ago = now - chrono::Duration::hours(1);
-    let two_hours_ago = now - chrono::Duration::hours(2);
+    let mut trades = Vec::new();
 
-    vec![
-        Order::new(
-            "AAPL".to_string(),
-            OrderType::Limit,
-            OrderSide::Buy,
-            100.0,
-            150.0,
-            "acc_001".to_string(),
-        ),
-        Order::new(
-            "GOOGL".to_string(),
-            OrderType::Market,
-            OrderSide::Sell,
-            50.0,
-            2800.0,
-            "acc_001".to_string(),
-        ),
-        Order::new(
-            "TSLA".to_string(),
-            OrderType::Stop,
-            OrderSide::Buy,
-            25.0,
-            220.0,
-            "acc_002".to_string(),
-        ),
-    ]
+    // Mock trade 1
+    trades.push(Order::new(
+        "AAPL".to_string(),
+        OrderType::Limit,
+        OrderSide::Buy,
+        Decimal::from_f64(100.0).unwrap(),
+        Some(Decimal::from_f64(150.0).unwrap()),
+        "acc_001".to_string(),
+    ));
+    
+    // Mock trade 2
+    trades.push(Order::new(
+        "GOOGL".to_string(),
+        OrderType::Market,
+        OrderSide::Sell,
+        Decimal::from_f64(50.0).unwrap(),
+        None,
+        "acc_001".to_string(),
+    ));
+
+    // Mock trade 3
+    trades.push(Order::new(
+        "TSLA".to_string(),
+        OrderType::Stop,
+        OrderSide::Buy,
+        Decimal::from_f64(25.0).unwrap(),
+        Some(Decimal::from_f64(220.0).unwrap()),
+        "acc_002".to_string(),
+    ));
+
+    trades
 }
 
 /// Find a mock trade by ID
 fn find_mock_trade(trade_id: &str) -> Option<Order> {
-    let mut trades = create_mock_trades();
-    trades.push(Order::new(
-        "MSFT".to_string(),
-        OrderType::Limit,
-        OrderSide::Buy,
-        75.0,
-        300.0,
-        "acc_001".to_string(),
-    ));
-
-    trades.into_iter()
-        .find(|order| order.id == trade_id)
+    // Basic implementation
+    let trades = create_mock_trades();
+    // Simulate lookup
+    if let Ok(uuid) = Uuid::parse_str(trade_id) {
+        trades.into_iter().find(|order| order.id == uuid)
+    } else {
+        None
+    }
 }
 
 /// Simulate trade creation (placeholder for actual trading engine integration)
 fn simulate_trade_creation(mut order: Order) -> Order {
     order.status = OrderStatus::Pending;
-    order.filled_quantity = 0.0;
-    order.average_fill_price = 0.0;
+    // order.filled_quantity = 0.0; // Not in Order
+    // order.average_fill_price = 0.0; // Not in Order
     order.timestamp = chrono::Utc::now();
-    order.updated_at = chrono::Utc::now();
+    // order.updated_at = chrono::Utc::now(); // Not in Order
     order
 }
 
@@ -335,7 +338,7 @@ mod tests {
         // Should handle invalid parameters gracefully
         let result = params.validate();
         // Note: This test would need to be updated when actual validation is implemented
-        assert!(result.is_ok());
+        assert!(result.is_err());
     }
 
     #[test]

@@ -4,15 +4,14 @@
 //! failover capabilities, circuit breaker patterns, and comprehensive monitoring.
 
 use anyhow::{anyhow, Result};
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime};
 use tokio::sync::{Mutex, RwLock};
-use tracing::{debug, error, info, instrument, warn};
+use tracing::{debug, info, instrument, warn};
 
 use crate::config::{ConnectionEndpoint, ConnectionPool, ConnectionPoolConfig, LoadBalancingStrategy};
 
@@ -278,7 +277,7 @@ impl ConnectionManager {
 
     /// Force reset global circuit breaker
     pub async fn reset_circuit_breaker(&self) {
-        let mut circuit_breaker = self.global_circuit_breaker.lock().await;
+        let circuit_breaker = self.global_circuit_breaker.lock().await;
         circuit_breaker.reset();
         info!("Global circuit breaker reset");
     }

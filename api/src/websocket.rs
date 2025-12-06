@@ -9,10 +9,7 @@ use axum::{
         ws::{Message, WebSocket, WebSocketUpgrade},
         State,
     },
-    http::StatusCode,
     response::{Html, IntoResponse},
-    routing::get,
-    Router,
 };
 use futures::{sink::SinkExt, stream::StreamExt};
 use serde::{Deserialize, Serialize};
@@ -29,8 +26,8 @@ use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
 use crate::{
-    error::{ApiError, ApiResult},
-    models::{MarketData, TradeResponse, PortfolioResponse, StrategyExecutionResponse},
+    error::ApiResult,
+    models::{TradeResponse, PortfolioResponse, StrategyExecutionResponse, MarketDataResponse},
     AppState,
 };
 
@@ -91,7 +88,7 @@ pub enum SubscriptionType {
 pub enum WebSocketMessage {
     /// Market data update
     MarketData {
-        data: MarketData,
+        data: MarketDataResponse,
         timestamp: chrono::DateTime<chrono::Utc>,
     },
     /// Trade update
@@ -151,7 +148,7 @@ pub enum ClientMessage {
 /// Internal message types for broadcasting
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MarketDataMessage {
-    pub data: MarketData,
+    pub data: MarketDataResponse,
     pub symbol: String,
 }
 
@@ -174,6 +171,7 @@ pub struct StrategyUpdateMessage {
 }
 
 /// Market data stream for periodic updates
+#[derive(Debug)]
 pub struct MarketDataStream {
     symbols: Vec<String>,
     update_interval: Duration,
@@ -260,7 +258,7 @@ impl WebSocketManager {
     }
 
     /// Broadcast market data to all subscribed clients
-    pub async fn broadcast_market_data(&self, data: MarketData) -> ApiResult<()> {
+    pub async fn broadcast_market_data(&self, data: MarketDataResponse) -> ApiResult<()> {
         let message = MarketDataMessage {
             data: data.clone(),
             symbol: data.symbol.clone(),
@@ -321,14 +319,16 @@ impl WebSocketManager {
         let symbols = Arc::new(RwLock::new(Vec::<String>::new()));
 
         // Start periodic update task
+        let symbols_read = symbols.clone();
         tokio::spawn(async move {
+            let symbols_inner = symbols_read;
             let mut interval = interval(Duration::from_secs(1));
 
             loop {
                 interval.tick().await;
 
                 // Get current symbols to stream
-                let current_symbols = symbols.read().await.clone();
+                let current_symbols = symbols_inner.read().await.clone();
 
                 if current_symbols.is_empty() {
                     continue;
@@ -337,7 +337,7 @@ impl WebSocketManager {
                 // Fetch latest market data for each symbol
                 for symbol in &current_symbols {
                     match app_state.market_data_service.get_latest_data(symbol).await {
-                        Ok(Some(data)) => {
+                        Ok(data) => {
                             let message = MarketDataMessage {
                                 data: data.clone(),
                                 symbol: symbol.clone(),
@@ -346,9 +346,6 @@ impl WebSocketManager {
                             if let Err(e) = market_data_tx.send(message) {
                                 warn!("Failed to send market data for {}: {}", symbol, e);
                             }
-                        }
-                        Ok(None) => {
-                            debug!("No market data available for symbol: {}", symbol);
                         }
                         Err(e) => {
                             warn!("Failed to fetch market data for {}: {}", symbol, e);
@@ -366,14 +363,19 @@ impl WebSocketManager {
             loop {
                 interval.tick().await;
 
-                match app_state.market_data_service.get_available_symbols().await {
-                    Ok(available_symbols) => {
-                        let mut symbols = symbols_clone.write().await;
-                        *symbols = available_symbols;
-                    }
-                    Err(e) => {
-                        warn!("Failed to fetch available symbols: {}", e);
-                    }
+                // match app_state.market_data_service.get_available_symbols().await {
+                //     Ok(available_symbols) => {
+                //         let mut symbols = symbols_clone.write().await;
+                //         *symbols = available_symbols;
+                //     }
+                //     Err(e) => {
+                //         warn!("Failed to fetch available symbols: {}", e);
+                //     }
+                // }
+                // Mock implementation until method is available
+                let mut symbols = symbols_clone.write().await;
+                if symbols.is_empty() {
+                    *symbols = vec!["BTC-USD".to_string(), "ETH-USD".to_string()];
                 }
             }
         });
@@ -384,7 +386,7 @@ impl WebSocketManager {
         let connections = self.connections.clone();
 
         tokio::spawn(async move {
-            let mut interval = interval(Duration::from_minutes(5));
+            let mut interval = interval(Duration::from_secs(5 * 60));
 
             loop {
                 interval.tick().await;
@@ -419,7 +421,7 @@ impl WebSocketManager {
         State(state): State<Arc<AppState>>,
         State(ws_manager): State<Arc<WebSocketManager>>,
     ) -> impl IntoResponse {
-        ws.on_upgrade(|socket| handle_socket(socket, state, ws_manager))
+        ws.on_upgrade(|socket| process_socket(socket, state, ws_manager))
     }
 
     /// Get WebSocket test page
@@ -428,8 +430,17 @@ impl WebSocketManager {
     }
 }
 
-/// Handle individual WebSocket connection
-async fn handle_socket(
+/// WebSocket handler endpoint
+pub async fn handle_socket(
+    ws: WebSocketUpgrade,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    let ws_manager = state.websocket_manager.clone();
+    ws.on_upgrade(move |socket| process_socket(socket, state, ws_manager))
+}
+
+/// Process WebSocket connection
+async fn process_socket(
     socket: WebSocket,
     app_state: Arc<AppState>,
     ws_manager: Arc<WebSocketManager>,

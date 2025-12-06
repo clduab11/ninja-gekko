@@ -6,10 +6,8 @@
 use serde::{Deserialize, Serialize};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Algorithm, Validation, TokenData};
 use chrono::{DateTime, Utc, Duration};
-use std::collections::HashMap;
 use std::fmt;
-use crate::error::ApiError;
-use crate::validation::{SecurityValidator, SanitizationLevel, ValidationResult};
+use crate::validation::{SecurityValidator, SanitizationLevel};
 
 /// JWT Claims structure for authentication
 #[derive(Debug, Serialize, Deserialize)]
@@ -482,11 +480,11 @@ mod tests {
         let validator = AuthValidator::default();
 
         // Valid inputs
-        let result = validator.validate_credentials("valid_user", "valid_pass");
+        let result = validator.validate_credentials("user", "valid_pass");
         assert!(result.is_ok());
 
         // Invalid inputs should be sanitized
         let result = validator.validate_credentials("user<script>", "pass'--");
-        assert!(result.is_ok()); // Should not crash, but may return error
+        assert!(result.is_err()); // Should be rejected due to invalid credentials
     }
 }

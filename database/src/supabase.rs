@@ -4,12 +4,9 @@
 //! for project management, authentication, and database operations.
 
 use anyhow::{anyhow, Result};
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::Mutex;
 use tracing::{debug, error, info, instrument, warn};
 
 use crate::config::SupabaseConfig;
@@ -341,7 +338,7 @@ pub enum SupabaseError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::Duration;
+    
 
     #[tokio::test]
     async fn test_supabase_manager_creation() {

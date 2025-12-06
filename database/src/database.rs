@@ -5,8 +5,6 @@
 
 use anyhow::Result;
 use sqlx::{postgres::PgPoolOptions, types::Json, PgPool, Postgres, Transaction};
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use tracing::{debug, error, info, instrument, warn};
 
 use crate::config::DatabaseConfig;

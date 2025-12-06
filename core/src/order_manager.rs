@@ -62,7 +62,7 @@ impl OrderManager {
         account_id: AccountId,
     ) -> TradingResult<OrderId> {
         // Create the order
-        let mut order = Order::new(symbol, order_type, side, quantity, price, account_id);
+        let order = Order::new(symbol, order_type, side, quantity, price, account_id);
 
         // Validate the order
         self.validate_order(&order).await?;
@@ -138,7 +138,7 @@ impl OrderManager {
         // Check for limit orders that can be executed at the new price
         let mut orders_to_remove = Vec::new();
         {
-            let mut order_book = self.order_book.write().await;
+            let order_book = self.order_book.write().await;
             let mut orders = self.orders.write().await;
 
             // Get matching orders for this symbol

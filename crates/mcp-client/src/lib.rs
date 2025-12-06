@@ -5,11 +5,9 @@
 
 pub mod discord_webhook;
 
-use event_bus::{EventBus, EventFrame, EventKind, EventMetadata, EventSource, Priority};
+use event_bus::EventBus;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use tokio::sync::RwLock;
-use tracing::{error, info, warn};
+use tracing::info;
 
 /// MCP Client configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]

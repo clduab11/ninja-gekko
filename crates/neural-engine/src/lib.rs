@@ -4,12 +4,11 @@
 //! including volatility prediction, cross-exchange analysis, and ML-powered
 //! opportunity detection.
 
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use thiserror::Error;
 use tokio::sync::RwLock;
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 /// Neural engine error types
 #[derive(Error, Debug)]

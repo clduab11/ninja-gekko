@@ -5,8 +5,10 @@
 
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
-use ninja_gekko_core::types::{Order, OrderSide, OrderStatus, OrderType, Position, Portfolio};
+use ninja_gekko_core::types::{Order, OrderSide, OrderType, Portfolio};
 use std::collections::HashMap;
+use rust_decimal::Decimal;
+use rust_decimal::prelude::ToPrimitive;
 
 /// Standardized API response wrapper
 #[derive(Debug, Serialize, Deserialize)]
@@ -250,8 +252,8 @@ impl CreateTradeRequest {
             self.symbol.clone(),
             order_type,
             side,
-            self.quantity,
-            self.price.unwrap_or(0.0),
+            Decimal::from_f64_retain(self.quantity).unwrap_or_default(),
+            self.price.and_then(|p| Decimal::from_f64_retain(p)),
             self.account_id.clone().unwrap_or_default(),
         ))
     }
@@ -300,7 +302,7 @@ impl UpdateTradeRequest {
 }
 
 /// Trade response (API representation)
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TradeResponse {
     /// Order ID
     pub id: String,
@@ -345,19 +347,19 @@ pub struct TradeResponse {
 impl From<Order> for TradeResponse {
     fn from(order: Order) -> Self {
         Self {
-            id: order.id,
+            id: order.id.to_string(),
             symbol: order.symbol,
             side: format!("{:?}", order.side),
-            quantity: order.quantity,
-            price: order.price,
+            quantity: order.quantity.to_f64().unwrap_or_default(),
+            price: order.price.and_then(|p| p.to_f64()).unwrap_or_default(),
             order_type: format!("{:?}", order.order_type),
             status: format!("{:?}", order.status),
-            filled_quantity: order.filled_quantity,
-            average_fill_price: order.average_fill_price,
+            filled_quantity: 0.0, // Not available in Order
+            average_fill_price: 0.0, // Not available in Order
             timestamp: order.timestamp,
-            updated_at: order.updated_at,
+            updated_at: order.timestamp, // Use timestamp as fallback
             account_id: order.account_id,
-            metadata: None, // Core Order doesn't have metadata
+            metadata: None,
         }
     }
 }
@@ -376,7 +378,7 @@ pub struct MarketDataRequest {
 }
 
 /// Market data response
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MarketDataResponse {
     /// Trading symbol
     pub symbol: String,
@@ -401,7 +403,7 @@ pub struct MarketDataResponse {
 }
 
 /// Individual market data point
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MarketDataPoint {
     /// Price at this point
     pub price: f64,
@@ -415,7 +417,7 @@ pub struct MarketDataPoint {
 
 /// Portfolio summary response
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PortfolioResponse {
+pub struct PortfolioSummaryResponse {
     /// Account ID
     pub account_id: String,
 
@@ -446,32 +448,28 @@ pub struct PortfolioResponse {
 pub struct PortfolioPerformance {
     /// Daily P&L
     pub daily_pnl: f64,
-
     /// Daily return percentage
     pub daily_return: f64,
-
     /// Total return percentage
     pub total_return: f64,
-
     /// Sharpe ratio
     pub sharpe_ratio: f64,
-
-    /// Maximum drawdown
+    /// Maximum drawdown percentage
     pub max_drawdown: f64,
 }
 
-impl From<Portfolio> for PortfolioResponse {
+impl From<Portfolio> for PortfolioSummaryResponse {
     fn from(portfolio: Portfolio) -> Self {
         Self {
             account_id: portfolio.account_id,
-            total_value: portfolio.total_value,
-            available_cash: portfolio.available_cash,
-            positions_value: portfolio.positions_value,
-            unrealized_pnl: portfolio.unrealized_pnl,
+            total_value: portfolio.total_value.to_f64().unwrap_or_default(),
+            available_cash: 0.0, 
+            positions_value: 0.0,
+            unrealized_pnl: 0.0,
             positions_count: portfolio.positions.len(),
-            updated_at: portfolio.updated_at,
+            updated_at: Utc::now(),
             performance: PortfolioPerformance {
-                daily_pnl: 0.0, // Would be calculated from historical data
+                daily_pnl: 0.0,
                 daily_return: 0.0,
                 total_return: 0.0,
                 sharpe_ratio: 0.0,
@@ -635,7 +633,7 @@ pub enum WebSocketMessage {
 }
 
 /// Portfolio response model
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PortfolioResponse {
     /// Portfolio ID
     pub portfolio_id: String,
@@ -660,7 +658,7 @@ pub struct PortfolioResponse {
 }
 
 /// Individual position response
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PositionResponse {
     /// Trading symbol
     pub symbol: String,
@@ -688,7 +686,7 @@ pub struct PositionResponse {
 }
 
 /// Performance metrics response
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PerformanceMetricsResponse {
     /// Daily return percentage
     pub daily_return: f64,
@@ -821,260 +819,247 @@ pub struct PortfolioHistoryResponse {
     pub timestamp: DateTime<Utc>,
 }
 
+
+
+/// Strategy execution request
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StrategyExecutionRequest {
+    /// Strategy ID to execute
+    pub strategy_id: String,
+
+    /// Account ID to execute on
+    pub account_id: String,
+
+    /// Initial capital allocation
+    pub capital: f64,
+
+    /// Execution parameters
+    pub parameters: Option<HashMap<String, serde_json::Value>>,
+}
+
+/// Strategy execution response
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct StrategyExecutionResponse {
+    /// Execution ID
+    pub execution_id: String,
+
+    /// Strategy ID
+    pub strategy_id: String,
+
+    /// Status (active, completed, failed)
+    pub status: String,
+
+    /// Start time
+    pub start_time: DateTime<Utc>,
+}
+
+/// Backtest request
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BacktestRequest {
+    /// Strategy ID (optional, if providing config directly)
+    pub strategy_id: Option<String>,
+
+    /// Strategy configuration (if no ID)
+    pub strategy_config: Option<serde_json::Value>,
+
+    /// Start date for backtest
+    pub start_date: DateTime<Utc>,
+
+    /// End date for backtest
+    pub end_date: DateTime<Utc>,
+
+    /// Initial capital
+    pub initial_capital: f64,
+
+    /// Symbols to test on
+    pub symbols: Vec<String>,
+
+    /// Timeframe (1m, 5m, 1h, 1d)
+    pub timeframe: String,
+}
+
+/// Backtest response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BacktestResponse {
+    /// Backtest ID
+    pub backtest_id: String,
+
+    /// Status
+    pub status: String,
+
+    /// Performance metrics
+    pub performance: Option<StrategyPerformance>,
+
+    /// Equity curve
+    pub equity_curve: Option<Vec<MarketDataPoint>>,
+}
+
+/// Strategy optimization request
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StrategyOptimizationRequest {
+    /// Strategy ID
+    pub strategy_id: String,
+
+    /// Parameters to optimize with ranges
+    pub parameter_ranges: HashMap<String, serde_json::Value>,
+
+    /// Optimization target (sharpe, returns, drawdown)
+    pub target_metric: String,
+
+    /// Maximum iterations
+    pub max_iterations: Option<usize>,
+}
+
+/// Strategy optimization response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StrategyOptimizationResponse {
+    /// Optimization ID
+    pub optimization_id: String,
+
+    /// Best parameters found
+    pub best_parameters: HashMap<String, serde_json::Value>,
+
+    /// Best metric value
+    pub best_metric_value: f64,
+}
+
+/// Update strategy request
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateStrategyRequest {
+    /// New name
+    pub name: Option<String>,
+
+    /// New description
+    pub description: Option<String>,
+
+    /// New parameters
+    pub parameters: Option<HashMap<String, serde_json::Value>>,
+
+    /// Activate/deactivate
+    pub is_active: Option<bool>,
+}
+
+/// Detailed strategy performance
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DetailedStrategyPerformance {
+    /// Basic performance metrics
+    #[serde(flatten)]
+    pub basic_metrics: StrategyPerformance,
+
+    /// Monthly returns
+    pub monthly_returns: HashMap<String, f64>,
+
+    /// Trade history
+    pub recent_trades: Vec<TradeResponse>,
+}
+
+
+
+
+
 /// Risk metrics response
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RiskMetricsResponse {
-    /// Value at Risk (95% confidence)
-    pub var_95: f64,
-
-    /// Value at Risk (99% confidence)
-    pub var_99: f64,
-
-    /// Conditional Value at Risk (95%)
-    pub cvar_95: f64,
-
-    /// Portfolio beta
+    pub value_at_risk: f64,
+    pub volatility: f64,
+    pub sharpe_ratio: f64,
+    pub max_drawdown: f64,
     pub beta: f64,
-
-    /// Portfolio alpha
-    pub alpha: f64,
-
-    /// Treynor ratio
-    pub treynor_ratio: f64,
-
-    /// Sortino ratio
-    pub sortino_ratio: f64,
-
-    /// Information ratio
-    pub information_ratio: f64,
+    pub correlation_matrix: HashMap<String, HashMap<String, f64>>,
 }
 
-/// Market data response with technical indicators
+/// Market data with indicators
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MarketDataWithIndicators {
-    /// Trading symbol
     pub symbol: String,
-
-    /// Current market price
-    pub current_price: f64,
-
-    /// Simple moving average (20 periods)
-    pub sma_20: f64,
-
-    /// Simple moving average (50 periods)
-    pub sma_50: f64,
-
-    /// Exponential moving average (12 periods)
-    pub ema_12: f64,
-
-    /// Exponential moving average (26 periods)
-    pub ema_26: f64,
-
-    /// Relative strength index (14 periods)
-    pub rsi_14: f64,
-
-    /// MACD line
-    pub macd_line: f64,
-
-    /// MACD signal line
-    pub macd_signal: f64,
-
-    /// Bollinger bands upper
-    pub bollinger_upper: f64,
-
-    /// Bollinger bands middle
-    pub bollinger_middle: f64,
-
-    /// Bollinger bands lower
-    pub bollinger_lower: f64,
-
-    /// Volume SMA
-    pub volume_sma: f64,
-
-    /// Last update timestamp
+    pub price: f64,
+    pub volume: f64,
+    pub indicators: HashMap<String, f64>,
     pub timestamp: DateTime<Utc>,
 }
 
-/// Symbol information for search results
+/// Search symbols request
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SearchSymbolsRequest {
+    pub query: String,
+    pub asset_class: Option<String>,
+    pub limit: Option<usize>,
+}
+
+/// Symbol info
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SymbolInfo {
-    /// Trading symbol
     pub symbol: String,
-
-    /// Full company/instrument name
-    pub name: String,
-
-    /// Exchange where the symbol is traded
+    pub name: Option<String>,
+    pub asset_class: String,
     pub exchange: String,
-
-    /// Asset type (stock, crypto, forex, etc.)
-    pub asset_type: String,
-
-    /// Whether the symbol is actively traded
-    pub is_active: bool,
+    pub price_precision: i32,
+    pub quantity_precision: i32,
 }
 
-/// Market overview response
+/// Market overview
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MarketOverview {
-    /// Top gaining symbols
     pub top_gainers: Vec<MarketDataResponse>,
-
-    /// Top losing symbols
     pub top_losers: Vec<MarketDataResponse>,
-
-    /// Highest volume symbols
-    pub volume_leaders: Vec<MarketDataResponse>,
-
-    /// Market indices
-    pub market_indices: Vec<MarketIndex>,
-
-    /// Last update timestamp
-    pub last_updated: DateTime<Utc>,
-}
-
-/// Market index information
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MarketIndex {
-    /// Index symbol (e.g., SPX, NDX, VIX)
-    pub symbol: String,
-
-    /// Index name
-    pub name: String,
-
-    /// Current value
-    pub value: f64,
-
-    /// Daily change
-    pub change: f64,
-
-    /// Change percentage
-    pub change_percent: f64,
-
-    /// Last update timestamp
-    pub timestamp: DateTime<Utc>,
+    pub most_active: Vec<MarketDataResponse>,
+    pub market_sentiment: f64, // -1.0 to 1.0
 }
 
 /// Stream subscription response
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StreamSubscriptionResponse {
-    /// Subscription ID
     pub subscription_id: String,
-
-    /// Symbol being subscribed to
-    pub symbol: String,
-
-    /// Type of stream
-    pub stream_type: String,
-
-    /// Whether subscription is active
-    pub is_active: bool,
-
-    /// Response message
-    pub message: String,
+    pub status: String,
+    pub stream_url: String,
 }
 
-/// Symbol search request parameters
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SearchSymbolsRequest {
-    /// Search query string
-    pub query: String,
-
-    /// Maximum number of results to return
-    pub limit: Option<usize>,
-}
-
-impl Default for SearchSymbolsRequest {
-    fn default() -> Self {
-        Self {
-            query: String::new(),
-            limit: Some(20),
-        }
-    }
-}
-
-/// Price statistics for market data
+/// Price statistics
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PriceStatistics {
-    /// Opening price
     pub open: f64,
-
-    /// Highest price
     pub high: f64,
-
-    /// Lowest price
     pub low: f64,
-
-    /// Closing price
     pub close: f64,
-
-    /// Volume
-    pub volume: f64,
-
-    /// Volume-weighted average price
     pub vwap: f64,
 }
 
 /// Volatility metrics
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VolatilityMetrics {
-    /// Daily volatility
     pub daily_volatility: f64,
-
-    /// Weekly volatility
-    pub weekly_volatility: f64,
-
-    /// Monthly volatility
-    pub monthly_volatility: f64,
-
-    /// Average true range
-    pub average_true_range: f64,
+    pub annualized_volatility: f64,
+    pub bb_width: f64,
+    pub atr: f64,
 }
 
 /// Liquidity metrics
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LiquidityMetrics {
-    /// Bid-ask spread
-    pub bid_ask_spread: f64,
-
-    /// Market depth
-    pub market_depth: f64,
-
-    /// Turnover ratio
-    pub turnover_ratio: f64,
+    pub average_spread: f64,
+    pub average_volume: f64,
+    pub turnover: f64,
+    pub depth: f64,
 }
 
-/// Trading activity metrics
+/// Trading activity
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TradingActivity {
-    /// Total number of trades
-    pub total_trades: usize,
-
-    /// Average trade size
-    pub average_trade_size: f64,
-
-    /// Trade frequency (trades per minute)
-    pub trade_frequency: f64,
+    pub buy_count: usize,
+    pub sell_count: usize,
+    pub buy_volume: f64,
+    pub sell_volume: f64,
+    pub large_trades: usize,
 }
 
-/// Complete market statistics response
+/// Market statistics
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MarketStatistics {
-    /// Trading symbol
     pub symbol: String,
-
-    /// Price statistics
+    pub period_start: DateTime<Utc>,
+    pub period_end: DateTime<Utc>,
     pub price_statistics: PriceStatistics,
-
-    /// Volatility metrics
     pub volatility_metrics: VolatilityMetrics,
-
-    /// Liquidity metrics
     pub liquidity_metrics: LiquidityMetrics,
-
-    /// Trading activity
     pub trading_activity: TradingActivity,
-
-    /// Last update timestamp
-    pub timestamp: DateTime<Utc>,
 }

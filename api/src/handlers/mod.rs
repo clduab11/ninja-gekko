@@ -8,18 +8,9 @@
 //! - Strategy management (trading strategies, execution, backtesting)
 //! - Utility endpoints (health check, API info)
 
-use axum::{
-    http::StatusCode,
-    response::Json,
-    extract::State,
-};
-use std::sync::Arc;
+use axum::response::Json;
 use serde_json::json;
-use crate::{
-    error::{ApiError, ApiResult},
-    models::ApiResponse,
-    AppState,
-};
+use crate::models::ApiResponse;
 
 pub mod auth_utils;
 pub mod trades;
@@ -31,8 +22,8 @@ pub mod arbitrage;
 // Re-export all handler functions
 pub use auth_utils::{login_handler, refresh_handler, logout_handler};
 pub use trades::{list_trades, create_trade, get_trade, update_trade, delete_trade};
-pub use portfolio::{get_portfolio, get_positions, get_position, get_performance};
-pub use market_data::{get_market_data, get_symbol_data, get_price_history};
+pub use portfolio::{get_portfolio, get_positions, get_position, get_performance_metrics};
+pub use market_data::{get_market_data, get_batch_market_data, get_historical_data};
 pub use strategies::{list_strategies, create_strategy, get_strategy, update_strategy, delete_strategy, execute_strategy};
 pub use arbitrage::{
     start_arbitrage_strategy, stop_arbitrage_strategy, get_arbitrage_opportunities,

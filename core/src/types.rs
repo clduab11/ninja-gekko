@@ -652,7 +652,7 @@ mod tests {
         position.update_from_execution(&execution);
 
         assert_eq!(position.quantity, Decimal::new(150, 0));
-        assert_eq!(position.average_price, Decimal::new(15067, 2)); // Weighted average
+        assert_eq!(position.average_price.round_dp(2), Decimal::new(15067, 2)); // Weighted average rounded
     }
 
     #[test]

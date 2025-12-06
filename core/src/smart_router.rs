@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use std::collections::HashMap;
@@ -6,8 +5,8 @@ use tokio::sync::RwLock;
 
 use crate::error::{TradingError, TradingResult};
 use crate::types::{
-    AccountId, ArbitrageOpportunity, Execution, MarketData, Order, OrderId, Symbol,
-    TradingPlatform, VolatilityScore,
+    Execution, MarketData, Order, Symbol,
+    TradingPlatform,
 };
 
 /// Smart Order Router for optimal venue selection and execution.
@@ -394,11 +393,10 @@ impl PlatformScoreComponents {
     /// Calculates the total weighted score
     pub fn calculate_total_score(&self) -> Decimal {
         // Weighted scoring: Liquidity 40%, Cost 30%, Speed 15%, Reliability 15%
-        (self.liquidity_score * Decimal::new(4, 1)
+        self.liquidity_score * Decimal::new(4, 1)
             + self.cost_score * Decimal::new(3, 1)
             + self.speed_score * Decimal::new(15, 2)
-            + self.reliability_score * Decimal::new(15, 2))
-            / Decimal::new(10, 0)
+            + self.reliability_score * Decimal::new(15, 2)
     }
 }
 

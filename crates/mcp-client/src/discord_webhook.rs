@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use reqwest::Client;
 use secrecy::{ExposeSecret, Secret};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::collections::VecDeque;
 use std::sync::Arc;
 use tokio::sync::RwLock;

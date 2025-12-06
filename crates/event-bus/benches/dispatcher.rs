@@ -22,7 +22,7 @@ fn setup_harness() -> ChannelHarness {
     let receiver = bus.signal_receiver();
 
     let drain_handle = tokio::spawn(async move {
-        let mut receiver = receiver;
+        let receiver = receiver;
         while receiver.recv_async().await.is_ok() {}
     });
 

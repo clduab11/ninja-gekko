@@ -10,15 +10,14 @@
 //! - Real-time cross-exchange arbitrage execution
 //! - Aggressive risk/reward optimization
 
-use async_trait::async_trait;
-use exchange_connectors::{ExchangeConnector, ExchangeId, MarketTick};
+use exchange_connectors::{ExchangeConnector, ExchangeId};
 use neural_engine::NeuralEngine;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use thiserror::Error;
-use tokio::sync::{mpsc, RwLock};
+use tokio::sync::RwLock;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
