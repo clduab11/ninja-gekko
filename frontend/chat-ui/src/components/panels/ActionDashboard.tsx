@@ -1,13 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { BarChart3, BrainCircuit, Hand } from 'lucide-react';
-
-import { fetchAccountSnapshot, fetchNews, pauseTrading, requestResearch, summonSwarm } from '../../services/api';
-import { AccountSnapshot, NewsHeadline } from '../../types';
+import { BrainCircuit, Hand, ShieldAlert, Terminal, Activity, Zap, Search, Globe } from 'lucide-react';
+import { pauseTrading, requestResearch, summonSwarm } from '../../services/api';
 
 const ActionDashboard = () => {
-  const { data: snapshot } = useQuery({ queryKey: ['account-snapshot'], queryFn: fetchAccountSnapshot });
-  const { data: news } = useQuery({ queryKey: ['news'], queryFn: fetchNews });
-
   const handlePause = async () => {
     await pauseTrading({ duration_hours: 6 });
   };
@@ -20,156 +14,96 @@ const ActionDashboard = () => {
     await requestResearch({ query: 'Top volatility catalysts within 24h' });
   };
 
-  return (
-    <section 
-      className="rounded-xl border border-border/60 bg-panel/80 p-4 text-sm"
-      data-testid="action-dashboard"
-      role="region"
-      aria-label="Trading control center"
-    >
-      <header className="mb-3 text-xs uppercase tracking-[0.35em] text-white/40">Control Center</header>
-      <div className="grid gap-3" role="group" aria-label="Trading action buttons">
-        <button
-          onClick={handlePause}
-          className="flex items-center justify-between rounded-lg border border-border/60 bg-panel px-3 py-2 text-left text-sm hover:border-accent"
-          data-testid="btn-pause-trading"
-          role="button"
-          aria-label="Pause trading for 6 hours across all exchanges"
-        >
-          <span className="flex items-center gap-2 text-white/80">
-            <Hand className="h-4 w-4 text-accent" aria-hidden="true" /> Pause Trading (6h)
-          </span>
-          <span className="text-xs text-white/40">OANDA · Coinbase · Binance.us</span>
-        </button>
-        <button
-          onClick={handleSwarm}
-          className="flex items-center justify-between rounded-lg border border-border/60 bg-panel px-3 py-2 text-left text-sm hover:border-accent"
-          data-testid="btn-summon-swarm"
-          role="button"
-          aria-label="Summon AI research swarm for strategy diagnostics"
-        >
-          <span className="flex items-center gap-2 text-white/80">
-            <BrainCircuit className="h-4 w-4 text-accent" aria-hidden="true" /> Summon Swarm
-          </span>
-          <span className="text-xs text-white/40">Strategy · Diagnostics · Retraining</span>
-        </button>
-        <button
-          onClick={handleResearch}
-          className="flex items-center justify-between rounded-lg border border-border/60 bg-panel px-3 py-2 text-left text-sm hover:border-accent"
-          data-testid="btn-research-pulse"
-          role="button"
-          aria-label="Request deep research analysis on market volatility"
-        >
-          <span className="flex items-center gap-2 text-white/80">
-            <BarChart3 className="h-4 w-4 text-accent" aria-hidden="true" /> Deep Research Pulse
-          </span>
-          <span className="text-xs text-white/40">Perplexity Finance · Sonar</span>
-        </button>
-      </div>
+  // We are removing the Treasury widget from here as it should be in MarketRadar or Header to save space for ACTIONS.
+  // This panel is now purely the "Control Center".
 
-      <div className="mt-4 space-y-3">
-        <SnapshotCard snapshot={snapshot} />
-        <NewsCard headlines={news} />
+  return (
+    <div className="flex h-full flex-col rounded-lg border border-white/5 bg-slate-900/40 p-1" data-testid="action-dashboard">
+      <div className="mb-2 flex items-center px-4 py-2 border-b border-white/5">
+        <Terminal className="mr-2 h-4 w-4 text-emerald-500" />
+        <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white/60">Command Deck</h3>
       </div>
-    </section>
+      
+      <div className="grid flex-1 grid-cols-2 gap-2 p-2 overflow-y-auto">
+          <CommandButton 
+            onClick={handleSwarm}
+            icon={<BrainCircuit className="h-5 w-5 text-purple-400" />}
+            label="Swarm Logic"
+            description="Parallel agent analysis"
+            testId="btn-summon-swarm"
+          />
+          <CommandButton 
+            onClick={handleResearch}
+            icon={<Search className="h-5 w-5 text-blue-400" />}
+            label="Deep Res"
+            description="Sonar / Perplexity Scan"
+            testId="btn-research-pulse"
+          />
+          <CommandButton 
+            onClick={() => {}} 
+            icon={<Globe className="h-5 w-5 text-amber-400" />}
+            label="Macro View"
+            description="Global liquidity map"
+            testId="btn-macro-view"
+            disabled
+          />
+           <CommandButton 
+            onClick={() => {}} 
+            icon={<Zap className="h-5 w-5 text-emerald-400" />}
+            label="HFT Mode"
+            description="Low-latency execution"
+            testId="btn-hft-mode"
+            disabled
+          />
+          <CommandButton 
+            onClick={handlePause}
+            icon={<Hand className="h-5 w-5 text-red-500" />}
+            label="Kill Switch"
+            description="Emergency halt (6h)"
+            testId="btn-pause-trading"
+            variant="danger"
+            className="col-span-2"
+          />
+      </div>
+    </div>
   );
 };
 
-const SnapshotCard = ({ snapshot }: { snapshot?: AccountSnapshot }) => {
-  if (!snapshot) return null;
-  return (
-    <article 
-      className="rounded-lg border border-border/60 bg-panel px-3 py-3"
-      data-testid="card-account-snapshot"
-      role="region"
-      aria-label="Account snapshot with equity and exposure"
-    >
-      <header className="text-xs uppercase tracking-[0.35em] text-white/40">Account Snapshot</header>
-      <div className="mt-2 text-sm">
-        <p 
-          className="text-lg font-semibold text-accent"
-          data-testid="metric-total-equity"
-          aria-label={`Total equity: $${snapshot.total_equity.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-        >
-          ${snapshot.total_equity.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-        </p>
-        <p 
-          className="text-xs text-white/50"
-          data-testid="metric-net-exposure"
-          aria-label={`Net exposure: ${(snapshot.net_exposure * 100).toFixed(1)}%`}
-        >
-          Net exposure: {(snapshot.net_exposure * 100).toFixed(1)}%
-        </p>
-      </div>
-      <ul 
-        className="mt-3 space-y-1 text-xs text-white/60"
-        data-testid="broker-list"
-        role="list"
-        aria-label="Broker account balances"
-      >
-        {snapshot.brokers.map((broker, index) => (
-          <li 
-            key={broker.broker} 
-            className="flex items-center justify-between"
-            data-testid={`broker-item-${index}`}
-            role="listitem"
-          >
-            <span data-testid={`broker-name-${index}`}>{broker.broker}</span>
-            <span data-testid={`broker-balance-${index}`}>
-              ${broker.balance.toLocaleString(undefined, { maximumFractionDigits: 0 })} · {broker.open_positions} positions
-            </span>
-          </li>
-        ))}
-      </ul>
-    </article>
-  );
-};
+interface CommandButtonProps {
+    onClick: () => void;
+    icon: JSX.Element;
+    label: string;
+    description: string;
+    testId: string;
+    variant?: 'default' | 'danger';
+    disabled?: boolean;
+    className?: string; // Allow col-span overriding
+}
 
-const NewsCard = ({ headlines }: { headlines?: NewsHeadline[] }) => {
-  if (!headlines?.length) return null;
-  return (
-    <article 
-      className="rounded-lg border border-border/60 bg-panel px-3 py-3"
-      data-testid="card-realtime-signals"
-      role="region"
-      aria-label="Realtime market signals and news"
+const CommandButton = ({ onClick, icon, label, description, testId, variant = 'default', disabled, className = '' }: CommandButtonProps) => (
+    <button
+        onClick={onClick}
+        disabled={disabled}
+        className={`
+            group relative flex flex-col justify-center rounded-md border px-4 py-3 text-left transition-all
+            ${disabled ? 'opacity-40 cursor-not-allowed border-white/5 bg-white/5' : 
+              variant === 'danger' 
+                ? 'border-red-900/30 bg-red-950/20 hover:bg-red-900/40 hover:border-red-500/50' 
+                : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-emerald-500/30 hover:shadow-[0_0_15px_rgba(16,185,129,0.1)]'
+            }
+            ${className}
+        `}
+        data-testid={testId}
     >
-      <header className="text-xs uppercase tracking-[0.35em] text-white/40">Realtime Signals</header>
-      <ul 
-        className="mt-2 space-y-2 text-xs"
-        data-testid="news-list"
-        role="list"
-        aria-label="Latest market news headlines"
-        aria-live="polite"
-      >
-        {headlines.map((item, index) => (
-          <li 
-            key={item.id} 
-            className="leading-relaxed text-white/80"
-            data-testid={`news-item-${index}`}
-            role="listitem"
-          >
-            <a 
-              href={item.url} 
-              target="_blank" 
-              rel="noreferrer" 
-              className="hover:text-accent"
-              data-testid={`news-link-${index}`}
-              aria-label={`Read article: ${item.title}`}
-            >
-              {item.title}
-            </a>
-            <div 
-              className="text-[10px] uppercase tracking-[0.3em] text-white/30"
-              data-testid={`news-meta-${index}`}
-            >
-              {item.source} · {new Date(item.published_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </div>
-          </li>
-        ))}
-      </ul>
-    </article>
-  );
-};
+        <div className="flex items-center justify-between mb-2">
+            {icon}
+            {!disabled && variant !== 'danger' && <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 opacity-0 group-hover:opacity-100 shadow-[0_0_5px_#10b981] transition-opacity" />}
+        </div>
+        <div>
+            <div className="font-bold text-sm text-slate-200 group-hover:text-white">{label}</div>
+            <div className="text-[10px] text-slate-500 group-hover:text-slate-400">{description}</div>
+        </div>
+    </button>
+);
 
 export default ActionDashboard;

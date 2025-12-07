@@ -1,157 +1,166 @@
 import { useMemo, useState } from 'react';
-import { Loader2, Pause, Play, Rocket, Sparkles, SquareChartGantt } from 'lucide-react';
+import { Loader2, Pause, Play, Rocket, Settings, ShieldCheck, SquareChartGantt, Zap, Menu } from 'lucide-react';
 
 import { useChatController } from './hooks/useChatController';
 import PersonaControls from './components/panels/PersonaControls';
-import InsightsPanel from './components/panels/InsightsPanel';
 import ChatConversation from './components/chat/ChatConversation';
 import ChatComposer from './components/chat/ChatComposer';
 import ActionDashboard from './components/panels/ActionDashboard';
 import DiagnosticsPanel from './components/panels/DiagnosticsPanel';
+import MarketRadar from './components/panels/MarketRadar';
+import { Modal } from './components/ui/Modal';
 
 function App() {
   const { messages, persona, diagnostics, isSending, isPersonaLoading, sendMessage, savePersona } =
     useChatController();
   const [duration, setDuration] = useState(4);
-
-  const personaLabel = useMemo(() => `${persona.tone} · ${persona.style} · ${persona.mood}`, [persona]);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background text-white" data-testid="app-container">
+    <div className="flex h-screen w-full flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans selection:bg-emerald-500/30" data-testid="app-container">
+      
+      {/* HEADER: High-Density Status Bar */}
       <header 
-        className="flex items-center justify-between px-10 py-6 border-b border-border/60"
+        className="flex h-12 shrink-0 items-center justify-between border-b border-white/5 bg-slate-950 px-4"
         role="banner"
-        aria-label="Ninja Gekko application header"
+        aria-label="Gordon Gekko Financial Terminal"
       >
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Talk to Gordon</h1>
-          <p className="text-sm text-white/70">Institutional-grade agentic control for Ninja Gekko</p>
-        </div>
-        <div 
-          className="flex items-center gap-3 text-sm text-white/70"
-          data-testid="indicator-persona"
-          aria-label={`Current persona: ${personaLabel}`}
-        >
-          <Sparkles className="h-4 w-4 text-accent" aria-hidden="true" />
-          <span>Persona: {personaLabel}</span>
-          {isPersonaLoading ? (
-            <Loader2 
-              className="h-4 w-4 animate-spin text-accent" 
-              data-testid="indicator-loading"
-              aria-label="Loading persona"
-            />
-          ) : null}
-        </div>
-      </header>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
+             <div className="flex h-8 w-8 items-center justify-center rounded bg-emerald-500 text-slate-900 font-black text-xs tracking-tighter shadow-[0_0_15px_#10b981]">
+                GG
+             </div>
+             <div>
+                <h1 className="text-sm font-bold tracking-tight text-white uppercase">
+                  Gordon<span className="text-emerald-500">Gekko</span>
+                </h1>
+                <div className="text-[9px] font-medium uppercase tracking-[0.2em] text-slate-500">
+                  Financial Ninja
+                </div>
+             </div>
+          </div>
 
-      <main 
-        className="grid grid-cols-[2.1fr_1.2fr] gap-6 px-10 py-8"
-        role="main"
-        data-testid="main-content"
-        aria-label="Trading orchestration interface"
-      >
-        <section className="flex flex-col gap-4" data-testid="orchestration-section">
-          <div 
-            className="flex items-center justify-between rounded-xl border border-border/40 bg-panel/80 px-6 py-4"
-            data-testid="orchestration-controls"
-            role="region"
-            aria-label="Live orchestration controls"
-          >
-            <div>
-              <h2 className="text-lg font-semibold">Live Orchestration</h2>
-              <p className="text-sm text-white/60">Control trading automations, research swarms, and MPC flows.</p>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
+           {/* Compact Orchestration Controls */}
+          <div className="flex items-center gap-3 rounded border border-white/5 bg-white/[0.02] px-3 py-1" role="toolbar" aria-label="Orchestration Controls">
+              <div className="flex items-center gap-2">
+                  <span className="text-[9px] uppercase tracking-wider text-slate-600 font-bold">Orchestrator</span>
+                  <div className={`h-1.5 w-1.5 rounded-full ${isSending ? 'bg-emerald-500 animate-pulse' : 'bg-slate-600'}`}></div>
+              </div>
+              <div className="h-3 w-px bg-white/10" />
               <button 
-                className="flex items-center gap-2 rounded-lg border border-accentSoft/60 px-3 py-2 font-medium text-accent"
+                className="group flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-emerald-400 transition-colors"
                 data-testid="btn-resume-trading"
-                role="button"
-                aria-label="Resume trading operations"
               >
-                <Play className="h-4 w-4" aria-hidden="true" /> Resume
+                <div className="flex h-4 w-4 items-center justify-center rounded-full border border-current group-hover:bg-emerald-500/20">
+                    <Play className="h-2 w-2" fill="currentColor" />
+                </div>
+                <span>Live</span>
               </button>
               <button 
-                className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 font-medium text-white/80 hover:border-accent"
+                className="group flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-amber-400 transition-colors"
                 data-testid="btn-pause-trading-header"
-                role="button"
-                aria-label={`Pause trading for ${duration} hours`}
               >
-                <Pause className="h-4 w-4" aria-hidden="true" /> Pause {duration}h
+                <div className="flex h-4 w-4 items-center justify-center rounded-full border border-current group-hover:bg-amber-500/20">
+                    <Pause className="h-2 w-2" fill="currentColor" />
+                </div>
+                <span>Kill</span>
               </button>
-              <input
+               <input
                 type="range"
                 min={1}
                 max={24}
                 value={duration}
                 onChange={(event) => setDuration(Number(event.target.value))}
-                className="h-1 w-32 accent-accent"
-                data-testid="slider-pause-duration"
-                aria-label="Pause duration in hours"
-                aria-valuemin={1}
-                aria-valuemax={24}
-                aria-valuenow={duration}
+                className="h-1 w-12 accent-emerald-500 opacity-30 hover:opacity-100 transition-opacity"
+                title={`Pause Duration: ${duration}h`}
               />
-            </div>
           </div>
+        </div>
 
-          <div className="flex h-[65vh] gap-4">
-            <div 
-              className="flex w-full flex-col rounded-xl border border-border/40 bg-panel/80"
-              data-testid="chat-panel"
-              role="region"
-              aria-label="Chat conversation with Gordon"
-            >
-              <div className="flex items-center justify-between border-b border-border/60 px-6 py-4">
-                <div>
-                  <h2 className="text-lg font-semibold">Conversation</h2>
-                  <p className="text-xs uppercase tracking-[0.28em] text-white/40">Memory · Citations · Control</p>
-                </div>
-                <span 
-                  className="flex items-center gap-2 rounded-full bg-accentSoft/20 px-3 py-1 text-xs text-accent"
-                  data-testid="indicator-autonomous-mode"
-                  role="status"
-                  aria-label="Autonomous mode active"
-                >
-                  <SquareChartGantt className="h-4 w-4" aria-hidden="true" /> Autonomous Mode
-                </span>
-              </div>
-              <ChatConversation messages={messages} />
-              <ChatComposer disabled={isSending} onSend={sendMessage} />
+        <div className="flex items-center gap-4">
+           <div className="hidden md:flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider text-slate-600">
+              <ShieldCheck className="h-3 w-3 text-emerald-900" />
+              <span>Secure Connection</span>
+           </div>
+           
+           <button 
+            onClick={() => setIsSettingsOpen(true)}
+            className="flex items-center gap-2 rounded border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-slate-400 hover:bg-white/10 hover:text-white transition-colors"
+             aria-label="Open Persona Settings"
+           >
+             <Settings className="h-3 w-3" />
+             <span>Config</span>
+           </button>
+        </div>
+      </header>
+
+      {/* COMMAND CENTER GRID - New Layout */}
+      {/* Top Row: Market Radar (Dominant) + Action Dashboard */}
+      {/* Bottom Row: Chat (Terminal) */}
+      <main 
+        className="grid flex-1 grid-rows-[65%_35%] gap-px bg-slate-900 overflow-hidden"
+        role="main"
+      >
+         {/* TOP SEC: Intelligence & Controls */}
+         <div className="grid grid-cols-[1fr_320px] gap-px bg-slate-950">
+            {/* Market Radar */}
+            <section className="bg-slate-950 p-1 overflow-hidden relative">
+                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent opacity-50"></div>
+                 <MarketRadar />
+            </section>
+            
+            {/* Control Deck */}
+            <section className="bg-slate-950 p-1 border-l border-white/5">
+                 <ActionDashboard />
+            </section>
+         </div>
+
+         {/* BOTTOM SEC: Communication Channel */}
+         <section 
+            className="flex flex-col bg-slate-950 border-t border-white/5 relative"
+            aria-label="Direct Communication Line"
+         >
+            <div className="absolute left-0 top-0 flex items-center gap-2 bg-slate-900 px-3 py-1 rounded-br border-r border-b border-white/5 z-10">
+                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                 <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Direct Uplink</span>
             </div>
-
-            <div className="flex w-[28rem] flex-col gap-4" data-testid="side-panels">
-              <PersonaControls persona={persona} onSave={savePersona} isLoading={isPersonaLoading} />
-              <DiagnosticsPanel diagnostics={diagnostics} />
-              <ActionDashboard />
+            
+            <div className="flex-1 overflow-hidden flex flex-col relative pt-6">
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none mix-blend-overlay" />
+                <ChatConversation messages={messages} />
             </div>
-          </div>
-        </section>
+            
+            <ChatComposer disabled={isSending} onSend={sendMessage} />
+         </section>
 
-        <aside 
-          className="flex flex-col gap-4"
-          role="complementary"
-          aria-label="Trading insights and intelligence"
-          data-testid="insights-aside"
-        >
-          <InsightsPanel />
-        </aside>
       </main>
 
-      <footer 
-        className="flex items-center justify-between px-10 py-4 text-xs text-white/40"
-        role="contentinfo"
-        data-testid="app-footer"
-      >
-        <span>© {new Date().getFullYear()} Ninja Gekko · Agentic Trading Intelligence</span>
-        <span 
-          className="flex items-center gap-2"
-          data-testid="indicator-mcp-status"
-          role="status"
-          aria-label="MCP Mesh connection active"
-        >
-          <Rocket className="h-4 w-4" aria-hidden="true" /> MCP Mesh Active
-        </span>
+      {/* FOOTER */}
+      <footer className="flex h-6 shrink-0 items-center justify-between border-t border-white/5 bg-black px-4 text-[9px] text-slate-600 uppercase tracking-widest font-mono">
+         <div className="flex items-center gap-4">
+            <span className="text-emerald-900 font-bold">Ninja Gekko v2.1.0</span>
+            <span className="flex items-center gap-1 text-emerald-500/40">
+              <Rocket className="h-3 w-3" /> System Nominal
+            </span>
+         </div>
+         <div className="flex items-center gap-4">
+           <span>Memory: 14%</span>
+           <span>Latency: 8ms</span>
+         </div>
       </footer>
+
+      {/* MODALS */}
+      <Modal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)}
+        title="System Configuration"
+      >
+        <PersonaControls persona={persona} onSave={savePersona} isLoading={isPersonaLoading} />
+        <div className="mt-6 border-t border-white/10 pt-4">
+           <DiagnosticsPanel diagnostics={diagnostics} />
+        </div>
+      </Modal>
+
     </div>
   );
 }

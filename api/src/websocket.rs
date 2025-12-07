@@ -84,7 +84,7 @@ pub enum SubscriptionType {
 
 /// WebSocket messages sent from server to client
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum WebSocketMessage {
     /// Market data update
     MarketData {
@@ -127,7 +127,7 @@ pub enum WebSocketMessage {
 
 /// Client messages sent to server
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum ClientMessage {
     /// Subscribe to updates
     Subscribe {

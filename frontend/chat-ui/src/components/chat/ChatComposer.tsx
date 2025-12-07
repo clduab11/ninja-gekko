@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react';
-import { Loader2, Send, Upload } from 'lucide-react';
+import { Loader2, Send, Upload, Wrench, BarChart2, Globe } from 'lucide-react';
+import clsx from 'clsx';
 
 interface Props {
   disabled?: boolean;
@@ -8,63 +9,86 @@ interface Props {
 
 const ChatComposer = ({ disabled, onSend }: Props) => {
   const [value, setValue] = useState('');
+  const [showTools, setShowTools] = useState(false);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!value.trim()) return;
     onSend(value.trim());
     setValue('');
+    setShowTools(false);
+  };
+
+  const insertToolCommand = (cmd: string) => {
+      setValue(prev => `${prev} /${cmd} `);
+      setShowTools(false);
   };
 
   return (
     <form 
       onSubmit={handleSubmit} 
-      className="border-t border-border/60 p-4"
+      className="border-t border-white/5 bg-slate-900 p-2"
       data-testid="chat-composer"
-      role="form"
-      aria-label="Send message to Gordon"
     >
-      <div className="rounded-xl border border-border/60 bg-panel px-4 py-3">
+      <div className="relative rounded-lg border border-white/10 bg-slate-950 focus-within:border-emerald-500/50 focus-within:ring-1 focus-within:ring-emerald-500/20 transition-all">
+        
+        {/* Tools Menu Overlay */}
+        {showTools && (
+            <div className="absolute bottom-full left-0 mb-2 w-full rounded-lg border border-white/10 bg-slate-900 p-2 shadow-xl animate-in fade-in slide-in-from-bottom-2">
+                <div className="mb-2 text-[10px] uppercase tracking-wider text-slate-500 font-bold px-1">Institutional Tools</div>
+                <div className="grid grid-cols-3 gap-2">
+                    <button type="button" onClick={() => insertToolCommand('oanda')} className="flex flex-col items-center gap-1 rounded bg-white/5 p-2 hover:bg-emerald-500/10 hover:text-emerald-400 transition-colors">
+                        <Globe className="h-4 w-4" />
+                        <span className="text-[10px]">OANDA Qry</span>
+                    </button>
+                    <button type="button" onClick={() => insertToolCommand('sentiment')} className="flex flex-col items-center gap-1 rounded bg-white/5 p-2 hover:bg-purple-500/10 hover:text-purple-400 transition-colors">
+                        <BarChart2 className="h-4 w-4" />
+                        <span className="text-[10px]">Sentiment</span>
+                    </button>
+                    <button type="button" onClick={() => insertToolCommand('swarm')} className="flex flex-col items-center gap-1 rounded bg-white/5 p-2 hover:bg-amber-500/10 hover:text-amber-400 transition-colors">
+                        <Loader2 className="h-4 w-4" />
+                        <span className="text-[10px]">Exec Swarm</span>
+                    </button>
+                </div>
+            </div>
+        )}
+
         <textarea
-          className="h-24 w-full resize-none border-none bg-transparent text-sm text-white/90 outline-none"
-          placeholder="Ask Gordon to orchestrate trades, research, or automation..."
+          className="h-20 w-full resize-none border-none bg-transparent p-3 text-sm font-mono text-slate-200 placeholder-slate-600 outline-none"
+          placeholder="Direct line to Gordon..."
           value={value}
           onChange={(event) => setValue(event.target.value)}
           disabled={disabled}
-          data-testid="chat-input-field"
-          aria-label="Type your message to Gordon"
-          aria-disabled={disabled}
         />
-        <div className="mt-3 flex items-center justify-between text-xs text-white/60">
-          <label 
-            className="flex cursor-pointer items-center gap-2 rounded-full border border-border/80 px-3 py-2 hover:border-accent/70"
-            data-testid="btn-attach-file"
-            aria-label="Attach files (CSV, PDF, MD)"
-          >
-            <Upload className="h-4 w-4" aria-hidden="true" />
-            Attach (CSV, PDF, MD)
-            <input 
-              type="file" 
-              className="hidden" 
-              multiple 
-              data-testid="input-file-upload"
-              aria-label="Select files to attach"
-            />
-          </label>
+        
+        <div className="flex items-center justify-between border-t border-white/5 bg-white/[0.02] px-2 py-1.5">
+          <div className="flex items-center gap-1">
+             <button
+                type="button"
+                onClick={() => setShowTools(!showTools)}
+                className={`flex items-center gap-1.5 rounded px-2 py-1 text-[10px] font-bold uppercase tracking-wide transition-colors ${showTools ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}
+             >
+                <Wrench className="h-3 w-3" /> Tools
+             </button>
+             <div className="h-4 w-px bg-white/10 mx-1" />
+             <label className="flex cursor-pointer items-center gap-1.5 rounded px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-500 hover:text-slate-300 transition-colors">
+                <Upload className="h-3 w-3" /> Attach
+                <input type="file" className="hidden" multiple />
+             </label>
+          </div>
+
           <button
             type="submit"
-            className="flex items-center gap-2 rounded-full bg-accent px-4 py-2 font-semibold text-black disabled:cursor-not-allowed disabled:bg-white/40"
-            disabled={disabled}
-            data-testid="btn-send-message"
-            role="button"
-            aria-label={disabled ? 'Sending message...' : 'Send message'}
-            aria-disabled={disabled}
+            disabled={disabled || !value.trim()}
+            className={clsx(
+              "flex items-center gap-2 rounded px-3 py-1 text-[10px] font-bold uppercase tracking-widest transition-all",
+              disabled || !value.trim() 
+                ? "text-slate-600 cursor-not-allowed" 
+                : "bg-emerald-600 text-white hover:bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]"
+            )}
           >
-            {disabled ? (
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-            ) : (
-              <Send className="h-4 w-4" aria-hidden="true" />
-            )} Send
+            {disabled ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+            Execute
           </button>
         </div>
       </div>

@@ -405,8 +405,20 @@ pub struct MarketDataResponse {
 /// Individual market data point
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MarketDataPoint {
-    /// Price at this point
+    /// Closing price (or single price point)
     pub price: f64,
+
+    /// Open price
+    pub open: Option<f64>,
+
+    /// High price
+    pub high: Option<f64>,
+
+    /// Low price
+    pub low: Option<f64>,
+
+    /// Close price (explicit)
+    pub close: Option<f64>,
 
     /// Volume at this point
     pub volume: f64,

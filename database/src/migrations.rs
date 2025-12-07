@@ -14,6 +14,7 @@ use tokio::sync::Mutex;
 use tracing::{debug, error, info, instrument, warn};
 
 use crate::config::MigrationConfig;
+use sqlx::Row;
 
 /// Migration status enumeration
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -79,7 +80,7 @@ impl MigrationManager {
     pub async fn load_applied_migrations(&self, pool: &sqlx::PgPool) -> Result<()> {
         debug!("Loading applied migrations from database");
 
-        let rows = sqlx::query!(
+        let rows = sqlx::query(
             r#"
             SELECT version, name, description, checksum, applied_at, status, execution_time_ms
             FROM schema_migrations
@@ -91,25 +92,33 @@ impl MigrationManager {
 
         let mut applied = HashMap::new();
         for row in rows {
-            let status = match row.status.as_str() {
+            let status_str: String = row.get("status");
+            let status = match status_str.as_str() {
                 "applied" => MigrationStatus::Applied,
                 "failed" => MigrationStatus::Failed,
                 "rolled_back" => MigrationStatus::RolledBack,
                 _ => MigrationStatus::Pending,
             };
 
+            let version: i64 = row.get("version");
+            let name: String = row.get("name");
+            let description: Option<String> = row.get("description");
+            let checksum: String = row.get("checksum");
+            let applied_at: Option<chrono::DateTime<chrono::Utc>> = row.get("applied_at");
+            let execution_time_ms: Option<i64> = row.get("execution_time_ms");
+
             let migration = Migration {
-                version: row.version,
-                name: row.name,
-                description: row.description.unwrap_or_default(),
-                checksum: row.checksum,
-                applied_at: row.applied_at.map(|dt| dt.into()),
+                version,
+                name,
+                description: description.unwrap_or_default(),
+                checksum,
+                applied_at: applied_at.map(|dt| dt.into()),
                 rolled_back_at: None, // TODO: Add rolled_back_at to schema
                 status,
-                execution_time_ms: row.execution_time_ms.map(|ms| ms as u64),
+                execution_time_ms: execution_time_ms.map(|ms| ms as u64),
             };
 
-            applied.insert(row.version, migration);
+            applied.insert(version, migration);
         }
 
         let mut migrations = self.applied_migrations.lock().await;
@@ -251,18 +260,18 @@ impl MigrationManager {
 
         let expires_at = SystemTime::now() + self.config.lock_timeout;
 
-        let result = sqlx::query!(
+        let result = sqlx::query(
             r#"
             INSERT INTO schema_migration_locks (lock_id, locked_by, expires_at)
             VALUES ($1, $2, $3)
             ON CONFLICT (lock_id) DO UPDATE SET
                 locked_by = EXCLUDED.locked_by,
                 expires_at = EXCLUDED.expires_at
-            "#,
-            lock_id,
-            "migration_manager",
-            expires_at.duration_since(UNIX_EPOCH)?.as_secs() as i64
+            "#
         )
+        .bind(lock_id)
+        .bind("migration_manager")
+        .bind(expires_at.duration_since(UNIX_EPOCH)?.as_secs() as i64)
         .execute(pool)
         .await;
 
@@ -288,10 +297,10 @@ impl MigrationManager {
     async fn release_lock(&self, pool: &sqlx::PgPool, lock_id: &str) -> Result<()> {
         debug!("Releasing migration lock: {}", lock_id);
 
-        let rows_affected = sqlx::query!(
-            "DELETE FROM schema_migration_locks WHERE lock_id = $1",
-            lock_id
+        let rows_affected = sqlx::query(
+            "DELETE FROM schema_migration_locks WHERE lock_id = $1"
         )
+        .bind(lock_id)
         .execute(pool)
         .await?
         .rows_affected();
@@ -401,7 +410,7 @@ impl MigrationManager {
         let mut tx = pool.begin().await?;
 
         // Create schema_migrations table if it doesn't exist
-        sqlx::query!(
+        sqlx::query(
             r#"
             CREATE TABLE IF NOT EXISTS schema_migrations (
                 version BIGINT PRIMARY KEY,
@@ -412,7 +421,7 @@ impl MigrationManager {
                 status VARCHAR(50) NOT NULL DEFAULT 'pending',
                 execution_time_ms BIGINT
             )
-            "#,
+            "#
         )
         .execute(&mut *tx)
         .await?;
@@ -423,17 +432,17 @@ impl MigrationManager {
                 // Record successful migration
                 let execution_time = start_time.elapsed().as_millis() as u64;
 
-                sqlx::query!(
+                sqlx::query(
                     r#"
                     INSERT INTO schema_migrations (version, name, description, checksum, applied_at, status, execution_time_ms)
                     VALUES ($1, $2, $3, $4, NOW(), 'applied', $5)
-                    "#,
-                    migration_file.version,
-                    migration_file.name,
-                    migration_file.description,
-                    migration_file.checksum,
-                    execution_time as i64
+                    "#
                 )
+                .bind(migration_file.version)
+                .bind(&migration_file.name)
+                .bind(&migration_file.description)
+                .bind(&migration_file.checksum)
+                .bind(execution_time as i64)
                 .execute(&mut *tx)
                 .await?;
 
@@ -463,17 +472,17 @@ impl MigrationManager {
             }
             Err(e) => {
                 // Record failed migration
-                sqlx::query!(
+                sqlx::query(
                     r#"
                     INSERT INTO schema_migrations (version, name, description, checksum, applied_at, status, execution_time_ms)
                     VALUES ($1, $2, $3, $4, NOW(), 'failed', $5)
-                    "#,
-                    migration_file.version,
-                    migration_file.name,
-                    migration_file.description,
-                    migration_file.checksum,
-                    start_time.elapsed().as_millis() as i64
+                    "#
                 )
+                .bind(migration_file.version)
+                .bind(&migration_file.name)
+                .bind(&migration_file.description)
+                .bind(&migration_file.checksum)
+                .bind(start_time.elapsed().as_millis() as i64)
                 .execute(&mut *tx)
                 .await?;
 
@@ -579,10 +588,10 @@ impl MigrationManager {
                     }
 
                     // Update migration record
-                    sqlx::query!(
-                        "UPDATE schema_migrations SET status = 'rolled_back', rolled_back_at = NOW() WHERE version = $1",
-                        latest_version
+                    sqlx::query(
+                        "UPDATE schema_migrations SET status = 'rolled_back', rolled_back_at = NOW() WHERE version = $1"
                     )
+                    .bind(latest_version)
                     .execute(&mut *tx)
                     .await?;
 

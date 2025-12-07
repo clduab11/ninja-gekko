@@ -120,13 +120,14 @@ statrs = "0.17"
 indexmap = "2.6"
 
 # Pinned dependencies (home 0.5.12 requires edition2024 which needs Rust 1.85+)
-home = "0.5.9"
+home = "=0.5.9"
 
 [dev-dependencies]
 testcontainers = "0.15"
 tokio = { version = "1.0", features = ["full", "macros"] }
 sqlx = { version = "0.8", features = ["postgres", "runtime-tokio", "uuid"] }
 redis = { version = "0.25", features = ["tokio-comp"] }
+reqwest = { workspace = true }
 
 [dependencies]
 # Core dependencies for the main binary
@@ -153,6 +154,7 @@ event-bus = { path = "crates/event-bus" }
 strategy-engine = { path = "crates/strategy-engine" }
 mcp-client = { path = "crates/mcp-client" }
 ninja-gekko-core = { path = "core" }
+ninja-gekko-api = { path = "api" }
 
 # HTTP API surface for the chat UI
 axum = { version = "0.7", features = ["macros"] }

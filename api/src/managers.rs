@@ -131,14 +131,36 @@ impl PortfolioManager {
 /// Service for market data operations
 pub struct MarketDataService {
     _db: Arc<DatabaseManager>,
+    connector: Option<Arc<Box<dyn exchange_connectors::ExchangeConnector>>>,
 }
 
 impl MarketDataService {
-    pub fn new(db: Arc<DatabaseManager>) -> Self {
-        Self { _db: db }
+    pub fn new(db: Arc<DatabaseManager>, connector: Option<Arc<Box<dyn exchange_connectors::ExchangeConnector>>>) -> Self {
+        Self { _db: db, connector }
     }
 
     pub async fn get_latest_data(&self, symbol: &str) -> ApiResult<MarketDataResponse> {
+        // If we have a connector, try to get real data
+        if let Some(conn) = &self.connector {
+             match conn.get_market_data(symbol).await {
+                Ok(tick) => {
+                    return Ok(MarketDataResponse {
+                        symbol: symbol.to_string(),
+                        price: tick.last.to_string().parse().unwrap_or(0.0),
+                        change_24h: 0.0, // Connector might not give 24h change yet
+                        volume_24h: tick.volume_24h.to_string().parse().unwrap_or(0.0),
+                        market_cap: None,
+                        timestamp: tick.timestamp,
+                        history: None,
+                    });
+                }
+                Err(e) => {
+                    tracing::warn!("Failed to fetch live data for {}: {}", symbol, e);
+                    // Fallback to mock data below
+                }
+             }
+        }
+
         Ok(MarketDataResponse {
             symbol: symbol.to_string(),
             price: 150.0,
@@ -158,7 +180,45 @@ impl MarketDataService {
         Ok(responses)
     }
 
-    pub async fn get_historical_data(&self, _symbol: &str, _params: PaginationParams) -> ApiResult<PaginatedResponse<MarketDataPoint>> {
+    pub async fn get_historical_data(&self, symbol: &str, _params: PaginationParams) -> ApiResult<PaginatedResponse<MarketDataPoint>> {
+        // Use connector if available
+        if let Some(conn) = &self.connector {
+            // Default to 1 day of 15m candles for now, or match params if we parsed them
+            let end = Utc::now();
+            let start = end - chrono::Duration::days(1);
+            let timeframe = exchange_connectors::Timeframe::FifteenMinutes;
+
+            match conn.get_candles(symbol, timeframe, Some(start), Some(end)).await {
+                Ok(candles) => {
+                    let points: Vec<MarketDataPoint> = candles.into_iter().map(|c| MarketDataPoint {
+                        timestamp: c.start_time,
+                        price: c.close.to_string().parse().unwrap_or(0.0),
+                        open: Some(c.open.to_string().parse().unwrap_or(0.0)),
+                        high: Some(c.high.to_string().parse().unwrap_or(0.0)),
+                        low: Some(c.low.to_string().parse().unwrap_or(0.0)),
+                        close: Some(c.close.to_string().parse().unwrap_or(0.0)),
+                        volume: c.volume.to_string().parse().unwrap_or(0.0),
+                    }).collect();
+
+                    return Ok(PaginatedResponse {
+                        response: ApiResponse::success(points.clone()), 
+                        pagination: PaginationMeta {
+                            page: 1,
+                            limit: points.len(),
+                            total: points.len(),
+                            total_pages: 1,
+                            has_next: false,
+                            has_prev: false,
+                        }
+                    });
+                }
+                Err(e) => {
+                    tracing::error!("Failed to fetch historical candles for {}: {}", symbol, e);
+                    // Fallback to empty/mock
+                }
+            }
+        }
+
         Ok(PaginatedResponse {
             response: ApiResponse::success(vec![]),
             pagination: PaginationMeta {

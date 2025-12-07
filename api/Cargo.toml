@@ -14,6 +14,7 @@ arbitrage-engine = { path = "../crates/arbitrage-engine" }
 exchange-connectors = { path = "../crates/exchange-connectors" }
 strategy-engine = { path = "../crates/strategy-engine" }
 event-bus = { path = "../crates/event-bus" }
+home = "=0.5.9"
 
 # Axum web framework
 axum = { version = "0.7", features = ["ws", "macros", "tracing", "multipart"] }

@@ -102,3 +102,28 @@ export interface SwarmResponse {
   status: string;
   eta_seconds: number;
 }
+
+export interface MarketDataPoint {
+  timestamp: string;
+  price: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  close?: number;
+  volume: number;
+}
+
+export interface PaginatedResponse<T> {
+  success: boolean;
+  data: T[];
+  error?: string;
+  timestamp: string;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    total_pages: number;
+    has_next: boolean;
+    has_prev: boolean;
+  };
+}

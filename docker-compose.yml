@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   trading-engine:
@@ -14,13 +14,16 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/ninja_gekko
       - REDIS_URL=redis://redis:6379
       - RUST_LOG=info
+      - GG_API_BIND_ADDRESS=0.0.0.0:8080
+      - GG_API_JWT_SECRET=dev-secret-do-not-use-in-prod-ninja-gekko
+      - GG_API_DATABASE_URL=postgresql://postgres:postgres@postgres:5432/ninja_gekko
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -28,10 +31,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2.00'
+          cpus: "2.00"
           memory: 4G
         reservations:
-          cpus: '0.50'
+          cpus: "0.50"
           memory: 512M
     logging:
       driver: "json-file"
@@ -75,9 +78,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.00'
+          cpus: "1.00"
           memory: 1G
     restart: unless-stopped
+    networks:
+      - backend
 
   redis:
     image: redis:7-alpine
@@ -91,9 +96,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.50'
+          cpus: "0.50"
           memory: 512M
     restart: unless-stopped
+    networks:
+      - backend
 
   prometheus:
     image: prom/prometheus:latest
@@ -104,11 +111,13 @@ services:
       - ./config/trading_rules.yml:/etc/prometheus/rules/trading_rules.yml
       - prometheus_data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
     depends_on:
       - trading-engine
     restart: unless-stopped
+    networks:
+      - backend
 
   grafana:
     image: grafana/grafana:latest
@@ -122,6 +131,8 @@ services:
     depends_on:
       - prometheus
     restart: unless-stopped
+    networks:
+      - backend
 
 volumes:
   postgres_data:

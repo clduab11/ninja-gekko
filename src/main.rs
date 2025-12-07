@@ -142,15 +142,33 @@ async fn main() -> Result<()> {
     // Get a reference to the MCP client for the web layer
     let mcp_client = bot.mcp_client().clone();
 
-    let api_addr: SocketAddr = "0.0.0.0:8787".parse()?;
-    // Pass the event bus to the web layer
-    let api_handle = web::spawn(
-        api_addr,
+    // --- Start Chat Orchestration API (8787) ---
+    let chat_addr: SocketAddr = "0.0.0.0:8787".parse()?;
+    let chat_handle = web::spawn(
+        chat_addr,
         Some(event_bus.clone()),
         mcp_client,
         metrics_handle,
     );
-    info!("🌐 Chat orchestration API live at http://{api_addr}");
+    info!("🌐 Chat orchestration API live at http://{chat_addr}");
+
+    // --- Start Main Trading API (8080) ---
+    // This handles market data, trading endpoints, and WebSocket stream
+    let main_api_handle = tokio::spawn(async move {
+        info!("🚀 Initializing Main API Server...");
+        match ninja_gekko_api::ApiServer::new().await {
+            Ok(server) => {
+                let config = server.config();
+                info!("   Main API Config: Bind={} Env={}", config.bind_address, config.environment);
+                if let Err(e) = server.serve().await {
+                    error!("💥 Main API Server crashed: {}", e);
+                }
+            }
+            Err(e) => {
+                error!("💥 Failed to initialize Main API Server: {}", e);
+            }
+        }
+    });
 
     // Start the bot in the background
     let bot_handle = tokio::spawn(async move {
@@ -159,6 +177,7 @@ async fn main() -> Result<()> {
         }
     });
 
+    // Setup shutdown handler
     // Setup shutdown handler
     setup_shutdown_handler().await;
 

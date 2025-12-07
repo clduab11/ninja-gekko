@@ -152,6 +152,18 @@ impl ExchangeConnector for BinanceUsConnector {
             "Fund transfers not implemented for Binance.us connector".to_string(),
         ))
     }
+
+    async fn get_candles(
+        &self,
+        _symbol: &str,
+        _timeframe: crate::Timeframe,
+        _start: Option<chrono::DateTime<chrono::Utc>>,
+        _end: Option<chrono::DateTime<chrono::Utc>>,
+    ) -> ExchangeResult<Vec<crate::Candle>> {
+        Err(ExchangeError::InvalidRequest(
+            "Historical candles not implemented for Binance.us connector".to_string(),
+        ))
+    }
 }
 
 fn build_symbol_mapping(symbols: &[String]) -> HashMap<String, String> {

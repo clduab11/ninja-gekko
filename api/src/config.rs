@@ -11,6 +11,7 @@ use tracing::{info, warn};
 
 /// Server configuration for the API
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct ApiConfig {
     /// Server bind address and port
     pub bind_address: SocketAddr,
@@ -52,7 +53,7 @@ pub struct ApiConfig {
 impl Default for ApiConfig {
     fn default() -> Self {
         Self {
-            bind_address: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 3000),
+            bind_address: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 8080),
             database_url: "postgresql://localhost/gordon_gekko".to_string(),
             jwt_secret: std::env::var("GG_API_JWT_SECRET").unwrap_or_else(|_| {
                 if cfg!(test) {
@@ -85,7 +86,8 @@ impl ApiConfig {
                     .separator("_")
                     .try_parsing(true)
             )
-            .set_default("bind_address", "0.0.0.0:3000")?
+            .set_override_option("database_url", std::env::var("GG_API_DATABASE_URL").ok())?
+            .set_default("bind_address", "0.0.0.0:8080")?
             .set_default("database_url", "postgresql://localhost/gordon_gekko")?
             .set_default("jwt_secret", "your-super-secret-jwt-key-change-this-in-production")?
             .set_default("environment", "development")?
@@ -176,6 +178,7 @@ impl ApiConfig {
 
 /// Rate limiting configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct RateLimitingConfig {
     /// Requests per second
     pub requests_per_second: u32,
@@ -207,6 +210,7 @@ impl Default for RateLimitingConfig {
 
 /// Logging configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct LoggingConfig {
     /// Log level (trace, debug, info, warn, error)
     pub level: String,
@@ -239,7 +243,7 @@ mod tests {
     #[test]
     fn test_default_config() {
         let config = ApiConfig::default();
-        assert_eq!(config.bind_address.port(), 3000);
+        assert_eq!(config.bind_address.port(), 8080);
         assert_eq!(config.environment, "development");
         assert!(config.is_development());
         assert!(!config.is_production());

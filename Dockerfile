@@ -23,6 +23,7 @@ COPY crates/mcp-client/Cargo.toml ./crates/mcp-client/
 COPY crates/event-bus/Cargo.toml ./crates/event-bus/
 COPY crates/data-pipeline/Cargo.toml ./crates/data-pipeline/
 COPY crates/strategy-engine/Cargo.toml ./crates/strategy-engine/
+COPY crates/mcp-server-trade/Cargo.toml ./crates/mcp-server-trade/
 
 # Create dummy source files to compile dependencies
 RUN mkdir -p src core/src database/src api/src \
@@ -37,19 +38,37 @@ RUN mkdir -p src core/src database/src api/src \
     crates/strategy-engine/src \
     && echo "fn main() {}" > src/main.rs \
     && echo "pub fn lib() {}" > src/lib.rs \
-    && for d in core database api crates/*/; do echo "pub fn lib() {}" > "${d}src/lib.rs"; done
+    && echo "pub fn lib() {}" > core/src/lib.rs \
+    && echo "pub fn lib() {}" > database/src/lib.rs \
+    && echo "pub fn lib() {}" > api/src/lib.rs \
+    && echo "pub fn lib() {}" > crates/exchange-connectors/src/lib.rs \
+    && echo "pub fn lib() {}" > crates/arbitrage-engine/src/lib.rs \
+    && echo "pub fn lib() {}" > crates/trading-core/src/lib.rs \
+    && echo "pub fn lib() {}" > crates/neural-engine/src/lib.rs \
+    && echo "pub fn lib() {}" > crates/swarm-intelligence/src/lib.rs \
+    && echo "pub fn lib() {}" > crates/mcp-client/src/lib.rs \
+    && echo "pub fn lib() {}" > crates/event-bus/src/lib.rs \
+    && echo "pub fn lib() {}" > crates/data-pipeline/src/lib.rs \
+    && echo "pub fn lib() {}" > crates/strategy-engine/src/lib.rs \
+    && mkdir -p crates/mcp-server-trade/src && echo "pub fn lib() {}" > crates/mcp-server-trade/src/lib.rs \
+    && mkdir -p crates/event-bus/benches && echo "fn main() {}" > crates/event-bus/benches/dispatcher.rs \
+    && mkdir -p crates/data-pipeline/benches && echo "fn main() {}" > crates/data-pipeline/benches/normalizer.rs \
+    && mkdir -p crates/strategy-engine/benches && echo "fn main() {}" > crates/strategy-engine/benches/strategy_eval.rs
 
 # Disable sqlx compile-time checks
 ENV SQLX_OFFLINE=true
 
 # Build dependencies only
-RUN cargo build --release 2>/dev/null || true
+RUN cargo build --release
 
 # Remove dummy source files
 RUN rm -rf src core/src database/src api/src crates/*/src
 
 # Copy actual source code
 COPY . .
+
+# Update mtimes to ensure Cargo rebuilds (Critical for Docker caching behavior)
+RUN find . -name "*.rs" -exec touch {} +
 
 # Build the release binary
 RUN cargo build --release --bin ninja-gekko

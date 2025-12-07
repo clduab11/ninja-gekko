@@ -472,6 +472,93 @@ impl ExchangeConnector for CoinbaseConnector {
             "Transfer status not supported by Coinbase API".to_string(),
         ))
     }
+
+    async fn get_candles(
+        &self,
+        symbol: &str,
+        timeframe: crate::Timeframe,
+        start: Option<chrono::DateTime<chrono::Utc>>,
+        end: Option<chrono::DateTime<chrono::Utc>>,
+    ) -> ExchangeResult<Vec<crate::Candle>> {
+        self.rate_limiter.acquire().await?;
+
+        let granularity = match timeframe {
+            crate::Timeframe::OneMinute => "ONE_MINUTE",
+            crate::Timeframe::FiveMinutes => "FIVE_MINUTE",
+            crate::Timeframe::FifteenMinutes => "FIFTEEN_MINUTE",
+            crate::Timeframe::OneHour => "ONE_HOUR",
+            crate::Timeframe::FourHours => "SIX_HOUR", // Coinbase doesn't have 4h, using 6h or closest
+            crate::Timeframe::OneDay => "ONE_DAY",
+        };
+
+        let mut url = format!("{}/products/{}/candles?granularity={}", self.base_url, symbol, granularity);
+        
+        if let Some(s) = start {
+            url.push_str(&format!("&start={}", s.timestamp()));
+        }
+        if let Some(e) = end {
+            url.push_str(&format!("&end={}", e.timestamp()));
+        }
+
+        let request = self.create_authenticated_request(Method::GET, &format!("/products/{}/candles", symbol), "");
+        // Query params need to be added to the URL carefully if using create_authenticated_request which takes a path.
+        // Actually, create_authenticated_request builds the URL from path. Let's rebuild to use properties properly.
+        
+        let mut path = format!("/products/{}/candles?granularity={}", symbol, granularity);
+        if let Some(s) = start {
+            path.push_str(&format!("&start={}", s.timestamp()));
+        }
+        if let Some(e) = end {
+            path.push_str(&format!("&end={}", e.timestamp()));
+        }
+
+        let request = self.create_authenticated_request(Method::GET, &path, "");
+
+        let response = request
+            .send()
+            .await
+            .map_err(|e| ExchangeError::Network(e.to_string()))?;
+
+        let candles_response: CoinbaseCandlesResponse = self.handle_response(response).await?;
+        
+        let mut candles = Vec::new();
+        for c in candles_response.candles {
+            // Coinbase Advanced Trade returns candles as object { start, low, high, open, close, volume }
+            // But verify actual response structure. 
+            // Docs say: { candles: [{ start, low, high, open, close, volume }, ...] }
+            
+            // Check if parsing needed or if it's already structured
+            candles.push(crate::Candle {
+                start_time: chrono::DateTime::from_timestamp(c.start.parse::<i64>().unwrap_or(0), 0)
+                    .unwrap_or_else(chrono::Utc::now),
+                open: c.open.parse().unwrap_or_default(),
+                high: c.high.parse().unwrap_or_default(),
+                low: c.low.parse().unwrap_or_default(),
+                close: c.close.parse().unwrap_or_default(),
+                volume: c.volume.parse().unwrap_or_default(),
+            });
+        }
+        
+        // Sort by time ascending
+        candles.sort_by_key(|c| c.start_time);
+
+        Ok(candles)
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct CoinbaseCandlesResponse {
+    candles: Vec<CoinbaseCandle>,
+}
+
+#[derive(Debug, Deserialize)]
+struct CoinbaseCandle {
+    start: String,
+    low: String,
+    high: String,
+    open: String,
+    close: String,
+    volume: String,
 }
 
 async fn run_coinbase_market_stream(

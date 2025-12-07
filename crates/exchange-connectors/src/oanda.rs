@@ -184,6 +184,18 @@ impl ExchangeConnector for OandaConnector {
             "Fund transfers not supported by the OANDA connector".to_string(),
         ))
     }
+
+    async fn get_candles(
+        &self,
+        _symbol: &str,
+        _timeframe: crate::Timeframe,
+        _start: Option<chrono::DateTime<chrono::Utc>>,
+        _end: Option<chrono::DateTime<chrono::Utc>>,
+    ) -> ExchangeResult<Vec<crate::Candle>> {
+        Err(ExchangeError::InvalidRequest(
+            "Historical candles not implemented for OANDA connector".to_string(),
+        ))
+    }
 }
 
 async fn run_oanda_price_stream(

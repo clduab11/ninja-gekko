@@ -228,6 +228,50 @@ pub trait ExchangeConnector: Send + Sync {
 
     /// Get transfer status
     async fn get_transfer_status(&self, transfer_id: &str) -> ExchangeResult<TransferStatus>;
+
+    /// Get historical candles
+    async fn get_candles(
+        &self,
+        symbol: &str,
+        timeframe: Timeframe,
+        start: Option<chrono::DateTime<chrono::Utc>>,
+        end: Option<chrono::DateTime<chrono::Utc>>,
+    ) -> ExchangeResult<Vec<Candle>>;
+}
+
+/// Market candle (OHLCV)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Candle {
+    pub start_time: chrono::DateTime<chrono::Utc>,
+    pub open: Decimal,
+    pub high: Decimal,
+    pub low: Decimal,
+    pub close: Decimal,
+    pub volume: Decimal,
+}
+
+/// Supported timeframes for candles
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Timeframe {
+    OneMinute,
+    FiveMinutes,
+    FifteenMinutes,
+    OneHour,
+    FourHours,
+    OneDay,
+}
+
+impl Timeframe {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Timeframe::OneMinute => "1m",
+            Timeframe::FiveMinutes => "5m",
+            Timeframe::FifteenMinutes => "15m",
+            Timeframe::OneHour => "1h",
+            Timeframe::FourHours => "4h",
+            Timeframe::OneDay => "1d",
+        }
+    }
 }
 
 /// Transfer status enumeration

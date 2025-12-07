@@ -5,17 +5,20 @@
 
 pub mod discord_webhook;
 pub mod execution;
-pub mod perplexity_browser;
+// pub mod perplexity_browser; // Deprecated
 pub mod perplexity_client;
+
 pub mod rate_limiter;
+pub mod openrouter_client;
 
 use event_bus::EventBus;
 use serde::{Deserialize, Serialize};
 use tracing::{info, warn};
 
-pub use perplexity_browser::{FallbackReason, PerplexityBrowser, PerplexityFinanceData, PlaywrightConfig, requires_visual_data};
+// pub use perplexity_browser::{FallbackReason, PerplexityBrowser, PerplexityFinanceData, PlaywrightConfig, requires_visual_data}; // Deprecated
 pub use perplexity_client::{classify_query, SonarClient, SonarConfig, SonarModel, SonarResponse};
 pub use rate_limiter::SonarRateLimiter;
+pub use openrouter_client::{OpenRouterClient, ChatMessage};
 
 /// MCP Client configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -32,6 +35,7 @@ pub struct McpClient {
     event_bus: Option<EventBus>,
     pub discord_service: Option<DiscordNotificationService>,
     sonar_client: Option<SonarClient>,
+    openrouter_client: Option<OpenRouterClient>,
 }
 
 impl McpClient {
@@ -49,11 +53,24 @@ impl McpClient {
             }
         };
 
+        // Try to initialize OpenRouter client from environment
+        let openrouter_client = match OpenRouterClient::from_env() {
+            Ok(client) => {
+                info!("🧠 OpenRouter client initialized successfully");
+                Some(client)
+            }
+            Err(e) => {
+                warn!("⚠️ OpenRouter client not initialized: {}", e);
+                None
+            }
+        };
+
         Self {
             config,
             event_bus: None,
             discord_service: None,
             sonar_client,
+            openrouter_client,
         }
     }
 
@@ -233,6 +250,26 @@ impl McpClient {
                 }
             ]
         }))
+    }
+
+    /// Perform a chat completion using the configured LLM provider (OpenRouter)
+    pub async fn chat_completion(
+        &self,
+        messages: Vec<ChatMessage>,
+        model: Option<String>,
+    ) -> anyhow::Result<String> {
+        if let Some(client) = &self.openrouter_client {
+            let response = client.chat_completion(messages, model).await?;
+            
+            if let Some(choice) = response.choices.first() {
+                return Ok(choice.message.content.clone());
+            } else {
+                return Err(anyhow::anyhow!("No choices returned from LLM"));
+            }
+        }
+        
+        // Fallback or error if not configured
+        Err(anyhow::anyhow!("OpenRouter client not configured"))
     }
 
     /// Perform deep research (convenience method for complex queries)

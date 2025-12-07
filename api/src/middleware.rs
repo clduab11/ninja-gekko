@@ -39,10 +39,22 @@ pub mod cors {
                 Method::OPTIONS,
                 Method::PATCH,
             ])
-            .allow_headers(Any)
-            .allow_credentials(true) // Important for authentication
-            .allow_origin(Any) // In production, specify allowed origins
-            .max_age(Duration::from_secs(3600)) // Cache preflight for 1 hour
+            .allow_headers([
+                header::AUTHORIZATION,
+                header::CONTENT_TYPE,
+                header::ACCEPT,
+                header::ORIGIN,
+                header::ACCESS_CONTROL_ALLOW_ORIGIN,
+                axum::http::header::HeaderName::from_static("x-requested-with"),
+            ])
+            .allow_credentials(true)
+            .allow_origin([
+                "http://localhost:5173".parse().unwrap(),
+                "http://localhost:3000".parse().unwrap(),
+                "http://127.0.0.1:5173".parse().unwrap(),
+                "http://127.0.0.1:3000".parse().unwrap(),
+            ])
+            .max_age(Duration::from_secs(3600))
     }
 
     /// Create a more restrictive CORS layer for production
@@ -72,21 +84,41 @@ pub mod cors {
             .max_age(Duration::from_secs(3600))
     }
 
-    /// Custom CORS middleware for development (allows all origins)
+    /// Custom CORS middleware for development (allows specified origins with credentials)
+    /// Note: Cannot use wildcard "*" with allow_credentials=true per CORS spec
     pub async fn dev_cors_middleware(
         request: Request,
         next: Next,
     ) -> impl IntoResponse {
-        info!("Development CORS: Allowing all origins for request to {}", request.uri());
+        // Extract the Origin header from the request before consuming it
+        let origin = request
+            .headers()
+            .get(header::ORIGIN)
+            .and_then(|v| v.to_str().ok())
+            .map(|s| s.to_string());
+
+        info!("Development CORS: Processing request to {} from origin {:?}", request.uri(), origin);
 
         // Create a response with CORS headers
         let mut response = next.run(request).await;
 
         let headers = response.headers_mut();
-        headers.insert(
-            header::ACCESS_CONTROL_ALLOW_ORIGIN,
-            "*".parse().unwrap(),
-        );
+        
+        // Use the actual origin instead of wildcard when credentials are enabled
+        // This is required by CORS spec: wildcard not allowed with credentials
+        if let Some(origin_value) = origin {
+            headers.insert(
+                header::ACCESS_CONTROL_ALLOW_ORIGIN,
+                origin_value.parse().unwrap(),
+            );
+        } else {
+            // For requests without Origin header (like same-origin), use a safe default
+            headers.insert(
+                header::ACCESS_CONTROL_ALLOW_ORIGIN,
+                "http://localhost:5173".parse().unwrap(),
+            );
+        }
+        
         headers.insert(
             header::ACCESS_CONTROL_ALLOW_METHODS,
             "GET, POST, PUT, DELETE, OPTIONS, PATCH".parse().unwrap(),

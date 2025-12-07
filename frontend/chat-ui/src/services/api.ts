@@ -9,7 +9,9 @@ import {
   ResearchRequest,
   ResearchResponse,
   SwarmRequest,
-  SwarmResponse
+  SwarmResponse,
+  MarketDataPoint,
+  PaginatedResponse
 } from '../types';
 
 const JSON_HEADERS = {
@@ -87,4 +89,20 @@ export async function summonSwarm(payload: SwarmRequest): Promise<SwarmResponse>
     body: JSON.stringify(payload)
   });
   return handleResponse<SwarmResponse>(res);
+}
+
+export async function fetchHistoricalCandles(symbol: string, timeframe: string = '15m'): Promise<MarketDataPoint[]> {
+  const res = await fetch(`/api/v1/market-data/${symbol}/history?timeframe=${timeframe}`);
+  // We need to import PaginatedResponse and MarketDataPoint, but they are in types
+  // Since this file imports from ../types, we can just use the generic locally if we trust the return shape
+  // OR update imports.  I'll assumes updated imports in same step or separate.
+  // Actually, I should update imports first or uses 'any' casting if lazy, but let's be strict if I can.
+  // I will check imports at top of file. 
+  // Wait, I can't easily see top imports here without scrolling.
+  // I will just cast to any for now to avoid compilation error until I fix imports, 
+  // OR better: use the types if I can validly import them.
+  // I'll update the whole file import set.
+  
+  const envelope = await handleResponse<PaginatedResponse<MarketDataPoint>>(res);
+  return envelope.data;
 }

@@ -45,6 +45,7 @@ pub mod env_validation;
 
 use crate::managers::{PortfolioManager, MarketDataService, StrategyManager};
 use crate::websocket::WebSocketManager;
+use exchange_connectors::ExchangeConnector;
 
 /// Application state shared across all handlers
 #[derive(Clone)]
@@ -85,8 +86,39 @@ impl AppState {
             PortfolioManager::new(db_manager.clone())
         );
 
+        // Initialize Exchange Connector (Coinbase) if credentials exist
+        let connector: Option<Arc<Box<dyn exchange_connectors::ExchangeConnector>>> = 
+            if let (Ok(key_name), Ok(private_key)) = (
+                std::env::var("COINBASE_API_KEY_NAME"),
+                std::env::var("COINBASE_PRIVATE_KEY")
+            ) {
+                // Determine if we should use sandbox or advanced trade from env or defaults
+                // For now, assuming production/advanced trade if keys are present
+                let config = exchange_connectors::coinbase::CoinbaseConfig {
+                    api_key_name: key_name,
+                    private_key,
+                    sandbox: false,
+                    use_advanced_trade: true,
+                };
+                
+                info!("Initializing Coinbase Advanced Trade connector");
+                let mut cb_connector = exchange_connectors::coinbase::CoinbaseConnector::new(config);
+                // Optionally connect immediately or let it connect on first use.
+                // It's async, so we can't await easily here without constructor being async.
+                // AppState::new IS async, so we can await.
+                if let Err(e) = cb_connector.connect().await {
+                   tracing::error!("Failed to connect to Coinbase on startup: {}", e);
+                   // We still return the connector, it might reconnect later
+                }
+                
+                Some(Arc::new(Box::new(cb_connector)))
+            } else {
+                info!("No Coinbase credentials found, using mock market data");
+                None
+            };
+
         let market_data_service = Arc::new(
-            MarketDataService::new(db_manager.clone())
+            MarketDataService::new(db_manager.clone(), connector)
         );
 
         let strategy_manager = Arc::new(
