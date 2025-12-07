@@ -1,0 +1,27 @@
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.170865Z","level":"INFO","fields":{"message":"🥷 Starting Ninja Gekko v2.0.0"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.171061Z","level":"INFO","fields":{"message":"📊 Configuration: /etc/ninja-gekko/arbitrage.toml"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.171167Z","level":"INFO","fields":{"message":"🎯 Operation mode: swarm"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.171175Z","level":"INFO","fields":{"message":"🏖️  Sandbox mode: false"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.171180Z","level":"INFO","fields":{"message":"🔥 GPU acceleration: false"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.171306Z","level":"INFO","fields":{"message":"🎭 MCP servers: playwright,filesystem,github,supabase"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.171321Z","level":"INFO","fields":{"message":"✅ Configuration loaded successfully"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.172189Z","level":"INFO","fields":{"message":"✅ Prometheus metrics recorder initialized"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.172285Z","level":"INFO","fields":{"message":"✅ Configuration loaded successfully (secrets protected in memory)"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.172297Z","level":"INFO","fields":{"message":"🔒 Database connection established: postgres://user:*****@localhost:5432/db"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.173133Z","level":"INFO","fields":{"message":"✅ Event Bus initialized"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.173403Z","level":"INFO","fields":{"message":"✅ Strategy Engine & Event Dispatcher started"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.249720Z","level":"INFO","fields":{"message":"🔍 Sonar client initialized successfully"},"target":"mcp_client"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.312914Z","level":"INFO","fields":{"message":"🧠 OpenRouter client initialized successfully"},"target":"mcp_client"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.405068Z","level":"INFO","fields":{"message":"✅ Ninja Gekko initialized"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.405218Z","level":"INFO","fields":{"message":"🌐 Chat orchestration API live at http://0.0.0.0:8787"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.405303Z","level":"INFO","fields":{"message":"🚀 Initializing Main API Server..."},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.405527Z","level":"INFO","fields":{"message":"Launching chat orchestration server at 0.0.0.0:8787"},"target":"ninja_gekko::web"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.405629Z","level":"INFO","fields":{"message":"🥷 Starting Ninja Gekko in Swarm mode"},"target":"ninja_gekko::core"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.405642Z","level":"INFO","fields":{"message":"🎭 Starting MCP Client with servers: [\"playwright\", \"filesystem\", \"github\", \"supabase\"]"},"target":"mcp_client"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.405658Z","level":"INFO","fields":{"message":"🔗 Connecting to MCP server: playwright"},"target":"mcp_client"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.405663Z","level":"INFO","fields":{"message":"🔗 Connecting to MCP server: filesystem"},"target":"mcp_client"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.405667Z","level":"INFO","fields":{"message":"🔗 Connecting to MCP server: github"},"target":"mcp_client"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.405669Z","level":"INFO","fields":{"message":"🔗 Connecting to MCP server: supabase"},"target":"mcp_client"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.405674Z","level":"INFO","fields":{"message":"🤖 Initializing swarm operations..."},"target":"ninja_gekko::core"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.405692Z","level":"INFO","fields":{"message":"🔄 MCP Client event loop started"},"target":"mcp_client"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:46:20.405712Z","level":"ERROR","fields":{"message":"💥 Failed to initialize Main API Server: Configuration error: Failed to load config: missing field `rate_limiting`"},"target":"ninja_gekko"}

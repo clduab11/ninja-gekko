@@ -1,0 +1,36 @@
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.059998Z","level":"INFO","fields":{"message":"🥷 Starting Ninja Gekko v2.0.0"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.060127Z","level":"INFO","fields":{"message":"📊 Configuration: /etc/ninja-gekko/arbitrage.toml"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.060133Z","level":"INFO","fields":{"message":"🎯 Operation mode: swarm"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.060136Z","level":"INFO","fields":{"message":"🏖️  Sandbox mode: false"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.060138Z","level":"INFO","fields":{"message":"🔥 GPU acceleration: false"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.060140Z","level":"INFO","fields":{"message":"🎭 MCP servers: playwright,filesystem,github,supabase"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.060144Z","level":"INFO","fields":{"message":"✅ Configuration loaded successfully"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.060869Z","level":"INFO","fields":{"message":"✅ Prometheus metrics recorder initialized"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.060895Z","level":"INFO","fields":{"message":"✅ Configuration loaded successfully (secrets protected in memory)"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.060900Z","level":"INFO","fields":{"message":"🔒 Database connection established: postgres://user:*****@localhost:5432/db"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.061617Z","level":"INFO","fields":{"message":"✅ Event Bus initialized"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.061735Z","level":"INFO","fields":{"message":"✅ Strategy Engine & Event Dispatcher started"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.134217Z","level":"INFO","fields":{"message":"🔍 Sonar client initialized successfully"},"target":"mcp_client"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.195169Z","level":"INFO","fields":{"message":"🧠 OpenRouter client initialized successfully"},"target":"mcp_client"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.235345Z","level":"INFO","fields":{"message":"✅ Ninja Gekko initialized"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.235519Z","level":"INFO","fields":{"message":"🌐 Chat orchestration API live at http://0.0.0.0:8787"},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.235666Z","level":"INFO","fields":{"message":"🥷 Starting Ninja Gekko in Swarm mode"},"target":"ninja_gekko::core"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.235714Z","level":"INFO","fields":{"message":"🎭 Starting MCP Client with servers: [\"playwright\", \"filesystem\", \"github\", \"supabase\"]"},"target":"mcp_client"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.235744Z","level":"INFO","fields":{"message":"🔗 Connecting to MCP server: playwright"},"target":"mcp_client"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.235747Z","level":"INFO","fields":{"message":"🔗 Connecting to MCP server: filesystem"},"target":"mcp_client"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.235750Z","level":"INFO","fields":{"message":"🔗 Connecting to MCP server: github"},"target":"mcp_client"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.235752Z","level":"INFO","fields":{"message":"🔗 Connecting to MCP server: supabase"},"target":"mcp_client"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.235758Z","level":"INFO","fields":{"message":"🤖 Initializing swarm operations..."},"target":"ninja_gekko::core"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.235791Z","level":"INFO","fields":{"message":"🔄 MCP Client event loop started"},"target":"mcp_client"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.235832Z","level":"INFO","fields":{"message":"🚀 Initializing Main API Server..."},"target":"ninja_gekko"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.235874Z","level":"INFO","fields":{"message":"Launching chat orchestration server at 0.0.0.0:8787"},"target":"ninja_gekko::web"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.236402Z","level":"INFO","fields":{"message":"API Configuration loaded:"},"target":"ninja_gekko_api::config"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.236458Z","level":"INFO","fields":{"message":"  Environment: development"},"target":"ninja_gekko_api::config"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.236464Z","level":"INFO","fields":{"message":"  Bind Address: 0.0.0.0:8080"},"target":"ninja_gekko_api::config"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.236469Z","level":"INFO","fields":{"message":"  Database: [REDACTED]"},"target":"ninja_gekko_api::config"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.236472Z","level":"INFO","fields":{"message":"  CORS Origins: [\"http://localhost:3000\"]"},"target":"ninja_gekko_api::config"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.236476Z","level":"INFO","fields":{"message":"  Rate Limiting: 600 req/minute"},"target":"ninja_gekko_api::config"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.236479Z","level":"INFO","fields":{"message":"  WebSocket Enabled: true"},"target":"ninja_gekko_api::config"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.236483Z","level":"INFO","fields":{"message":"  Request Timeout: 30s"},"target":"ninja_gekko_api::config"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.236486Z","level":"WARN","fields":{"message":"⚠️  Using default JWT secret! Please set GG_API_JWT_SECRET environment variable in production!"},"target":"ninja_gekko_api::config"}
+trading-engine-1  | {"timestamp":"2025-12-07T00:57:04.236540Z","level":"INFO","fields":{"message":"Initializing database connection pool"},"target":"ninja_gekko_database::database","span":{"database_url":"postgresql://localhost/gordon_gekko","name":"new"},"spans":[{"database_url":"postgresql://localhost/gordon_gekko","name":"new"}]}

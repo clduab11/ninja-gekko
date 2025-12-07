@@ -54,6 +54,14 @@ Thumbs.db
 *.log
 logs/
 
+# Prevent root-level log/debug files pollution
+/*.txt
+/*.log
+/*.out
+!/debug/**
+!/docs/**
+# End log/debug file pollution rules
+
 # Coverage reports
 htmlcov/
 .tox/
