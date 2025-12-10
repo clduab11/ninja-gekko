@@ -1061,4 +1061,99 @@ mod tests {
         assert_eq!(exchange_order.quantity, Decimal::new(1, 0));
         assert_eq!(exchange_order.price, Some(Decimal::new(50000, 0)));
     }
+
+    #[test]
+    fn test_jwt_generation() {
+        // Valid P-256 EC private key in PEM format (SEC1) - generated for testing only
+        let test_private_key = r#"-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEIFhWmy1vKAM0kdUENj+LriBPAp2TICRW/T7Ykh7iIpzwoAoGCCqGSM49
+AwEHoUQDQgAEDk/z1l4dj9B/zW5S8EkAkPDdXo09vs07WT0Kl+3IWhvaQfjqguPF
+fIC3Smd78+WzrwCo6c9qbnvoskng6jdLwg==
+-----END EC PRIVATE KEY-----"#;
+
+        let config = CoinbaseConfig {
+            api_key_name: "test_key_name".to_string(),
+            private_key: test_private_key.to_string(),
+            sandbox: false,
+            use_advanced_trade: true,
+        };
+
+        let connector = CoinbaseConnector::new(config);
+
+        // Test JWT generation
+        let jwt_result = connector.generate_jwt("GET", "/accounts");
+        
+        assert!(jwt_result.is_ok(), "JWT generation should succeed");
+        
+        let jwt = jwt_result.unwrap();
+        
+        // JWT should have three parts separated by dots
+        let parts: Vec<&str> = jwt.split('.').collect();
+        assert_eq!(parts.len(), 3, "JWT should have 3 parts (header.payload.signature)");
+        
+        // Decode and verify header
+        let header_json = String::from_utf8(
+            URL_SAFE_NO_PAD.decode(parts[0]).expect("Header should be valid base64")
+        ).expect("Header should be valid UTF-8");
+        
+        let header: serde_json::Value = serde_json::from_str(&header_json)
+            .expect("Header should be valid JSON");
+        
+        assert_eq!(header["alg"], "ES256", "Algorithm should be ES256");
+        assert_eq!(header["kid"], "test_key_name", "Key ID should match");
+        assert_eq!(header["typ"], "JWT", "Type should be JWT");
+        assert!(header["nonce"].is_string(), "Nonce should be present");
+        
+        // Verify nonce is in hex format (16 characters)
+        let nonce = header["nonce"].as_str().unwrap();
+        assert_eq!(nonce.len(), 16, "Nonce should be 16 hex characters");
+        assert!(nonce.chars().all(|c| c.is_ascii_hexdigit()), "Nonce should be hex");
+        
+        // Decode and verify claims
+        let claims_json = String::from_utf8(
+            URL_SAFE_NO_PAD.decode(parts[1]).expect("Claims should be valid base64")
+        ).expect("Claims should be valid UTF-8");
+        
+        let claims: serde_json::Value = serde_json::from_str(&claims_json)
+            .expect("Claims should be valid JSON");
+        
+        assert_eq!(claims["iss"], "cdp", "Issuer should be 'cdp'");
+        assert_eq!(claims["sub"], "test_key_name", "Subject should match key name");
+        assert!(claims["nbf"].is_number(), "Not before should be a timestamp");
+        assert!(claims["exp"].is_number(), "Expiration should be a timestamp");
+        assert!(claims["uri"].is_string(), "URI should be present");
+        
+        // Verify clock skew buffer is applied
+        let now = chrono::Utc::now().timestamp();
+        let nbf = claims["nbf"].as_i64().unwrap();
+        let exp = claims["exp"].as_i64().unwrap();
+        
+        // nbf should be 5 seconds before now (with some tolerance)
+        assert!(
+            nbf <= now && nbf >= now - JWT_CLOCK_SKEW_BUFFER_SECONDS - 1,
+            "Not before should include clock skew buffer"
+        );
+        
+        // exp should be 120 seconds after now (with some tolerance)
+        assert!(
+            exp >= now + 119 && exp <= now + 121,
+            "Expiration should be ~120 seconds from now"
+        );
+        
+        // Verify URI format
+        let uri = claims["uri"].as_str().unwrap();
+        assert!(
+            uri.starts_with("GET api.coinbase.com"),
+            "URI should start with method and host"
+        );
+        
+        // Signature should be 64 bytes (raw r||s format for ES256)
+        let signature_bytes = URL_SAFE_NO_PAD.decode(parts[2])
+            .expect("Signature should be valid base64");
+        assert_eq!(
+            signature_bytes.len(),
+            64,
+            "ES256 signature should be 64 bytes (32-byte r + 32-byte s)"
+        );
+    }
 }
