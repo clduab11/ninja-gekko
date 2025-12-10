@@ -106,7 +106,7 @@ impl CoinbaseConnector {
         }
 
         // 1. Create Header
-        let nonce = rand::thread_rng().gen::<u64>().to_string();
+        let nonce = format!("{:016x}", rand::thread_rng().gen::<u64>());
         let header = json!({
             "alg": "ES256",
             "kid": key_name,
@@ -128,8 +128,8 @@ impl CoinbaseConnector {
         let now = chrono::Utc::now().timestamp();
         
         let claims = json!({
-            "iss": "coinbase-cloud",
-            "nbf": now,
+            "iss": "cdp",
+            "nbf": now - 5,  // 5 second clock skew buffer
             "exp": now + 120, // 2 minutes
             "sub": key_name,
             "uri": jwt_uri,
