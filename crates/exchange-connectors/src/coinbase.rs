@@ -35,6 +35,9 @@ const COINBASE_PRO_WS_SANDBOX_URL: &str = "wss://ws-feed-public.sandbox.pro.coin
 const COINBASE_ADVANCED_API_URL: &str = "https://api.coinbase.com/api/v3/brokerage";
 const COINBASE_ADVANCED_WS_URL: &str = "wss://advanced-trade-ws.coinbase.com";
 
+/// JWT authentication constants
+const JWT_CLOCK_SKEW_BUFFER_SECONDS: i64 = 5;
+
 #[derive(Debug, Clone)]
 pub struct CoinbaseConfig {
     pub api_key_name: String,
@@ -129,7 +132,7 @@ impl CoinbaseConnector {
         
         let claims = json!({
             "iss": "cdp",
-            "nbf": now - 5,  // 5 second clock skew buffer
+            "nbf": now - JWT_CLOCK_SKEW_BUFFER_SECONDS,
             "exp": now + 120, // 2 minutes
             "sub": key_name,
             "uri": jwt_uri,
