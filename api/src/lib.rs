@@ -86,34 +86,33 @@ impl AppState {
             PortfolioManager::new(db_manager.clone())
         );
 
-        // Initialize Exchange Connector (Coinbase) if credentials exist
+        // Initialize Exchange Connector
+        // Prioritize Kraken as the primary execution venue
         let connector: Option<Arc<Box<dyn exchange_connectors::ExchangeConnector>>> = 
-            if let (Ok(key_name), Ok(private_key)) = (
-                std::env::var("COINBASE_API_KEY_NAME"),
-                std::env::var("COINBASE_PRIVATE_KEY")
+            if let (Ok(api_key), Ok(api_secret)) = (
+                std::env::var("KRAKEN_API_KEY"),
+                std::env::var("KRAKEN_API_SECRET")
             ) {
-                // Determine if we should use sandbox or advanced trade from env or defaults
-                // For now, assuming production/advanced trade if keys are present
-                let config = exchange_connectors::coinbase::CoinbaseConfig {
-                    api_key_name: key_name,
-                    private_key,
-                    sandbox: false,
-                    use_advanced_trade: true,
-                };
+                info!("Initializing Kraken connector");
+                let creds = exchange_connectors::credentials::ExchangeCredentials::new(
+                    exchange_connectors::ExchangeId::Kraken,
+                    api_key,
+                    api_secret,
+                    None,
+                    false, // sandbox param, could load from env
+                );
                 
-                info!("Initializing Coinbase Advanced Trade connector");
-                let mut cb_connector = exchange_connectors::coinbase::CoinbaseConnector::new(config);
-                // Optionally connect immediately or let it connect on first use.
-                // It's async, so we can't await easily here without constructor being async.
-                // AppState::new IS async, so we can await.
-                if let Err(e) = cb_connector.connect().await {
-                   tracing::error!("Failed to connect to Coinbase on startup: {}", e);
-                   // We still return the connector, it might reconnect later
+                let mut kraken_connector = exchange_connectors::kraken::KrakenConnector::new(creds);
+                
+                // Try to connect (validate credentials)
+                if let Err(e) = kraken_connector.connect().await {
+                    tracing::error!("Failed to connect to Kraken on startup: {}", e);
+                    // Return it anyway, it might work later or this was just a connectivity blip
                 }
                 
-                Some(Arc::new(Box::new(cb_connector)))
+                Some(Arc::new(Box::new(kraken_connector)))
             } else {
-                info!("No Coinbase credentials found, using mock market data");
+                info!("No Kraken credentials found, using mock market data");
                 None
             };
 
@@ -211,6 +210,17 @@ impl ApiServer {
 
             // API documentation
             .route("/api/v1/docs", get(handlers::api_info))
+
+            // Chat & Frontend routes
+            .route("/api/chat/history", get(handlers::chat::get_chat_history))
+            .route("/api/chat/message", post(handlers::chat::send_message))
+            .route("/api/chat/persona", get(handlers::chat::get_persona))
+            .route("/api/chat/persona", post(handlers::chat::update_persona)) // Handle both GET and POST
+            .route("/api/trading/pause", post(handlers::chat::pause_trading))
+            .route("/api/accounts/snapshot", get(handlers::chat::get_account_snapshot))
+            .route("/api/news/headlines", get(handlers::chat::get_news_headlines))
+            .route("/api/research/sonar", post(handlers::chat::research_sonar))
+            .route("/api/agents/swarm", post(handlers::chat::summon_swarm))
 
             // Apply middleware
             // Apply middleware

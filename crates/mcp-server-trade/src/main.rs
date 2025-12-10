@@ -92,7 +92,7 @@ async fn handle_request(req: &JsonRpcRequest, safety: &SafetyValidator) -> JsonR
                     "inputSchema": {
                         "type": "object",
                         "properties": {
-                            "exchange": { "type": "string", "enum": ["Coinbase", "BinanceUs", "Oanda"] },
+                            "exchange": { "type": "string", "enum": ["BinanceUs", "Oanda", "Kraken"] },
                             "symbol": { "type": "string" },
                             "side": { "type": "string", "enum": ["Buy", "Sell"] },
                             "type": { "type": "string", "enum": ["Market", "Limit"] },
@@ -108,7 +108,7 @@ async fn handle_request(req: &JsonRpcRequest, safety: &SafetyValidator) -> JsonR
                     "inputSchema": {
                         "type": "object",
                         "properties": {
-                            "exchange": { "type": "string", "enum": ["Coinbase", "BinanceUs", "Oanda"] }
+                            "exchange": { "type": "string", "enum": ["BinanceUs", "Oanda", "Kraken"] }
                         },
                         "required": ["exchange"]
                     }

@@ -15,9 +15,9 @@ use tokio::sync::mpsc;
 use uuid::Uuid;
 
 pub mod binance_us;
-pub mod coinbase;
 pub mod credentials;
 pub mod oanda;
+pub mod kraken;
 
 /// Exchange connector error types
 #[derive(Error, Debug)]
@@ -58,9 +58,10 @@ pub type ExchangeResult<T> = Result<T, ExchangeError>;
 /// Unique identifiers for exchanges
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ExchangeId {
-    Coinbase,
+    Mock,
     BinanceUs,
     Oanda,
+    Kraken,
 }
 
 /// Trading pair representation
@@ -337,7 +338,8 @@ pub mod utils {
             HmacSha256::new_from_slice(secret.as_bytes()).expect("HMAC can take key of any size");
         mac.update(message.as_bytes());
         let result = mac.finalize();
-        base64::encode(result.into_bytes())
+        use base64::{Engine as _, engine::general_purpose::STANDARD};
+        STANDARD.encode(result.into_bytes())
     }
 
     /// Generate timestamp for API calls

@@ -91,30 +91,28 @@ impl NinjaGekko {
     async fn start_precision_mode(&self) -> Result<(), Box<dyn std::error::Error>> {
         tracing::info!("⚡ Initializing precision operations...");
         
-        // Initialize Coinbase Connector
-        let api_key_name = std::env::var("COINBASE_API_KEY_NAME")
-            .or_else(|_| std::env::var("COINBASE_API_KEY"))
-            .unwrap_or_default();
-        let private_key = std::env::var("COINBASE_PRIVATE_KEY")
-            .or_else(|_| std::env::var("COINBASE_API_SECRET"))
-            .unwrap_or_default();
+        // Initialize Kraken Connector
+        let api_key = std::env::var("KRAKEN_API_KEY").unwrap_or_default();
+        let api_secret = std::env::var("KRAKEN_API_SECRET").unwrap_or_default();
         
-        if !api_key_name.is_empty() && !private_key.is_empty() {
-            tracing::info!("Found Coinbase credentials, attempting connection...");
-             let config = exchange_connectors::coinbase::CoinbaseConfig {
-                api_key_name,
-                private_key: private_key.replace("\\n", "\n"),
-                sandbox: false, 
-                use_advanced_trade: true,
-            };
+        if !api_key.is_empty() && !api_secret.is_empty() {
+            tracing::info!("Found Kraken credentials, attempting connection...");
+             
+            let creds = exchange_connectors::credentials::ExchangeCredentials::new(
+                exchange_connectors::ExchangeId::Kraken,
+                api_key,
+                api_secret,
+                None, // account_id 
+                false, // sandbox
+            );
             
-            let mut connector = exchange_connectors::coinbase::CoinbaseConnector::new(config);
+            let mut connector = exchange_connectors::kraken::KrakenConnector::new(creds);
             match connector.connect().await {
-                Ok(_) => tracing::info!("Successfully connected to Coinbase"),
-                Err(e) => tracing::error!("Failed to connect to Coinbase: {}", e),
+                Ok(_) => tracing::info!("Successfully connected to Kraken"),
+                Err(e) => tracing::error!("Failed to connect to Kraken: {}", e),
             }
         } else {
-            tracing::warn!("Coinbase credentials not found in environment");
+            tracing::warn!("Kraken credentials not found in environment");
         }
 
         // TODO: Implement precision mode logic

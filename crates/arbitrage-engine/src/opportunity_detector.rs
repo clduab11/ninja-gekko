@@ -253,12 +253,12 @@ mod tests {
             timestamp: Utc::now(),
         };
 
-        detector.update_price(tick_a, ExchangeId::Coinbase).await;
+        detector.update_price(tick_a, ExchangeId::Kraken).await;
         detector.update_price(tick_b, ExchangeId::BinanceUs).await;
 
         let opps = detector.detect_opportunities().await.unwrap();
         assert_eq!(opps.len(), 1);
-        assert_eq!(opps[0].buy_exchange, ExchangeId::Coinbase);
+        assert_eq!(opps[0].buy_exchange, ExchangeId::Kraken);
         assert_eq!(opps[0].sell_exchange, ExchangeId::BinanceUs);
         assert_eq!(opps[0].price_difference, dec!(2));
         // Without NeuralEngine, should use default 0.9

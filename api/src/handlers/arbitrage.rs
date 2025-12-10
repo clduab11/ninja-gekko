@@ -190,7 +190,7 @@ pub async fn get_balance_distribution(
     let distribution = json!({
         "total_portfolio_value": 1250000.00,
         "exchanges": {
-            "coinbase": {
+            "kraken": {
                 "USD": {"available": 425000.00, "reserved": 25000.00},
                 "BTC": {"available": 8.5, "reserved": 0.5, "usd_value": 510000.00},
                 "ETH": {"available": 125.0, "reserved": 5.0, "usd_value": 312500.00}
@@ -415,7 +415,7 @@ fn generate_mock_opportunities(query: &OpportunityQuery) -> Vec<ArbitrageOpportu
         ArbitrageOpportunity {
             id: Uuid::new_v4(),
             symbol: symbol.to_string(),
-            buy_exchange: ExchangeId::Coinbase,
+            buy_exchange: ExchangeId::Kraken,
             sell_exchange: ExchangeId::BinanceUs,
             buy_price: rust_decimal::Decimal::new(49850 + i as i64 * 10, 0),
             sell_price: rust_decimal::Decimal::new(50125 + i as i64 * 12, 0),
@@ -435,7 +435,7 @@ fn generate_mock_opportunities(query: &OpportunityQuery) -> Vec<ArbitrageOpportu
 
 fn generate_mock_volatility_scores(query: &VolatilityQuery) -> Vec<VolatilityScore> {
     let limit = query.limit.unwrap_or(20);
-    let exchanges = [ExchangeId::Coinbase, ExchangeId::BinanceUs];
+    let exchanges = [ExchangeId::Kraken, ExchangeId::BinanceUs];
     
     (0..limit).map(|i| {
         let symbol = query.symbol.as_deref()

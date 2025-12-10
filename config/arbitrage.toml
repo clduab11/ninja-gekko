@@ -31,18 +31,6 @@ target_return_max = 20.0
 scan_frequency_ms = 100
 
 [exchanges]
-# Coinbase Pro/Advanced Trade API
-[exchanges.coinbase]
-enabled = true
-api_key = "${COINBASE_API_KEY}"
-api_secret = "${COINBASE_API_SECRET}"
-api_passphrase = "${COINBASE_API_PASSPHRASE}"
-sandbox = false
-base_url = "https://api.exchange.coinbase.com"
-websocket_url = "wss://ws-feed.exchange.coinbase.com"
-rate_limit_requests_per_second = 10
-rate_limit_burst = 15
-
 # Binance.us API
 [exchanges.binance_us]
 enabled = true

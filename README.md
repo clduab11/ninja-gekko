@@ -20,7 +20,7 @@
 [![Playwright](https://img.shields.io/badge/Playwright-MCP-lightgreen)](https://playwright.dev)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-***Stealth. Precision. Autonomous Operation.***
+**_Stealth. Precision. Autonomous Operation._**
 
 **Ninja Gekko represents the evolutionary leap from traditional trading bots to a completely autonomous, self-improving trading intelligence powered by Rust performance and MCP ecosystem integration.**
 
@@ -35,12 +35,13 @@
 **Ninja Gekko** features a production-ready **event-driven trading engine** built in Rust, with proven performance benchmarks and comprehensive architecture. The implementation includes:
 
 - **✅ Event Bus**: ~9.1μs dispatch performance (exceeds <10μs AGENTS target)
-- **✅ WebSocket Data Pipeline**: ~2.25μs normalization (44x better than <100μs target) 
-- **✅ Exchange Connectors**: Unified trait with Coinbase, Binance, OANDA support
+- **✅ WebSocket Data Pipeline**: ~2.25μs normalization (44x better than <100μs target)
+- **✅ Exchange Connectors**: Unified trait with Binance, Kraken, OANDA support
 - **✅ Strategy Engine**: WASM sandbox architecture with wasmtime integration
 - **✅ Comprehensive Testing**: Timeout-protected async test harness with performance validation
 
 ### **🥷 Why "Ninja"?**
+
 - **Stealth Operation**: Executes trades with minimal market impact and maximum discretion
 - **Lightning Speed**: <100ms decision times powered by Rust's zero-cost abstractions
 - **Surgical Precision**: Exact position sizing with neural network-guided risk management
@@ -51,6 +52,7 @@
 ### **🔥 Revolutionary Capabilities**
 
 **Ninja Gekko** combines the best of:
+
 - **🦀 Rust Performance**: Memory-safe, blazing-fast execution (2.8-4.4x improvement)
 - **🧠 ruv-FANN Neural Networks**: 27+ state-of-the-art forecasting models
 - **🤖 flow-nexus Swarm Intelligence**: 84.8% SWE-Bench solve rate for complex problem solving
@@ -66,15 +68,15 @@
 
 Ninja Gekko unifies ruv-FANN, Neuro-Divergent, and industry-standard NeuralForecast models under a single benchmarking harness with GPU and CPU parity.
 
-| Model Family | Supported Variants | Benchmark Focus | Status |
-|--------------|--------------------|-----------------|--------|
-| **NHITS** | Multi-horizon time-series, custom attention heads | Latency <10ms, horizon stability | ✅ Production |
-| **N-BEATSx** | Seasonality/trend expert stacks | Forecast accuracy, regime resilience | ✅ Production |
-| **LSTM / GRU** | ruv-FANN recurrent suite | Cross-asset adaptability, training throughput | ✅ Production |
-| **Temporal Fusion Transformer** | TFT with multi-asset covariates | Explainability, feature attributions | 🚧 Preview |
-| **Dilated CNN (WaveNet)** | Residual dilated convolutions | Order book microstructure modelling | ✅ Production |
-| **ruv-FANN Neuro-Divergent** | Ensemble neuro-symbolic hybrids | Strategy consensus, swarm scoring | ✅ Production |
-| **Hybrid RL Agents** | Policy-gradient & actor-critic blends | Risk-adjusted Sharpe, live feedback loops | 🧪 Research |
+| Model Family                    | Supported Variants                                | Benchmark Focus                               | Status        |
+| ------------------------------- | ------------------------------------------------- | --------------------------------------------- | ------------- |
+| **NHITS**                       | Multi-horizon time-series, custom attention heads | Latency <10ms, horizon stability              | ✅ Production |
+| **N-BEATSx**                    | Seasonality/trend expert stacks                   | Forecast accuracy, regime resilience          | ✅ Production |
+| **LSTM / GRU**                  | ruv-FANN recurrent suite                          | Cross-asset adaptability, training throughput | ✅ Production |
+| **Temporal Fusion Transformer** | TFT with multi-asset covariates                   | Explainability, feature attributions          | 🚧 Preview    |
+| **Dilated CNN (WaveNet)**       | Residual dilated convolutions                     | Order book microstructure modelling           | ✅ Production |
+| **ruv-FANN Neuro-Divergent**    | Ensemble neuro-symbolic hybrids                   | Strategy consensus, swarm scoring             | ✅ Production |
+| **Hybrid RL Agents**            | Policy-gradient & actor-critic blends             | Risk-adjusted Sharpe, live feedback loops     | 🧪 Research   |
 
 The forthcoming **Neural Benchmarking Module** captures inference latency, MAE/MAPE, and Sharpe/Sortino metrics across every supported architecture with reproducible evaluation manifests.
 
@@ -83,21 +85,24 @@ The forthcoming **Neural Benchmarking Module** captures inference latency, MAE/M
 ## 🥷 **Revolutionary Features**
 
 ### **🧠 Neural Intelligence Stack**
+
 Built on cutting-edge Rust-based neural network technology:
 
-| Component | Technology | Performance Gain |
-|-----------|------------|------------------|
-| **🦀 ruv-FANN Core** | Rust Neural Networks | 2.8-4.4x faster than Python |
-| **🔮 Neuro-Divergent** | 27+ forecasting models | 100% NeuralForecast compatibility |
-| **🤖 ruv-swarm Intelligence** | Distributed agents | 84.8% SWE-Bench solve rate |
-| **⚡ Neural Forecasting** | NHITS/NBEATSx models | <100ms response times |
-| **🚀 GPU Acceleration** | CUDA 11.8+ & Metal | Hardware-agnostic compute |
-| **🌐 WASM Runtime** | Browser & Edge | Universal deployment |
+| Component                     | Technology             | Performance Gain                  |
+| ----------------------------- | ---------------------- | --------------------------------- |
+| **🦀 ruv-FANN Core**          | Rust Neural Networks   | 2.8-4.4x faster than Python       |
+| **🔮 Neuro-Divergent**        | 27+ forecasting models | 100% NeuralForecast compatibility |
+| **🤖 ruv-swarm Intelligence** | Distributed agents     | 84.8% SWE-Bench solve rate        |
+| **⚡ Neural Forecasting**     | NHITS/NBEATSx models   | <100ms response times             |
+| **🚀 GPU Acceleration**       | CUDA 11.8+ & Metal     | Hardware-agnostic compute         |
+| **🌐 WASM Runtime**           | Browser & Edge         | Universal deployment              |
 
 ### **🎭 MCP-First Architecture**
+
 Native Model Context Protocol integration with 70+ servers, formalized as the **Tenno-MCP** runtime for plug-and-play agent composition. Tenno-MCP provides USB-C-like interoperability for LLMs, automation tools, and market adapters with declarative manifests, hot-reloadable toolchains, and CLI/server parity.
 
 #### **🔧 Core MCP Servers**
+
 - **🎪 Playwright MCP**: Advanced browser automation, web scraping, and market data collection
 - **📁 Filesystem MCP**: Intelligent file operations, data management, and persistent storage
 - **🐙 GitHub MCP**: Repository analysis, automated workflows, and version control
@@ -105,15 +110,16 @@ Native Model Context Protocol integration with 70+ servers, formalized as the **
 - **🔍 Search MCP**: Perplexity AI integration for real-time market intelligence
 
 #### **🌐 Extended MCP Ecosystem**
-| Category | MCP Servers | Trading Applications |
-|----------|-------------|---------------------|
-| **🤖 AI & ML** | OpenAI, Cohere, Replicate, HuggingFace | Sentiment analysis, model inference, predictive analytics |
-| **📊 Data Analytics** | Code Interpreter, Mem0, Ahrefs | Market analysis, data processing, SEO insights |
-| **💬 Communication** | Gmail, Slack, Telegram, Discord | Alert systems, notifications, community monitoring |
-| **📈 Trading** | Custom trading platform integrations | Multi-exchange execution, order management |
-| **☁️ Cloud Storage** | Google Drive, Dropbox, OneDrive | Data backup, model persistence, configuration management |
-| **📱 Social Intelligence** | Twitter, Reddit, YouTube, LinkedIn | Social sentiment, news monitoring, trend analysis |
-| **🔧 DevOps** | GitHub, GitLab, Docker, NPM | CI/CD pipelines, deployment automation |
+
+| Category                   | MCP Servers                            | Trading Applications                                      |
+| -------------------------- | -------------------------------------- | --------------------------------------------------------- |
+| **🤖 AI & ML**             | OpenAI, Cohere, Replicate, HuggingFace | Sentiment analysis, model inference, predictive analytics |
+| **📊 Data Analytics**      | Code Interpreter, Mem0, Ahrefs         | Market analysis, data processing, SEO insights            |
+| **💬 Communication**       | Gmail, Slack, Telegram, Discord        | Alert systems, notifications, community monitoring        |
+| **📈 Trading**             | Custom trading platform integrations   | Multi-exchange execution, order management                |
+| **☁️ Cloud Storage**       | Google Drive, Dropbox, OneDrive        | Data backup, model persistence, configuration management  |
+| **📱 Social Intelligence** | Twitter, Reddit, YouTube, LinkedIn     | Social sentiment, news monitoring, trend analysis         |
+| **🔧 DevOps**              | GitHub, GitLab, Docker, NPM            | CI/CD pipelines, deployment automation                    |
 
 Tenno-MCP now exposes a **Tool Orchestration Registry** inspired by Claude-Flow, enabling swarm agents to register capabilities, negotiate ownership, and coordinate workflows through consensus-driven leasing contracts.
 
@@ -122,6 +128,7 @@ Tenno-MCP now exposes a **Tool Orchestration Registry** inspired by Claude-Flow,
 The **Gordon Chat Interface** provides a conversational control center for managing Ninja Gekko's autonomous trading operations. Built with React + TypeScript and powered by Vite for fast development iteration.
 
 ### **Frontend Features**
+
 - **Real-time Chat**: Conversational interface with Gordon AI persona
 - **Persona Controls**: Adjustable AI tone (witty, direct, analytical) and style
 - **Action Dashboard**: One-click system actions and trading controls
@@ -130,6 +137,7 @@ The **Gordon Chat Interface** provides a conversational control center for manag
 - **Responsive Design**: Mobile-friendly interface with Tailwind CSS
 
 ### **Gordon AI Capabilities**
+
 - **Dynamic Personas**: Switch between analytical, witty, or direct communication styles
 - **Context-Aware Responses**: Maintains conversation history and context
 - **System Integration**: Direct control over trading pause, account snapshots, and swarm deployment
@@ -137,6 +145,7 @@ The **Gordon Chat Interface** provides a conversational control center for manag
 - **Diagnostic Output**: Provides neural forecasts and risk assessments with each response
 
 ### **Frontend Development**
+
 ```bash
 # Navigate to chat UI directory
 cd frontend/chat-ui
@@ -154,21 +163,27 @@ pnpm build
 ### **🥷 Autonomous Operation Modes**
 
 #### **🌙 Stealth Mode**
-*Execute trades without leaving footprints*
+
+_Execute trades without leaving footprints_
+
 - Fragmented order execution across multiple venues
 - Dynamic position sizing to avoid detection algorithms
 - Advanced market impact minimization techniques
 - Order timing randomization and camouflage patterns
 
 #### **⚡ Precision Mode**
-*Microsecond-perfect execution*
+
+_Microsecond-perfect execution_
+
 - Neural network price prediction with confidence intervals
 - Multi-timeframe technical analysis integration
 - Risk-adjusted position optimization using Kelly Criterion
 - Real-time volatility clustering and regime detection
 
 #### **🤖 Swarm Mode**
-*Collaborative intelligence across multiple agents*
+
+_Collaborative intelligence across multiple agents_
+
 - Distributed decision-making with consensus algorithms
 - Cross-market arbitrage detection and execution
 - Coordinated strategies across different asset classes
@@ -180,17 +195,17 @@ pnpm build
 
 ## 🤝 **Capability Matrix: Ninja Gekko vs Modern Neural Trading Stacks**
 
-| Feature | **Ninja Gekko** | Neural Trader MCP | Claude-Flow |
-|---------|-----------------|-------------------|-------------|
-| **🤖 Agentic Workflows** | Claude Code + Notion AI integration for automated PR reviews and PM-in-the-loop issue generation | Manual workflow orchestration | Swarm-assisted development |
-| **Neural Forecasting Models** | ruv-FANN, Neuro-Divergent, NHITS, N-BEATSx, LSTM/GRU, WaveNet, TFT preview | NHITS, N-BEATSx, LSTM/GRU | Swarm-assisted inference |
-| **MCP Protocol** | Tenno-MCP with declarative tool manifests and USB-C-style plug-and-play | FastMCP core | Claude MCP/Flow orchestration |
-| **Agentic Swarm Orchestration** | ruv-swarm with tool registry, leasing, and consensus failover | 87+ tool hive-mind | Swarm coordination layer |
-| **Trading Venue Integrations** | Coinbase, Binance, Oanda, Alpaca (beta), Deribit, Kraken | Polymarket, Betfair, Alpaca, Alpha Vantage, TheOddsAPI | Customizable adapters |
-| **Telemetry & Observability** | Prometheus, Grafana, OpenTelemetry traces, ELK | JSON dashboards, custom telemetry | Flow-native dashboards |
-| **Security & Governance** | MFA, TLS 1.3, RBAC, audit ledger, GDPR-ready | KYC/RBAC, end-to-end encryption | Workspace roles |
-| **Benchmarking** | Built-in neural latency/Sharpe harness with reproducible manifests | Proprietary benchmarking suite | Scenario planners |
-| **Deployment Footprint** | Rust microservices, Docker/K8s, WASM | Rust/Python hybrid, Docker/K8s | Python-first orchestration |
+| Feature                         | **Ninja Gekko**                                                                                  | Neural Trader MCP                                      | Claude-Flow                   |
+| ------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------ | ----------------------------- |
+| **🤖 Agentic Workflows**        | Claude Code + Notion AI integration for automated PR reviews and PM-in-the-loop issue generation | Manual workflow orchestration                          | Swarm-assisted development    |
+| **Neural Forecasting Models**   | ruv-FANN, Neuro-Divergent, NHITS, N-BEATSx, LSTM/GRU, WaveNet, TFT preview                       | NHITS, N-BEATSx, LSTM/GRU                              | Swarm-assisted inference      |
+| **MCP Protocol**                | Tenno-MCP with declarative tool manifests and USB-C-style plug-and-play                          | FastMCP core                                           | Claude MCP/Flow orchestration |
+| **Agentic Swarm Orchestration** | ruv-swarm with tool registry, leasing, and consensus failover                                    | 87+ tool hive-mind                                     | Swarm coordination layer      |
+| **Trading Venue Integrations**  | Binance, Oanda, Alpaca (beta), Deribit, Kraken                                                   | Polymarket, Betfair, Alpaca, Alpha Vantage, TheOddsAPI | Customizable adapters         |
+| **Telemetry & Observability**   | Prometheus, Grafana, OpenTelemetry traces, ELK                                                   | JSON dashboards, custom telemetry                      | Flow-native dashboards        |
+| **Security & Governance**       | MFA, TLS 1.3, RBAC, audit ledger, GDPR-ready                                                     | KYC/RBAC, end-to-end encryption                        | Workspace roles               |
+| **Benchmarking**                | Built-in neural latency/Sharpe harness with reproducible manifests                               | Proprietary benchmarking suite                         | Scenario planners             |
+| **Deployment Footprint**        | Rust microservices, Docker/K8s, WASM                                                             | Rust/Python hybrid, Docker/K8s                         | Python-first orchestration    |
 
 > Tenno-MCP emphasizes transparent, modular interoperability so that researchers can replicate or extend benchmarks across open-source trading stacks.
 
@@ -198,14 +213,14 @@ pnpm build
 
 ## 🌐 **Integration Coverage & Roadmap**
 
-| Domain | Live Integrations | Upcoming Targets | Notes |
-|--------|------------------|------------------|-------|
-| **Centralized Exchanges** | Coinbase, Binance, Kraken, Oanda | Interactive Brokers, Bitfinex | Unified order router with smart venue selection |
-| **Decentralized / Prediction Markets** | Uniswap (data), dYdX (execution) | Polymarket, Betfair Exchange, TheGraph | Workflow recipes under Tenno-MCP tool registry |
-| **Market Data & Analytics** | Alpha Vantage, Tiingo, TradingView, Glassnode | TheOddsAPI, Kaiko, Polygon.io | Multi-frequency data normalization pipelines |
-| **AI / ML Services** | OpenAI, HuggingFace, Replicate | Anthropic Claude-Flow, Cohere, StabilityAI | Shared embeddings cache across agents |
-| **Community & Ops** | Slack, Discord, Telegram, Notion | Linear, Jira, GitLab Issues | MCP-driven incident response bots |
-| **Compliance & Governance** | Supabase Auth, custom RBAC, audit ledger | KYC/AML providers, on-chain attestations | Policy-driven access enforced via Tenno-MCP |
+| Domain                                 | Live Integrations                             | Upcoming Targets                           | Notes                                           |
+| -------------------------------------- | --------------------------------------------- | ------------------------------------------ | ----------------------------------------------- |
+| **Centralized Exchanges**              | Binance, Kraken, Oanda                        | Interactive Brokers, Bitfinex              | Unified order router with smart venue selection |
+| **Decentralized / Prediction Markets** | Uniswap (data), dYdX (execution)              | Polymarket, Betfair Exchange, TheGraph     | Workflow recipes under Tenno-MCP tool registry  |
+| **Market Data & Analytics**            | Alpha Vantage, Tiingo, TradingView, Glassnode | TheOddsAPI, Kaiko, Polygon.io              | Multi-frequency data normalization pipelines    |
+| **AI / ML Services**                   | OpenAI, HuggingFace, Replicate                | Anthropic Claude-Flow, Cohere, StabilityAI | Shared embeddings cache across agents           |
+| **Community & Ops**                    | Slack, Discord, Telegram, Notion              | Linear, Jira, GitLab Issues                | MCP-driven incident response bots               |
+| **Compliance & Governance**            | Supabase Auth, custom RBAC, audit ledger      | KYC/AML providers, on-chain attestations   | Policy-driven access enforced via Tenno-MCP     |
 
 Deployment runbooks for Docker and Kubernetes clusters now include:
 
@@ -225,34 +240,35 @@ The Ninja Gekko trading engine is built on a high-performance event-driven archi
 
 **Core Components:**
 
-| Component | Performance | Status | Description |
-|-----------|-------------|--------|-------------|
-| **Event Bus** | ~9.1μs dispatch | ✅ Complete | Crossbeam channels with <10μs target exceeded |
-| **Data Pipeline** | ~2.25μs normalization | ✅ Complete | 3-stage WebSocket processing (44x faster than target) |
-| **Exchange Connectors** | WebSocket streaming | ✅ Complete | Unified trait supporting Coinbase, Binance, OANDA |
-| **Strategy Engine** | WASM sandbox | ✅ Complete | Wasmtime isolation with <5ms evaluation timeout |
-| **Order Management** | Smart routing | ✅ Complete | Risk validation and fee calculation |
+| Component               | Performance           | Status      | Description                                           |
+| ----------------------- | --------------------- | ----------- | ----------------------------------------------------- |
+| **Event Bus**           | ~9.1μs dispatch       | ✅ Complete | Crossbeam channels with <10μs target exceeded         |
+| **Data Pipeline**       | ~2.25μs normalization | ✅ Complete | 3-stage WebSocket processing (44x faster than target) |
+| **Exchange Connectors** | WebSocket streaming   | ✅ Complete | Unified trait supporting Binance, Kraken, OANDA       |
+| **Strategy Engine**     | WASM sandbox          | ✅ Complete | Wasmtime isolation with <5ms evaluation timeout       |
+| **Order Management**    | Smart routing         | ✅ Complete | Risk validation and fee calculation                   |
 
 ### **📊 Proven Performance Metrics**
 
 **Real benchmarks from production codebase:**
 
-| Benchmark | Target | Achieved | Status |
-|-----------|--------|----------|--------|
-| **Event Dispatch** | <10μs | ~9.1μs | ✅ **Exceeds target** |
-| **Market Data Normalization** | <100μs | ~2.25μs | ✅ **44x better** |
-| **WebSocket Processing** | Real-time | <5ms total latency | ✅ **Production ready** |
-| **Strategy Evaluation** | <10ms | <5ms (WASM) | ✅ **Exceeds target** |
-| **Memory Safety** | 100% | Zero unsafe code | ✅ **Rust guaranteed** |
+| Benchmark                     | Target    | Achieved           | Status                  |
+| ----------------------------- | --------- | ------------------ | ----------------------- |
+| **Event Dispatch**            | <10μs     | ~9.1μs             | ✅ **Exceeds target**   |
+| **Market Data Normalization** | <100μs    | ~2.25μs            | ✅ **44x better**       |
+| **WebSocket Processing**      | Real-time | <5ms total latency | ✅ **Production ready** |
+| **Strategy Evaluation**       | <10ms     | <5ms (WASM)        | ✅ **Exceeds target**   |
+| **Memory Safety**             | 100%      | Zero unsafe code   | ✅ **Rust guaranteed**  |
 
 ### **🔧 Technical Implementation**
 
 **Workspace Structure:**
+
 ```
 ninja-gekko/
 ├── core/                  # Order management & smart routing
 ├── crates/
-│   ├── event-bus/         # ~9.1μs event dispatch performance  
+│   ├── event-bus/         # ~9.1μs event dispatch performance
 │   ├── data-pipeline/     # ~2.25μs WebSocket normalization
 │   ├── exchange-connectors/ # Multi-exchange unified interface
 │   ├── strategy-engine/   # WASM sandbox with wasmtime
@@ -262,22 +278,23 @@ ninja-gekko/
 ```
 
 **Key Technical Achievements:**
+
 - **Zero Unsafe Code**: Memory safety guaranteed by Rust ownership
 - **Async-First Design**: Tokio runtime with comprehensive async/await
-- **Timeout Protection**: All async operations bounded with circuit breakers  
+- **Timeout Protection**: All async operations bounded with circuit breakers
 - **Comprehensive Testing**: Event bus, pipeline, and integration test coverage
 - **Production Ready**: Error handling, logging, and observability built-in
 
 ---
 
-| Feature Category | Description | Performance |
-|-----------------|-------------|-------------|
-| **Trading Strategies** | Multiple algorithmic approaches with dynamic adaptation | 99.5% accuracy |
-| **Risk Management** | Real-time VaR, position limits, and automated controls | <10ms calculation |
-| **Order Execution** | Smart routing with optimal venue selection | <100ms execution |
-| **ML Integration** | GPU-accelerated models with continuous learning | <50ms inference |
-| **Market Data** | Multi-platform real-time feeds with validation | <5ms latency |
-| **Portfolio Management** | Automated rebalancing and optimization | 24/7 monitoring |
+| Feature Category         | Description                                             | Performance       |
+| ------------------------ | ------------------------------------------------------- | ----------------- |
+| **Trading Strategies**   | Multiple algorithmic approaches with dynamic adaptation | 99.5% accuracy    |
+| **Risk Management**      | Real-time VaR, position limits, and automated controls  | <10ms calculation |
+| **Order Execution**      | Smart routing with optimal venue selection              | <100ms execution  |
+| **ML Integration**       | GPU-accelerated models with continuous learning         | <50ms inference   |
+| **Market Data**          | Multi-platform real-time feeds with validation          | <5ms latency      |
+| **Portfolio Management** | Automated rebalancing and optimization                  | 24/7 monitoring   |
 
 ---
 
@@ -324,18 +341,18 @@ Ninja Gekko is experimental, open-source research software. Automated trading ca
 
 ### **Technology Stack**
 
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| **Backend** | Rust 1.75+ | High-performance trading logic |
-| **Database** | PostgreSQL (Supabase) | Relational data storage |
-| **Cache** | Redis | Session and data caching |
-| **ML/AI** | ruv-FANN + CUDA | Neural network models |
-| **GPU** | CUDA 11.8+ / wgpu | Hardware acceleration |
-| **Web** | React / WebSocket | Real-time dashboard |
-| **API** | Axum / REST | External integrations |
-| **Security** | JWT / OAuth2 | Authentication & authorization |
-| **Monitoring** | Prometheus / Grafana | System observability |
-| **Orchestration** | Docker / Kubernetes | Container management |
+| Component         | Technology            | Purpose                        |
+| ----------------- | --------------------- | ------------------------------ |
+| **Backend**       | Rust 1.75+            | High-performance trading logic |
+| **Database**      | PostgreSQL (Supabase) | Relational data storage        |
+| **Cache**         | Redis                 | Session and data caching       |
+| **ML/AI**         | ruv-FANN + CUDA       | Neural network models          |
+| **GPU**           | CUDA 11.8+ / wgpu     | Hardware acceleration          |
+| **Web**           | React / WebSocket     | Real-time dashboard            |
+| **API**           | Axum / REST           | External integrations          |
+| **Security**      | JWT / OAuth2          | Authentication & authorization |
+| **Monitoring**    | Prometheus / Grafana  | System observability           |
+| **Orchestration** | Docker / Kubernetes   | Container management           |
 
 ---
 
@@ -357,90 +374,97 @@ Ninja Gekko is experimental, open-source research software. Automated trading ca
 ### **Installation**
 
 1. **Clone the Repository**
-    ```bash
-    git clone https://github.com/your-org/ninja-gekko.git
-    cd ninja-gekko
-    ```
+
+   ```bash
+   git clone https://github.com/your-org/ninja-gekko.git
+   cd ninja-gekko
+   ```
 
 2. **Rust Environment Setup**
-    ```bash
-    # Verify Rust installation
-    rustc --version
-    cargo --version
 
-    # Add required Rust targets (if needed)
-    rustup target add x86_64-unknown-linux-gnu
-    ```
+   ```bash
+   # Verify Rust installation
+   rustc --version
+   cargo --version
+
+   # Add required Rust targets (if needed)
+   rustup target add x86_64-unknown-linux-gnu
+   ```
 
 3. **Environment Setup**
-    ```bash
-    # Copy environment template and configure
-    cp .env.template .env
-    # Edit .env with your API keys and configuration
-    ```
+
+   ```bash
+   # Copy environment template and configure
+   cp .env.template .env
+   # Edit .env with your API keys and configuration
+   ```
 
 4. **Docker Services**
-    ```bash
-    # Start all services (recommended)
-    docker-compose up -d
 
-    # Or start services individually
-    docker-compose up -d postgres redis
+   ```bash
+   # Start all services (recommended)
+   docker-compose up -d
 
-    # Verify services
-    docker-compose ps
-    ```
+   # Or start services individually
+   docker-compose up -d postgres redis
+
+   # Verify services
+   docker-compose ps
+   ```
 
 5. **Build the Application**
-    ```bash
-    # Build the Rust application
-    cargo build --release
 
-    # Run tests to verify installation
-    cargo test --all
-    ```
+   ```bash
+   # Build the Rust application
+   cargo build --release
+
+   # Run tests to verify installation
+   cargo test --all
+   ```
 
 6. **Frontend Development**
-    ```bash
-    # Install frontend dependencies
-    cd frontend/chat-ui
-    pnpm install
 
-    # Start development server
-    pnpm dev
-    ```
+   ```bash
+   # Install frontend dependencies
+   cd frontend/chat-ui
+   pnpm install
+
+   # Start development server
+   pnpm dev
+   ```
 
 7. **System Initialization**
-    ```bash
-    # Run the trading engine with API server
-    cargo run --release -- \
-      --config config/arbitrage.toml \
-      --mode precision \
-      --sandbox
 
-    # Or run with telemetry only
-    cargo run -- \
-      --config config/arbitrage.toml \
-      --mode swarm \
-      --log-level debug \
-      --sandbox
-    ```
+   ```bash
+   # Run the trading engine with API server
+   cargo run --release -- \
+     --config config/arbitrage.toml \
+     --mode precision \
+     --sandbox
+
+   # Or run with telemetry only
+   cargo run -- \
+     --config config/arbitrage.toml \
+     --mode swarm \
+     --log-level debug \
+     --sandbox
+   ```
 
 8. **Access the System**
-    - **Talk to Gordon Chat UI**: http://localhost:5173
-    - **Chat Orchestration API**: http://localhost:8787/health
-    - **REST API Endpoints**: http://localhost:8787/api/v1/
-    - **Legacy Health Check**: http://localhost:8080/health
-    - **Prometheus Metrics**: http://localhost:8787/metrics
-    - **Grafana Dashboard**: http://localhost:3000
-    - **Database**: PostgreSQL on port 5432
-    - **Redis Cache**: Redis on port 6379
+   - **Talk to Gordon Chat UI**: http://localhost:5173
+   - **Chat Orchestration API**: http://localhost:8787/health
+   - **REST API Endpoints**: http://localhost:8787/api/v1/
+   - **Legacy Health Check**: http://localhost:8080/health
+   - **Prometheus Metrics**: http://localhost:8787/metrics
+   - **Grafana Dashboard**: http://localhost:3000
+   - **Database**: PostgreSQL on port 5432
+   - **Redis Cache**: Redis on port 6379
 
 ### **Basic Configuration**
 
 ```env
 # Trading Platform API Keys (MCP Managed)
-COINBASE_API_KEY=your_coinbase_key
+KRAKEN_API_KEY=your_kraken_key
 BINANCE_API_KEY=your_binance_key
 OANDA_API_KEY=your_oanda_key
 
@@ -487,6 +511,7 @@ RUST_BACKTRACE=1
 ### **🚀 API Documentation**
 
 #### **Core API Endpoints** (Port 8787)
+
 - **Health Check**: `GET /health` - Service status verification
 - **Chat History**: `GET /api/chat/history` - Retrieve conversation history
 - **Send Message**: `POST /api/chat/message` - Send chat prompts to Gordon
@@ -499,6 +524,7 @@ RUST_BACKTRACE=1
 - **Swarm Control**: `POST /api/agents/swarm` - Launch agent swarms
 
 #### **Trading Engine API** (Port 8787)
+
 - **Trades**: `GET/POST/PUT/DELETE /api/v1/trades` - Manage trading operations
 - **Portfolio**: `GET /api/v1/portfolio` - Portfolio data and positions
 - **Strategies**: `GET/POST/PUT/DELETE /api/v1/strategies` - Strategy management
@@ -506,11 +532,13 @@ RUST_BACKTRACE=1
 - **Authentication**: `POST /api/v1/auth/login` - JWT token management
 
 #### **Monitoring & Observability**
+
 - **Metrics**: `GET /metrics` - Prometheus metrics endpoint
 - **Prometheus Dashboard**: http://localhost:9090
 - **Grafana Dashboard**: http://localhost:3000 (admin/admin)
 
 #### **Frontend Development**
+
 - **Gordon Chat UI**: http://localhost:5173 - React + TypeScript interface
 - **Vite Dev Server**: Hot module reloading during development
 
@@ -527,18 +555,21 @@ RUST_BACKTRACE=1
 Ninja Gekko implements a comprehensive security framework designed for institutional trading:
 
 #### **Authentication & Authorization**
+
 - **Multi-Factor Authentication**: SMS, TOTP, and hardware token support
 - **JWT Token Management**: 1-hour token lifetime with automatic refresh
 - **Role-Based Access Control**: Granular permissions for admin, trader, and read-only roles
 - **API Key Management**: Secure MCP-managed credentials with encryption
 
 #### **Data Protection**
+
 - **End-to-End Encryption**: TLS 1.3 for all data in transit
 - **Data at Rest Encryption**: AES-256-GCM encryption for sensitive data
 - **Secure Key Management**: Hardware security module integration
 - **Data Masking**: Automatic masking of sensitive information in logs
 
 #### **Network Security**
+
 - **Zero-Trust Architecture**: All requests validated regardless of origin
 - **DDoS Protection**: Multi-layer protection at API gateway level
 - **VPN Access**: Mandatory VPN for administrative functions
@@ -546,13 +577,13 @@ Ninja Gekko implements a comprehensive security framework designed for instituti
 
 ### **🔐 Compliance & Governance**
 
-| Compliance Standard | Implementation | Status |
-|-------------------|----------------|---------|
-| **SOX Compliance** | Full audit trails and financial controls | ✅ Compliant |
-| **GDPR** | Data protection and user privacy controls | ✅ Compliant |
-| **PCI DSS** | Payment card data security | ✅ Compliant |
-| **FINRA** | Financial industry regulatory compliance | ✅ Compliant |
-| **SEC** | Securities and exchange commission rules | ✅ Compliant |
+| Compliance Standard | Implementation                            | Status       |
+| ------------------- | ----------------------------------------- | ------------ |
+| **SOX Compliance**  | Full audit trails and financial controls  | ✅ Compliant |
+| **GDPR**            | Data protection and user privacy controls | ✅ Compliant |
+| **PCI DSS**         | Payment card data security                | ✅ Compliant |
+| **FINRA**           | Financial industry regulatory compliance  | ✅ Compliant |
+| **SEC**             | Securities and exchange commission rules  | ✅ Compliant |
 
 ---
 
@@ -560,35 +591,35 @@ Ninja Gekko implements a comprehensive security framework designed for instituti
 
 ### **⚡ System Performance**
 
-| Metric | Target | Current | Status |
-|--------|--------|---------|---------|
-| **Trade Execution** | <100ms | 45ms | ✅ Exceeds |
-| **Risk Calculation** | <10ms | 3ms | ✅ Exceeds |
-| **ML Inference** | <50ms | 12ms | ✅ Exceeds |
-| **Market Data Latency** | <5ms | 2ms | ✅ Exceeds |
-| **System Uptime** | 99.9% | 99.95% | ✅ Exceeds |
-| **API Response Time** | <50ms | 15ms | ✅ Exceeds |
+| Metric                  | Target | Current | Status     |
+| ----------------------- | ------ | ------- | ---------- |
+| **Trade Execution**     | <100ms | 45ms    | ✅ Exceeds |
+| **Risk Calculation**    | <10ms  | 3ms     | ✅ Exceeds |
+| **ML Inference**        | <50ms  | 12ms    | ✅ Exceeds |
+| **Market Data Latency** | <5ms   | 2ms     | ✅ Exceeds |
+| **System Uptime**       | 99.9%  | 99.95%  | ✅ Exceeds |
+| **API Response Time**   | <50ms  | 15ms    | ✅ Exceeds |
 
 ### **📊 Trading Performance**
 
-| Metric | Benchmark | Achieved | Improvement |
-|--------|-----------|-----------|-------------|
-| **Risk-Adjusted Return** | S&P 500 | +12.5% | ✅ Superior |
-| **Sharpe Ratio** | >1.0 | 1.8 | ✅ Excellent |
-| **Maximum Drawdown** | <15% | 8.2% | ✅ Excellent |
-| **Win Rate** | >55% | 68% | ✅ Superior |
-| **Alpha Generation** | >0 | 4.2% | ✅ Excellent |
-| **Information Ratio** | >0.5 | 1.1 | ✅ Superior |
+| Metric                   | Benchmark | Achieved | Improvement  |
+| ------------------------ | --------- | -------- | ------------ |
+| **Risk-Adjusted Return** | S&P 500   | +12.5%   | ✅ Superior  |
+| **Sharpe Ratio**         | >1.0      | 1.8      | ✅ Excellent |
+| **Maximum Drawdown**     | <15%      | 8.2%     | ✅ Excellent |
+| **Win Rate**             | >55%      | 68%      | ✅ Superior  |
+| **Alpha Generation**     | >0        | 4.2%     | ✅ Excellent |
+| **Information Ratio**    | >0.5      | 1.1      | ✅ Superior  |
 
 ### **🔬 ML Model Performance**
 
-| Model Type | Accuracy | Precision | Recall | F1-Score |
-|------------|----------|-----------|--------|----------|
-| **Price Prediction** | 87.3% | 85.1% | 89.2% | 87.1% |
-| **Sentiment Analysis** | 91.7% | 89.4% | 94.1% | 91.7% |
-| **Market Regime Detection** | 94.2% | 92.8% | 95.6% | 94.2% |
-| **Anomaly Detection** | 96.1% | 94.3% | 97.8% | 96.0% |
-| **Portfolio Optimization** | 88.9% | 86.7% | 91.2% | 88.9% |
+| Model Type                  | Accuracy | Precision | Recall | F1-Score |
+| --------------------------- | -------- | --------- | ------ | -------- |
+| **Price Prediction**        | 87.3%    | 85.1%     | 89.2%  | 87.1%    |
+| **Sentiment Analysis**      | 91.7%    | 89.4%     | 94.1%  | 91.7%    |
+| **Market Regime Detection** | 94.2%    | 92.8%     | 95.6%  | 94.2%    |
+| **Anomaly Detection**       | 96.1%    | 94.3%     | 97.8%  | 96.0%    |
+| **Portfolio Optimization**  | 88.9%    | 86.7%     | 91.2%  | 88.9%    |
 
 ---
 
@@ -607,8 +638,8 @@ DATABASE_URL=postgresql://username:password@localhost:5432/gordon_gekko
 REDIS_URL=redis://localhost:6379/0
 
 # Trading Platform Configuration
-COINBASE_API_KEY=your_coinbase_api_key
-COINBASE_API_SECRET=your_coinbase_api_secret
+KRAKEN_API_KEY=your_kraken_api_key
+KRAKEN_API_SECRET=your_kraken_api_secret
 BINANCE_API_KEY=your_binance_api_key
 BINANCE_API_SECRET=your_binance_api_secret
 OANDA_API_KEY=your_oanda_api_key
@@ -782,13 +813,6 @@ async fn main() -> anyhow::Result<()> {
 ```yaml
 # config/platforms.yaml
 platforms:
-  coinbase:
-    api_key: "${COINBASE_API_KEY}"
-    api_secret: "${COINBASE_API_SECRET}"
-    sandbox: false
-    rate_limit: 10
-    max_orders_per_second: 5
-
   binance_us:
     api_key: "${BINANCE_API_KEY}"
     api_secret: "${BINANCE_API_SECRET}"
@@ -810,10 +834,10 @@ platforms:
 # config/risk_management.yaml
 risk_management:
   global_settings:
-    max_position_size: 0.05  # 5% of portfolio
-    max_portfolio_var: 0.15   # 15% Value at Risk
-    max_drawdown_limit: 0.20  # 20% maximum drawdown
-    correlation_limit: 0.7    # Maximum correlation allowed
+    max_position_size: 0.05 # 5% of portfolio
+    max_portfolio_var: 0.15 # 15% Value at Risk
+    max_drawdown_limit: 0.20 # 20% maximum drawdown
+    correlation_limit: 0.7 # Maximum correlation allowed
 
   position_limits:
     crypto:
@@ -826,14 +850,14 @@ risk_management:
   stop_loss:
     automatic_enabled: true
     trailing_stop: true
-    threshold: 0.02  # 2% stop loss
-    timeout: 300     # 5 minutes
+    threshold: 0.02 # 2% stop loss
+    timeout: 300 # 5 minutes
 
   circuit_breakers:
-    pnl_threshold: -0.05    # 5% loss triggers circuit breaker
-    volume_spike: 3.0       # 3x volume spike
-    price_gap: 0.10         # 10% price gap
-    recovery_time: 3600     # 1 hour cooldown
+    pnl_threshold: -0.05 # 5% loss triggers circuit breaker
+    volume_spike: 3.0 # 3x volume spike
+    price_gap: 0.10 # 10% price gap
+    recovery_time: 3600 # 1 hour cooldown
 ```
 
 ---
@@ -842,13 +866,13 @@ risk_management:
 
 ### **Common Issues & Solutions**
 
-| Issue | Symptom | Solution |
-|-------|---------|----------|
+| Issue                  | Symptom              | Solution                                       |
+| ---------------------- | -------------------- | ---------------------------------------------- |
 | **Connection Timeout** | API calls timing out | Check network connectivity and API rate limits |
-| **Order Rejection** | Orders not executing | Verify API credentials and account permissions |
-| **ML Model Errors** | Prediction failures | Check GPU availability and model file paths |
-| **Risk Limit Breach** | Trading halted | Review risk parameters and position sizes |
-| **Performance Lag** | Slow system response | Monitor system resources and scale if needed |
+| **Order Rejection**    | Orders not executing | Verify API credentials and account permissions |
+| **ML Model Errors**    | Prediction failures  | Check GPU availability and model file paths    |
+| **Risk Limit Breach**  | Trading halted       | Review risk parameters and position sizes      |
+| **Performance Lag**    | Slow system response | Monitor system resources and scale if needed   |
 
 ### **Health Check Commands**
 
@@ -984,17 +1008,20 @@ Security Issues: security@gordongekko.ai
 ## 🏆 Acknowledgments
 
 ### **Contributors**
+
 - **Core Development Team**: Led by world-class AI and trading system experts
 - **Open Source Community**: Contributors from leading financial institutions
 - **Academic Partners**: Collaboration with top universities in AI research
 
 ### **Technology Partners**
+
 - **Apple**: Metal Performance Shaders optimization
 - **NVIDIA**: CUDA acceleration support
 - **Redis Labs**: High-performance caching solutions
 - **Supabase**: Secure database infrastructure
 
 ### **Financial Industry Recognition**
+
 - **Best AI Trading System 2024** - Financial Technology Awards
 - **Innovation in Algorithmic Trading** - Trading Technology Summit
 - **Excellence in Risk Management** - Risk Management Association
@@ -1017,6 +1044,6 @@ Security Issues: security@gordongekko.ai
 
 **Built with ❤️ by the Ninja Gekko Team**
 
-*Empowering Financial Markets with Intelligent Automation*
+_Empowering Financial Markets with Intelligent Automation_
 
 </div>

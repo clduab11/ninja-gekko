@@ -18,6 +18,7 @@ pub mod portfolio;
 pub mod market_data;
 pub mod strategies;
 pub mod arbitrage;
+pub mod chat;
 
 // Re-export all handler functions
 pub use auth_utils::{login_handler, refresh_handler, logout_handler};
