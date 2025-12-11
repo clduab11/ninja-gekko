@@ -1,5 +1,7 @@
 import {
   AccountSnapshot,
+  AggregateAccount,
+  ExchangeAccount,
   ChatMessage,
   ChatResponse,
   NewsHeadline,
@@ -11,8 +13,21 @@ import {
   SwarmRequest,
   SwarmResponse,
   MarketDataPoint,
-  PaginatedResponse
+  PaginatedResponse,
 } from '../types';
+
+export interface IntelItem {
+  id: string;
+  source: string;
+  title: string;
+  summary?: string;
+  url?: string;
+  sentiment?: number;
+  published_at: string;
+  relevance_score: number;
+}
+
+
 
 const JSON_HEADERS = {
   'Content-Type': 'application/json'
@@ -63,9 +78,17 @@ export async function pauseTrading(payload: PauseTradingRequest): Promise<PauseT
   return handleResponse<PauseTradingResponse>(res);
 }
 
-export async function fetchAccountSnapshot(): Promise<AccountSnapshot> {
-  const res = await fetch('/api/accounts/snapshot');
-  return handleResponse<AccountSnapshot>(res);
+export async function fetchAccountSnapshot(exchange?: string): Promise<ExchangeAccount[]> {
+  const query = exchange ? `?exchange=${exchange}` : '';
+  const res = await fetch(`/api/v1/accounts/snapshot${query}`);
+  const envelope = await handleResponse<any>(res);
+  return envelope.data; // Assuming ApiResponse envelope
+}
+
+export async function fetchAggregateAccount(): Promise<AggregateAccount> {
+  const res = await fetch('/api/v1/accounts/aggregate');
+  const envelope = await handleResponse<any>(res);
+  return envelope.data;
 }
 
 export async function fetchNews(): Promise<NewsHeadline[]> {
@@ -89,6 +112,13 @@ export async function summonSwarm(payload: SwarmRequest): Promise<SwarmResponse>
     body: JSON.stringify(payload)
   });
   return handleResponse<SwarmResponse>(res);
+}
+
+export async function fetchIntelStream(limit?: number): Promise<IntelItem[]> {
+  const query = limit ? `?limit=${limit}` : '';
+  const res = await fetch(`/api/v1/intel/stream${query}`);
+  const envelope = await handleResponse<any>(res);
+  return envelope.data;
 }
 
 export async function fetchHistoricalCandles(symbol: string, timeframe: string = '15m'): Promise<MarketDataPoint[]> {

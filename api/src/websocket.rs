@@ -42,6 +42,8 @@ pub struct WebSocketManager {
     portfolio_updates_tx: broadcast::Sender<PortfolioUpdateMessage>,
     /// Broadcast sender for strategy execution updates
     strategy_updates_tx: broadcast::Sender<StrategyUpdateMessage>,
+    /// Broadcast sender for intel stream updates
+    intel_updates_tx: broadcast::Sender<IntelUpdateMessage>,
     /// Active connections with their subscriptions
     connections: Arc<RwLock<HashMap<String, ConnectionInfo>>>,
     /// Market data stream for periodic updates
@@ -80,6 +82,8 @@ pub enum SubscriptionType {
     AllPortfolios,
     /// All strategy updates
     AllStrategies,
+    /// Intel stream updates
+    IntelStream,
 }
 
 /// WebSocket messages sent from server to client
@@ -107,6 +111,11 @@ pub enum WebSocketMessage {
     StrategyUpdate {
         execution: StrategyExecutionResponse,
         status: String,
+        timestamp: chrono::DateTime<chrono::Utc>,
+    },
+    /// Intel stream update
+    IntelUpdate {
+        item: crate::handlers::intel::IntelItem,
         timestamp: chrono::DateTime<chrono::Utc>,
     },
     /// Subscription confirmation
@@ -170,6 +179,11 @@ pub struct StrategyUpdateMessage {
     pub status: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntelUpdateMessage {
+    pub item: crate::handlers::intel::IntelItem,
+}
+
 /// Market data stream for periodic updates
 #[derive(Debug)]
 pub struct MarketDataStream {
@@ -185,6 +199,7 @@ impl WebSocketManager {
         let (trade_updates_tx, _) = broadcast::channel(1000);
         let (portfolio_updates_tx, _) = broadcast::channel(1000);
         let (strategy_updates_tx, _) = broadcast::channel(1000);
+        let (intel_updates_tx, _) = broadcast::channel(1000);
 
         let market_data_stream = Arc::new(RwLock::new(MarketDataStream {
             symbols: Vec::new(),
@@ -196,9 +211,10 @@ impl WebSocketManager {
             market_data_tx,
             trade_updates_tx,
             portfolio_updates_tx,
-            strategy_updates_tx,
             connections: Arc::new(RwLock::new(HashMap::new())),
             market_data_stream,
+            strategy_updates_tx,
+            intel_updates_tx,
         }
     }
 
@@ -308,6 +324,19 @@ impl WebSocketManager {
 
         if let Err(e) = self.strategy_updates_tx.send(message) {
             warn!("Failed to broadcast strategy update: {}", e);
+        }
+
+        Ok(())
+    }
+
+    /// Broadcast intel stream update to all subscribed clients
+    pub async fn broadcast_intel_update(&self, item: crate::handlers::intel::IntelItem) -> ApiResult<()> {
+        let message = IntelUpdateMessage {
+            item,
+        };
+
+        if let Err(e) = self.intel_updates_tx.send(message) {
+            warn!("Failed to broadcast intel update: {}", e);
         }
 
         Ok(())
@@ -440,6 +469,7 @@ pub async fn handle_socket(
 }
 
 /// Process WebSocket connection
+/// Process WebSocket connection
 async fn process_socket(
     socket: WebSocket,
     app_state: Arc<AppState>,
@@ -459,6 +489,7 @@ async fn process_socket(
     let mut trade_updates_rx = ws_manager.trade_updates_tx.subscribe();
     let mut portfolio_updates_rx = ws_manager.portfolio_updates_tx.subscribe();
     let mut strategy_updates_rx = ws_manager.strategy_updates_tx.subscribe();
+    let mut intel_updates_rx = ws_manager.intel_updates_tx.subscribe();
 
     // Store connection info
     let connection_info = ConnectionInfo {
@@ -608,6 +639,30 @@ async fn process_socket(
                     }
                 }
             }
+
+            // Handle intel update broadcasts
+            msg = intel_updates_rx.recv() => {
+                match msg {
+                    Ok(intel_msg) => {
+                        if should_send_to_client(&SubscriptionType::IntelStream, &subscriptions) {
+                            let ws_message = WebSocketMessage::IntelUpdate {
+                                item: intel_msg.item,
+                                timestamp: chrono::Utc::now(),
+                            };
+
+                            if let Ok(message_text) = serde_json::to_string(&ws_message) {
+                                if let Err(e) = sender.send(Message::Text(message_text)).await {
+                                    debug!("Failed to send intel update, client disconnected");
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        warn!("Intel update broadcast error: {}", e);
+                    }
+                }
+            }
         }
     }
 
@@ -707,6 +762,7 @@ fn should_send_to_client(subscription_type: &SubscriptionType, client_subscripti
             (SubscriptionType::AllTrades, SubscriptionType::TradeUpdates(_)) => return true,
             (SubscriptionType::AllPortfolios, SubscriptionType::PortfolioUpdates(_)) => return true,
             (SubscriptionType::AllStrategies, SubscriptionType::StrategyUpdates(_)) => return true,
+            (SubscriptionType::IntelStream, SubscriptionType::IntelStream) => return true,
             (SubscriptionType::MarketData(client_symbols), SubscriptionType::MarketData(msg_symbols)) => {
                 // Check if there's any symbol overlap
                 for msg_symbol in msg_symbols {

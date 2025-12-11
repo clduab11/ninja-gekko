@@ -61,22 +61,6 @@ export interface PauseTradingResponse {
 
 export interface BrokerSnapshot {
   broker: string;
-  balance: number;
-  open_positions: number;
-  risk_score: number;
-}
-
-export interface AccountSnapshot {
-  generated_at: string;
-  total_equity: number;
-  net_exposure: number;
-  brokers: BrokerSnapshot[];
-}
-
-export interface NewsHeadline {
-  id: string;
-  title: string;
-  source: string;
   published_at: string;
   url: string;
 }
@@ -127,3 +111,35 @@ export interface PaginatedResponse<T> {
     has_prev: boolean;
   };
 }
+
+export interface ExchangeAccount {
+  exchange_id: string;
+  net_liquidity: number;
+  buying_power: number;
+  margin_used: number;
+  unrealized_pnl: number;
+  positions: any[]; 
+  updated_at: string;
+}
+
+export interface AggregateAccount {
+  total_net_liquidity: number;
+  total_exposure: number;
+  breakdown: ExchangeAccount[];
+}
+
+export interface NewsHeadline {
+  id: string;
+  title: string;
+  source: string;
+  published_at: string;
+  url: string;
+}
+
+export interface AccountSnapshot {
+  generated_at: string;
+  total_equity: number;
+  net_exposure: number;
+  brokers: BrokerSnapshot[];
+}
+

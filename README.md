@@ -125,24 +125,38 @@ Tenno-MCP now exposes a **Tool Orchestration Registry** inspired by Claude-Flow,
 
 ## **🎭 Gordon Chat Interface**
 
-The **Gordon Chat Interface** provides a conversational control center for managing Ninja Gekko's autonomous trading operations. Built with React + TypeScript and powered by Vite for fast development iteration.
+The **Gordon Chat Interface** provides a conversational control center for managing Ninja Gekko's autonomous trading operations. Built with React + TypeScript and powered by Vite for fast development iteration with real-time WebSocket streaming intelligence.
 
-### **Frontend Features**
+### **Frontend Features & Components**
 
-- **Real-time Chat**: Conversational interface with Gordon AI persona
-- **Persona Controls**: Adjustable AI tone (witty, direct, analytical) and style
-- **Action Dashboard**: One-click system actions and trading controls
-- **Diagnostics Panel**: Live system health and performance metrics
-- **Insights Panel**: Market analysis and trading recommendations
-- **Responsive Design**: Mobile-friendly interface with Tailwind CSS
+#### **Core Chat Interface**
+- **ChatComposer**: Advanced message input with markdown support
+- **ChatConversation**: Real-time conversation history with threading
+- **Real-time Chat**: WebSocket-powered bi-directional messaging with Gordon AI
+
+#### **Intelligence Panels**
+- **InsightsPanel**: Market analysis and trading opportunities
+- **MarketRadar**: Real-time market data visualization
+- **ActionDashboard**: One-click system actions and controls
+- **PersonaControls**: Adjustable AI tone and behavior settings
+- **HeaderMetrics**: Portfolio metrics and system health
 
 ### **Gordon AI Capabilities**
 
-- **Dynamic Personas**: Switch between analytical, witty, or direct communication styles
-- **Context-Aware Responses**: Maintains conversation history and context
-- **System Integration**: Direct control over trading pause, account snapshots, and swarm deployment
-- **Research Integration**: Triggers deep market research and news aggregation
-- **Diagnostic Output**: Provides neural forecasts and risk assessments with each response
+- **Dynamic Personas**: Switch between analytical, witty, or direct communication styles with persistent preferences
+- **Context-Aware Responses**: Maintains full conversation history with semantic understanding
+- **Real-time Market Intelligence**: WebSocket-powered live market data and sentiment analysis
+- **System Integration**: Direct control over trading pause, account snapshots, strategy deployment, and swarm operations
+- **Research Integration**: Triggers deep market research, news aggregation, and technical analysis
+- **Diagnostic Output**: Provides neural forecasts, risk assessments, and anomaly detection with each response
+
+### **Real-time WebSocket Architecture**
+
+The frontend utilizes WebSocket streaming for:
+- Low-latency order book updates (<5ms)
+- Real-time price tickers and sentiment analysis
+- Automatic reconnection with exponential backoff
+- Memory-efficient delta compression for large datasets
 
 ### **Frontend Development**
 
@@ -153,11 +167,55 @@ cd frontend/chat-ui
 # Install dependencies with pnpm (recommended)
 pnpm install
 
-# Start development server with hot reload
+# Start development server with hot reload (port 5173)
 pnpm dev
 
-# Build for production
+# Build for production with optimizations
 pnpm build
+
+# Preview production build locally
+pnpm preview
+
+# Run end-to-end tests
+pnpm test:e2e
+
+# Run unit tests
+pnpm test
+```
+
+### **Frontend Architecture**
+
+```
+frontend/chat-ui/
+├── src/
+│   ├── components/
+│   │   ├── panels/           # Specialized dashboard panels
+│   │   │   ├── InsightsPanel.tsx
+│   │   │   ├── MarketRadar.tsx
+│   │   │   ├── ActionDashboard.tsx
+│   │   │   ├── PersonaControls.tsx
+│   │   │   └── DiagnosticsPanel.tsx
+│   │   ├── ui/              # Reusable UI components
+│   │   │   ├── HeaderMetrics.tsx
+│   │   │   ├── Modal.tsx
+│   │   │   ├── ChatComposer.tsx
+│   │   │   └── ChatConversation.tsx
+│   │   └── App.tsx          # Main application root
+│   ├── hooks/               # Custom React hooks
+│   │   ├── useChatController.ts
+│   │   └── useIntelWebSocket.ts
+│   ├── state/               # State management
+│   │   ├── chatStore.ts
+│   │   └── personaStore.ts
+│   ├── services/            # API client
+│   │   └── api.ts
+│   ├── types/               # TypeScript definitions
+│   │   └── index.ts
+│   └── styles.css           # Global styles with Tailwind CSS
+├── e2e/                     # End-to-end tests with Playwright
+├── Dockerfile               # Multi-stage Docker build
+├── nginx.conf              # Production web server config
+└── vite.config.ts          # Vite build configuration
 ```
 
 ### **🥷 Autonomous Operation Modes**
@@ -343,13 +401,17 @@ Ninja Gekko is experimental, open-source research software. Automated trading ca
 
 | Component         | Technology            | Purpose                        |
 | ----------------- | --------------------- | ------------------------------ |
-| **Backend**       | Rust 1.75+            | High-performance trading logic |
+| **Backend**       | Rust 1.83+            | High-performance trading logic |
+| **Frontend**      | React 18+ / TypeScript| Real-time chat & dashboards    |
+| **Build Tool**    | Vite                  | Fast development & production builds |
+| **Styling**       | Tailwind CSS          | Utility-first CSS framework    |
+| **WebSocket**     | tokio-tungstenite     | Real-time data streaming       |
+| **State Mgmt**    | Redux-like patterns   | Centralized state management   |
 | **Database**      | PostgreSQL (Supabase) | Relational data storage        |
 | **Cache**         | Redis                 | Session and data caching       |
 | **ML/AI**         | ruv-FANN + CUDA       | Neural network models          |
 | **GPU**           | CUDA 11.8+ / wgpu     | Hardware acceleration          |
-| **Web**           | React / WebSocket     | Real-time dashboard            |
-| **API**           | Axum / REST           | External integrations          |
+| **API**           | Axum / REST / WS      | External integrations & streaming |
 | **Security**      | JWT / OAuth2          | Authentication & authorization |
 | **Monitoring**    | Prometheus / Grafana  | System observability           |
 | **Orchestration** | Docker / Kubernetes   | Container management           |
@@ -361,15 +423,16 @@ Ninja Gekko is experimental, open-source research software. Automated trading ca
 ### **Prerequisites**
 
 - **Operating System**: macOS 12+ (Apple Silicon optimized) or Linux
-- **Rust**: 1.83 or higher with Cargo package manager (bookworm recommended)
+- **Rust**: 1.83 or higher with Cargo package manager (stable toolchain)
 - **Docker**: 20.10 or higher
 - **Docker Compose**: 2.0 or higher
-- **Node.js**: 18.0 or higher (for frontend development)
-- **pnpm**: 8.0 or higher (preferred package manager for frontend)
+- **Node.js**: 18.18.0 or higher (for frontend development)
+- **pnpm**: 8.0 or higher (recommended package manager for frontend)
+- **PostgreSQL**: 14+ (Supabase or self-hosted)
 - **Redis**: 6.0 or higher
 - **GPU Support**: NVIDIA GPU with CUDA 11.8+ (optional but recommended)
-- **Memory**: 16GB RAM minimum, 32GB recommended
-- **Storage**: 100GB SSD space
+- **Memory**: 16GB RAM minimum, 32GB recommended for full stack
+- **Storage**: 100GB SSD space (50GB for code, 50GB for data)
 
 ### **Installation**
 
@@ -422,43 +485,80 @@ Ninja Gekko is experimental, open-source research software. Automated trading ca
    cargo test --all
    ```
 
-6. **Frontend Development**
+6. **Frontend Development Setup**
 
-   ```bash
-   # Install frontend dependencies
-   cd frontend/chat-ui
-   pnpm install
+    ```bash
+    # Navigate to frontend directory
+    cd frontend/chat-ui
 
-   # Start development server
-   pnpm dev
-   ```
+    # Install dependencies with pnpm
+    pnpm install
 
-7. **System Initialization**
+    # Start development server (port 5173)
+    pnpm dev
 
-   ```bash
-   # Run the trading engine with API server
-   cargo run --release -- \
-     --config config/arbitrage.toml \
-     --mode precision \
-     --sandbox
+    # In a separate terminal, run the backend
+    cd ../..
+    cargo run --release -- \
+      --config config/arbitrage.toml \
+      --mode precision \
+      --sandbox
+    ```
 
-   # Or run with telemetry only
-   cargo run -- \
-     --config config/arbitrage.toml \
-     --mode swarm \
-     --log-level debug \
-     --sandbox
-   ```
+7. **System Initialization & Verification**
+
+    ```bash
+    # Run the trading engine with API server (from project root)
+    cargo run --release -- \
+      --config config/arbitrage.toml \
+      --mode precision \
+      --sandbox
+
+    # In development, use debug mode with hot reload capability
+    cargo run -- \
+      --config config/arbitrage.toml \
+      --mode swarm \
+      --log-level debug \
+      --sandbox
+
+    # Run comprehensive test suite
+    cargo test --all
+    ```
 
 8. **Access the System**
-   - **Talk to Gordon Chat UI**: http://localhost:5173
-   - **Chat Orchestration API**: http://localhost:8787/health
-   - **REST API Endpoints**: http://localhost:8787/api/v1/
-   - **Legacy Health Check**: http://localhost:8080/health
-   - **Prometheus Metrics**: http://localhost:8787/metrics
-   - **Grafana Dashboard**: http://localhost:3000
-   - **Database**: PostgreSQL on port 5432
-   - **Redis Cache**: Redis on port 6379
+
+    Once all services are running:
+
+    | Service                    | URL                              | Port |
+    |---------------------------|----------------------------------|------|
+    | **Gordon Chat UI**         | http://localhost:5173            | 5173 |
+    | **Chat API & WebSocket**   | http://localhost:8787            | 8787 |
+    | **REST API Endpoints**     | http://localhost:8787/api/v1/    | 8787 |
+    | **Health Check (Chat)**    | http://localhost:8787/health     | 8787 |
+    | **Health Check (Engine)**  | http://localhost:8080/health     | 8080 |
+    | **Prometheus Metrics**     | http://localhost:8787/metrics    | 8787 |
+    | **Grafana Dashboard**      | http://localhost:3000            | 3000 |
+    | **PostgreSQL Database**    | localhost:5432                   | 5432 |
+    | **Redis Cache**            | localhost:6379                   | 6379 |
+
+### **First Steps After Installation**
+
+```bash
+# 1. Verify backend is running
+curl http://localhost:8787/health
+
+# 2. Open Gordon Chat UI in browser
+# Navigate to http://localhost:5173
+
+# 3. Test WebSocket connection
+# Send a message in the chat interface - should see real-time responses
+
+# 4. Monitor system metrics
+# Open Grafana at http://localhost:3000 (admin/admin)
+
+# 5. Check trading engine logs
+docker-compose logs -f api
+```
 
 ### **Basic Configuration**
 
@@ -500,28 +600,50 @@ RUST_BACKTRACE=1
 - **[🔄 Enhancement Proposals](docs/enhancement_proposals.md)** - Planned features and improvements
 - **[🧠 Neural Trader Integration](docs/neural_trader_integration_specification.md)** - Advanced neural forecasting and AI integration
 
-### **📁 Milestone Documentation**
+### **📁 Project Roadmap & Specifications**
 
+**Core Milestones:**
 1. **[🎯 Milestone 1](specs/1_initial_setup.md)** - Initial setup with MCP integrations
-2. **[🔗 Milestone 2](specs/2_trading_platform_integration.md)** - Trading platform integration
-3. **[🤖 Milestone 3](specs/3_autonomous_trading.md)** - Autonomous trading engine
-4. **[🧠 Milestone 4](specs/4_advanced_features.md)** - Advanced ML features
-5. **[🔌 Milestone 5](specs/5_api_endpoints_integration.md)** - API endpoints and services
+2. **[🔗 Milestone 2](specs/2_trading_platform_integration.md)** - Trading platform integration (Binance, Kraken, OANDA)
+3. **[🤖 Milestone 3](specs/3_autonomous_trading.md)** - Autonomous trading engine with event bus
+4. **[🧠 Milestone 4](specs/4_advanced_features.md)** - Advanced ML features and neural forecasting
+5. **[🔌 Milestone 5](specs/5_api_endpoints_integration.md)** - API endpoints and WebSocket services
+
+**Technical Specifications:**
+- **[🦀 Rust Migration](specs/rust_migration.md)** - Rust backend implementation details
 
 ### **🚀 API Documentation**
 
-#### **Core API Endpoints** (Port 8787)
+#### **Core Chat & Intelligence API** (Port 8787)
 
+**Chat Operations:**
+- **WebSocket**: `WS /ws/chat` - Real-time chat streaming with bi-directional messaging
 - **Health Check**: `GET /health` - Service status verification
-- **Chat History**: `GET /api/chat/history` - Retrieve conversation history
-- **Send Message**: `POST /api/chat/message` - Send chat prompts to Gordon
-- **Persona Controls**: `GET/POST /api/chat/persona` - Manage AI persona settings
+- **Chat History**: `GET /api/chat/history` - Retrieve conversation history with pagination
+- **Send Message**: `POST /api/chat/message` - Send chat prompts to Gordon with context
+- **Persona Controls**: `GET /api/chat/persona` - Retrieve current persona settings
+- **Update Persona**: `POST /api/chat/persona` - Modify AI tone and behavior
+
+**Intelligence & Market Data:**
+- **WebSocket Intelligence**: `WS /ws/intel` - Real-time market intelligence streaming
+- **Market Insights**: `GET /api/insights` - Retrieve market analysis and trading recommendations
+- **Market Radar**: `GET /api/radar/{symbol}` - Get detailed market data for specific assets
+- **News Headlines**: `GET /api/news/headlines` - Fetch latest market news and sentiment
+
+**System Management:**
 - **System Actions**: `GET /api/actions` - List available system actions
+- **System Diagnostics**: `GET /api/diagnostics` - Get detailed system health metrics
 - **Trading Control**: `POST /api/trading/pause` - Pause/resume trading operations
-- **Account Data**: `GET /api/accounts/snapshot` - Get account balances and positions
-- **Market News**: `GET /api/news/headlines` - Fetch latest market news
-- **Deep Research**: `POST /api/research/sonar` - Trigger research tasks
-- **Swarm Control**: `POST /api/agents/swarm` - Launch agent swarms
+- **Trading Control**: `POST /api/trading/resume` - Resume paused trading
+
+**Account & Portfolio:**
+- **Account Data**: `GET /api/accounts/snapshot` - Get account balances, positions, and holdings
+- **Portfolio Analytics**: `GET /api/accounts/analytics` - Get detailed portfolio performance metrics
+- **Aggregate Accounts**: `GET /api/accounts/aggregate` - Get aggregated data across all connected accounts
+
+**Advanced Operations:**
+- **Deep Research**: `POST /api/research/sonar` - Trigger advanced market research
+- **Swarm Control**: `POST /api/agents/swarm` - Deploy and manage agent swarms
 
 #### **Trading Engine API** (Port 8787)
 

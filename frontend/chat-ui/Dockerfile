@@ -1,11 +1,12 @@
 # Build stage
 FROM node:20-bookworm AS builder
 WORKDIR /app
-COPY package.json ./
-# Installing dependencies. Note: No lockfile present in this directory, so using npm install.
-# If this is part of a pnpm workspace, consider copying root pnpm-lock.yaml.
+COPY package*.json ./
+# Install dependencies using the lockfile
 RUN npm install
+
 COPY . .
+# Ensure all types are available
 RUN npm run build
 
 # Runtime stage

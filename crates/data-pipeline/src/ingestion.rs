@@ -136,7 +136,8 @@ async fn ingest_loop(
 
 fn exchange_name(id: ExchangeId) -> &'static str {
     match id {
-        ExchangeId::Coinbase => "coinbase",
+        ExchangeId::Kraken => "kraken",
+        ExchangeId::Mock => "mock",
         ExchangeId::BinanceUs => "binance_us",
         ExchangeId::Oanda => "oanda",
     }

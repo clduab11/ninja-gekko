@@ -441,7 +441,7 @@ mod tests {
     fn test_allocation_request_creation() {
         let request = AllocationRequest {
             id: Uuid::new_v4(),
-            from_exchange: ExchangeId::Coinbase,
+            from_exchange: ExchangeId::Kraken,
             to_exchange: ExchangeId::BinanceUs,
             currency: "USD".to_string(),
             amount: Decimal::new(10000, 0),
@@ -462,7 +462,7 @@ mod tests {
         let _aggressive = AllocationStrategy::Aggressive;
 
         let mut weights = HashMap::new();
-        weights.insert(ExchangeId::Coinbase, 0.4);
+        weights.insert(ExchangeId::Kraken, 0.4);
         weights.insert(ExchangeId::BinanceUs, 0.6);
         let _weighted = AllocationStrategy::Weighted(weights);
     }

@@ -9,6 +9,7 @@ import ActionDashboard from './components/panels/ActionDashboard';
 import DiagnosticsPanel from './components/panels/DiagnosticsPanel';
 import MarketRadar from './components/panels/MarketRadar';
 import { Modal } from './components/ui/Modal';
+import HeaderMetrics from './components/ui/HeaderMetrics';
 
 function App() {
   const { messages, persona, diagnostics, isSending, isPersonaLoading, sendMessage, savePersona } =
@@ -19,7 +20,6 @@ function App() {
   return (
     <div className="flex h-screen w-full flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans selection:bg-emerald-500/30" data-testid="app-container">
       
-      {/* HEADER: High-Density Status Bar */}
       <header 
         className="flex h-12 shrink-0 items-center justify-between border-b border-white/5 bg-slate-950 px-4"
         role="banner"
@@ -39,6 +39,9 @@ function App() {
                 </div>
              </div>
           </div>
+          
+           {/* Net Liq & Exposure Display */}
+           <HeaderMetrics />
 
            {/* Compact Orchestration Controls */}
           <div className="flex items-center gap-3 rounded border border-white/5 bg-white/[0.02] px-3 py-1" role="toolbar" aria-label="Orchestration Controls">

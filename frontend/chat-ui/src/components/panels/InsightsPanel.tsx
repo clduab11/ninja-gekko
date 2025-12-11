@@ -1,11 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 import { ActivitySquare, Database, FileSearch, GlobeLock, LineChart } from 'lucide-react';
+import { useEffect } from 'react';
 
-import { fetchAccountSnapshot, fetchNews } from '../../services/api';
+import { fetchAccountSnapshot, fetchAggregateAccount, fetchIntelStream } from '../../services/api';
+import { useIntelWebSocket } from '../../hooks/useIntelWebSocket';
 
 const InsightsPanel = () => {
-  const { data: snapshot } = useQuery({ queryKey: ['account-snapshot'], queryFn: fetchAccountSnapshot });
-  const { data: news } = useQuery({ queryKey: ['news'], queryFn: fetchNews });
+  const { data: aggregateAccount } = useQuery({ queryKey: ['aggregate-account'], queryFn: fetchAggregateAccount });
+  const { data: initialIntel } = useQuery({ queryKey: ['intel-stream-initial'], queryFn: () => fetchIntelStream(10) });
+  
+  const { items: liveIntel, isConnected } = useIntelWebSocket();
+
+  // Combine initial fetch with live updates, favoring live updates
+  const displayItems = liveIntel.length > 0 ? liveIntel : (initialIntel || []);
 
   return (
     <section 
@@ -15,7 +22,10 @@ const InsightsPanel = () => {
       aria-label="Realtime trading intelligence"
     >
       <header>
-        <h2 className="text-lg font-semibold">Realtime Intel</h2>
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+            Realtime Intel
+            {isConnected && <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" title="Live Stream Active"/>}
+        </h2>
         <p className="text-xs text-white/50">Positions · Risk · Rationale · Research</p>
       </header>
 
@@ -28,8 +38,8 @@ const InsightsPanel = () => {
           testId="insight-tile-exposure"
           icon={<LineChart className="h-4 w-4" />}
           title="Current Exposure"
-          value={snapshot ? `${(snapshot.net_exposure * 100).toFixed(1)}% net` : 'Loading...'}
-          description="Cross-venue leverage, hedges, and directional skew"
+          value={aggregateAccount ? `$${((aggregateAccount.total_exposure ?? 0) / 1000).toFixed(1)}k` : 'Loading...'}
+          description={aggregateAccount ? `Net Liq: $${((aggregateAccount.total_net_liquidity ?? 0) / 1000).toFixed(1)}k` : "Calculating..."}
         />
         <InsightTile
           testId="insight-tile-automation"
@@ -55,44 +65,47 @@ const InsightsPanel = () => {
       </div>
 
       <div 
-        className="rounded-xl border border-border/60 bg-panel px-4 py-3 text-xs text-white/70"
+        className="rounded-xl border border-border/60 bg-panel px-4 py-3 text-xs text-white/70 flex-1 overflow-hidden flex flex-col"
         data-testid="market-radar"
         role="region"
         aria-label="Market news and signals radar"
       >
-        <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.4em] text-white/30">
+        <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.4em] text-white/30 shrink-0">
           <FileSearch className="h-4 w-4" aria-hidden="true" /> Market Radar
         </div>
         <ul 
-          className="space-y-2"
+          className="space-y-2 overflow-y-auto pr-2 custom-scrollbar"
           role="list"
           aria-label="Latest market radar signals"
           aria-live="polite"
         >
-          {news?.map((item, index) => (
+          {displayItems.map((item, index) => (
             <li 
               key={item.id}
               data-testid={`radar-item-${index}`}
               role="listitem"
+              className="border-l-2 border-transparent hover:border-accent pl-2 transition-all"
             >
               <a 
                 href={item.url} 
                 target="_blank" 
                 rel="noreferrer" 
-                className="font-medium text-white/80 hover:text-accent"
+                className="font-medium text-white/80 hover:text-accent block"
                 data-testid={`radar-link-${index}`}
                 aria-label={`Read: ${item.title}`}
               >
                 {item.title}
               </a>
               <div 
-                className="text-[10px] uppercase tracking-[0.3em] text-white/30"
+                className="text-[10px] uppercase tracking-[0.3em] text-white/30 mt-0.5 flex justify-between"
                 data-testid={`radar-meta-${index}`}
               >
-                {item.source} · {new Date(item.published_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                <span>{item.source}</span>
+                <span>{new Date(item.published_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
               </div>
             </li>
-          )) || <li data-testid="radar-loading">Loading sonar + perplexity feeds...</li>}
+          ))}
+          {displayItems.length === 0 && <li data-testid="radar-loading" className="text-white/30 italic">Connecting to intelligence stream...</li>}
         </ul>
       </div>
     </section>

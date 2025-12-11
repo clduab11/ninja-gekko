@@ -535,7 +535,7 @@ mod tests {
     fn test_volatility_score_creation() {
         let score = VolatilityScore {
             symbol: "BTC-USD".to_string(),
-            exchange: ExchangeId::Coinbase,
+            exchange: ExchangeId::Kraken,
             score: 0.85,
             price_change_1m: Decimal::new(150, 2),   // 1.50
             price_change_5m: Decimal::new(750, 2),   // 7.50
@@ -547,7 +547,7 @@ mod tests {
         };
 
         assert_eq!(score.symbol, "BTC-USD");
-        assert_eq!(score.exchange, ExchangeId::Coinbase);
+        assert_eq!(score.exchange, ExchangeId::Kraken);
         assert_eq!(score.score, 0.85);
     }
 
@@ -556,7 +556,7 @@ mod tests {
         let opportunity = ArbitrageOpportunity {
             id: Uuid::new_v4(),
             symbol: "BTC-USD".to_string(),
-            buy_exchange: ExchangeId::Coinbase,
+            buy_exchange: ExchangeId::Kraken,
             sell_exchange: ExchangeId::BinanceUs,
             buy_price: Decimal::new(50000, 0),
             sell_price: Decimal::new(50250, 0),

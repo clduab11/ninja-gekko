@@ -217,10 +217,17 @@ impl ApiServer {
             .route("/api/chat/persona", get(handlers::chat::get_persona))
             .route("/api/chat/persona", post(handlers::chat::update_persona)) // Handle both GET and POST
             .route("/api/trading/pause", post(handlers::chat::pause_trading))
-            .route("/api/accounts/snapshot", get(handlers::chat::get_account_snapshot))
+            // Old generic route - keeping for backward compatibility if needed, or replacing
+            .route("/api/accounts/snapshot", get(handlers::accounts::get_account_snapshot))
+            // New routes
+            .route("/api/v1/accounts/snapshot", get(handlers::accounts::get_account_snapshot))
+            .route("/api/v1/accounts/aggregate", get(handlers::accounts::get_aggregate_account))
             .route("/api/news/headlines", get(handlers::chat::get_news_headlines))
             .route("/api/research/sonar", post(handlers::chat::research_sonar))
             .route("/api/agents/swarm", post(handlers::chat::summon_swarm))
+
+            // Intel Stream
+            .route("/api/v1/intel/stream", get(handlers::intel::get_intel_stream))
 
             // Apply middleware
             // Apply middleware

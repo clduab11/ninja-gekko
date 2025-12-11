@@ -127,7 +127,7 @@ impl TennoMcp {
             },
         ];
 
-        exchange_balances.insert(ExchangeId::Coinbase, demo_balances);
+        exchange_balances.insert(ExchangeId::Kraken, demo_balances);
 
         let response = BalanceResponse {
             query_id: query.id,
@@ -190,7 +190,7 @@ impl TennoMcp {
         let health = ArbitrageSystemHealth {
             overall_status: SystemStatus::Healthy,
             exchange_status: std::collections::HashMap::from([
-                (ExchangeId::Coinbase, ExchangeStatus::Connected),
+                (ExchangeId::Kraken, ExchangeStatus::Connected),
                 (ExchangeId::BinanceUs, ExchangeStatus::Connected),
                 (ExchangeId::Oanda, ExchangeStatus::Connected),
             ]),

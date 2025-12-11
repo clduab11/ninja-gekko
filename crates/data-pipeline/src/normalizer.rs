@@ -146,7 +146,7 @@ mod tests {
             volume_24h: dec!(1234),
             timestamp: chrono::Utc::now(),
         };
-        let raw = (ExchangeId::Coinbase, StreamMessage::Tick(tick));
+        let raw = (ExchangeId::Kraken, StreamMessage::Tick(tick));
 
         let mut normalizer = MarketNormalizer::new();
         let normalized = normalizer.normalize(raw).expect("normalized");

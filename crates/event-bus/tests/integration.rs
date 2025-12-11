@@ -48,7 +48,7 @@ impl EventHandler<MarketEvent> for MarketToSignalHandler {
             account_id: self.account_id.clone(),
             priority: Priority::High,
             signal: StrategySignal {
-                exchange: Some(ExchangeId::Coinbase),
+                exchange: Some(ExchangeId::Kraken),
                 symbol,
                 side: ninja_gekko_core::types::OrderSide::Buy,
                 order_type: OrderType::Limit,
@@ -89,7 +89,7 @@ struct MockExchange;
 #[async_trait]
 impl ExchangeConnector for MockExchange {
     fn exchange_id(&self) -> ExchangeId {
-        ExchangeId::Coinbase
+        ExchangeId::Kraken
     }
 
     async fn connect(&mut self) -> Result<(), ExchangeError> {

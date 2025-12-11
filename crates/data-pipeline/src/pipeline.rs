@@ -208,7 +208,7 @@ mod tests {
         };
 
         let normalized = normalizer
-            .normalize((ExchangeId::Coinbase, StreamMessage::Tick(tick)))
+            .normalize((ExchangeId::Kraken, StreamMessage::Tick(tick)))
             .expect("expected tick normalization");
 
         distributor
