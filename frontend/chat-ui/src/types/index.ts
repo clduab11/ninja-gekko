@@ -143,3 +143,21 @@ export interface AccountSnapshot {
   brokers: BrokerSnapshot[];
 }
 
+export interface OrchestratorState {
+  is_live: boolean;
+  is_winding_down: boolean;
+  wind_down_started_at?: string;
+  emergency_halt_active: boolean;
+  emergency_halt_reason?: string;
+  risk_throttle: number;
+  last_updated: string;
+}
+
+export interface LlmModel {
+  id: string;
+  display_name: string;
+  provider: string;
+  context_window: number;
+  specialization: string;
+}
+

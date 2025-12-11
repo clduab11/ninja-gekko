@@ -1,34 +1,22 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Activity, ArrowUpRight, Globe, Newspaper, Radio, TrendingUp, Zap } from 'lucide-react';
-import { fetchNews, fetchAggregateAccount, fetchHistoricalCandles } from '../../services/api';
+import { Activity, Globe, Newspaper, Radio, Zap } from 'lucide-react';
+import { fetchAggregateAccount } from '../../services/api';
+import { useChartData } from '../../hooks/useChartData';
+import { useIntelWebSocket } from '../../hooks/useIntelWebSocket';
 
 const EXCHANGES = {
-  OANDA: { 
-    id: 'OANDA', 
-    name: 'OANDA', 
-    type: 'FX/CFD', 
-    pairs: [
-      { s: 'EUR/USD', n: 'Euro' },
-      { s: 'GBP/USD', n: 'British Pound' },
-      { s: 'USD/JPY', n: 'Japanese Yen' },
-      { s: 'USD/CAD', n: 'Canadian Dollar' },
-      { s: 'AUD/USD', n: 'Aussie Dollar' },
-      { s: 'BTC/USD', n: 'Bitcoin (CFD)' },
-      { s: 'ETH/USD', n: 'Ethereum (CFD)' }
-    ] 
-  },
-  COINBASE: { 
-    id: 'COINBASE', 
-    name: 'Coinbase', 
+  KRAKEN: { 
+    id: 'KRAKEN', 
+    name: 'Kraken', 
     type: 'SPOT', 
     pairs: [
-      { s: 'BTC-USD', n: 'Bitcoin' },
-      { s: 'ETH-USD', n: 'Ethereum' },
-      { s: 'SOL-USD', n: 'Solana' },
-      { s: 'DOGE-USD', n: 'Dogecoin' },
-      { s: 'AVAX-USD', n: 'Avalanche' }
+      { symbol: 'XBT/USD', name: 'Bitcoin', category: 'crypto' },
+      { symbol: 'ETH/USD', name: 'Ethereum', category: 'crypto' },
+      { symbol: 'SOL/USD', name: 'Solana', category: 'crypto' },
+      { symbol: 'DOGE/USD', name: 'Dogecoin', category: 'crypto' },
+      { symbol: 'USDT/USD', name: 'Tether', category: 'crypto' }
     ] 
   },
   BINANCE: { 
@@ -36,33 +24,47 @@ const EXCHANGES = {
     name: 'Binance.US', 
     type: 'SPOT', 
     pairs: [
-      { s: 'BTCUSD', n: 'Bitcoin' },
-      { s: 'ETHUSD', n: 'Ethereum' },
-      { s: 'SOLUSD', n: 'Solana' },
-      { s: 'BNBUSD', n: 'Binance Coin' },
-      { s: 'ADAUSD', n: 'Cardano' }
+      { symbol: 'BTCUSD', name: 'Bitcoin', category: 'crypto' },
+      { symbol: 'ETHUSD', name: 'Ethereum', category: 'crypto' },
+      { symbol: 'SOLUSD', name: 'Solana', category: 'crypto' },
+      { symbol: 'BNBUSD', name: 'Binance Coin', category: 'crypto' },
+      { symbol: 'ADAUSD', name: 'Cardano', category: 'crypto' }
+    ] 
+  },
+  OANDA: { 
+    id: 'OANDA', 
+    name: 'OANDA', 
+    type: 'FX/CFD', 
+    pairs: [
+      { symbol: 'EUR/USD', name: 'Euro', category: 'forex' },
+      { symbol: 'GBP/USD', name: 'British Pound', category: 'forex' },
+      { symbol: 'USD/JPY', name: 'Japanese Yen', category: 'forex' },
+      { symbol: 'USD/CAD', name: 'Canadian Dollar', category: 'forex' },
+      { symbol: 'AUD/USD', name: 'Aussie Dollar', category: 'forex' },
+      { symbol: 'BTC/USD', name: 'Bitcoin (CFD)', category: 'cfd' },
+      { symbol: 'ETH/USD', name: 'Ethereum (CFD)', category: 'cfd' }
     ] 
   }
 };
 
 const MarketRadar = () => {
-  const [activeExchange, setActiveExchange] = React.useState<keyof typeof EXCHANGES>('COINBASE');
-  const [symbol, setSymbol] = React.useState(EXCHANGES['COINBASE'].pairs[0].s);
+  const [activeExchange, setActiveExchange] = React.useState<keyof typeof EXCHANGES>('KRAKEN');
+  const [symbol, setSymbol] = React.useState(EXCHANGES['KRAKEN'].pairs[0].symbol);
   const [timeframe, setTimeframe] = React.useState('15m');
 
-  const { data: news } = useQuery({ queryKey: ['news'], queryFn: fetchNews, refetchInterval: 30000 });
+
   const { data: aggregateAccount } = useQuery({ queryKey: ['aggregate-account'], queryFn: fetchAggregateAccount });
   
-  const { data: historicalData, isLoading: isChartLoading } = useQuery({ 
-    queryKey: ['market-history', symbol, timeframe], 
-    queryFn: () => fetchHistoricalCandles(symbol, timeframe as any),
-    refetchInterval: 60000
-  });
+  // Use custom hook for chart data
+  const { data: historicalData, isLoading: isChartLoading } = useChartData(symbol, timeframe);
+  
+  // Use Intel Stream hook
+  const { items: intelItems, isConnected: isIntelConnected } = useIntelWebSocket();
 
   // State for live price updates
   const [livePrice, setLivePrice] = React.useState<number | null>(null);
 
-  // WebSocket for live updates
+  // WebSocket for live updates (Keep simple local state for header price for now, hook handles chart mostly)
   React.useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/api/v1/ws?symbols=${symbol}`;
@@ -130,7 +132,7 @@ const MarketRadar = () => {
                     key={ex}
                     onClick={() => {
                         setActiveExchange(ex);
-                        setSymbol(EXCHANGES[ex].pairs[0].s);
+                        setSymbol(EXCHANGES[ex].pairs[0].symbol);
                     }}
                     className={`px-3 py-1 text-[10px] font-bold transition-all rounded ${activeExchange === ex ? 'bg-emerald-500 text-slate-900 shadow-lg shadow-emerald-500/20' : 'text-slate-400 hover:text-slate-200'}`}
                 >
@@ -317,33 +319,50 @@ const MarketRadar = () => {
             </div>
         </div>
 
-        {/* Right: News Feed */}
+        {/* Right: Intel Stream Feed */}
         <div className="flex flex-col rounded-lg border border-white/5 bg-slate-950/50">
             <div className="flex items-center justify-between border-b border-white/5 px-3 py-3 bg-white/5">
                 <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     <Newspaper className="h-3 w-3" /> Intel Stream
                 </span>
-                <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_#10b981]"></span>
+                <div className="flex items-center gap-2">
+                     <span className={`text-[9px] font-mono ${isIntelConnected ? 'text-emerald-500' : 'text-slate-600'}`}>
+                        {isIntelConnected ? 'LIVE' : 'OFFLINE'}
+                     </span>
+                     <span className={`flex h-1.5 w-1.5 rounded-full ${isIntelConnected ? 'bg-emerald-500 shadow-[0_0_5px_#10b981]' : 'bg-slate-700'}`}></span>
+                </div>
             </div>
             <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
                 <div className="space-y-2">
-                    {news?.map((item, idx) => (
-                        <a 
-                            key={idx}
-                            href={item.url}
-                            target="_blank"
-                            rel="noreferrer"
+                    {intelItems.length > 0 ? (
+                        intelItems.map((item) => (
+                        <div 
+                            key={item.id}
                             className="group block rounded border border-transparent bg-white/5 p-2 transition-all hover:border-emerald-500/30 hover:bg-white/10"
                         >
                             <div className="mb-1 flex items-center justify-between">
-                                <span className="text-[9px] font-bold uppercase text-emerald-500/70">{item.source}</span>
-                                <span className="text-[9px] text-slate-500">{new Date(item.published_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                <span className={`text-[9px] font-bold uppercase ${
+                                    item.source.includes('ALERT') ? 'text-amber-500/90' : 
+                                    item.source.includes('KRAKEN') ? 'text-blue-400/90' : 'text-emerald-500/70'
+                                }`}>{item.source}</span>
+                                <span className="text-[9px] text-slate-500">{new Date(item.published_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</span>
                             </div>
                             <h4 className="line-clamp-2 text-xs font-medium text-slate-300 group-hover:text-emerald-50">
                                 {item.title}
                             </h4>
-                        </a>
-                    )) || (
+                            {item.sentiment !== undefined && (
+                                <div className="mt-1 flex items-center gap-1">
+                                    <div className="h-0.5 flex-1 rounded-full bg-slate-800">
+                                        <div 
+                                            className={`h-full rounded-full ${item.sentiment > 0.6 ? 'bg-emerald-500' : item.sentiment < 0.4 ? 'bg-red-500' : 'bg-slate-500'}`} 
+                                            style={{width: `${item.sentiment * 100}%`}}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )) 
+                    ) : (
                         <div className="p-4 text-center text-xs text-slate-500">
                            <div className="flex flex-col items-center gap-2 animate-pulse">
                                 <Globe className="h-5 w-5 opacity-50" />

@@ -53,7 +53,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Simulate exchange setup (in real implementation, these would be actual connectors)
     println!("🌐 Setting up multi-exchange infrastructure:");
-    println!("   • Coinbase Pro: Connected ✅");
+    println!("   • Kraken: Connected ✅");
     println!("   • Binance.us: Connected ✅");
     println!("   • OANDA: Connected ✅");
     println!();
@@ -69,15 +69,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Simulate some arbitrage opportunities being detected
     println!("💎 OPPORTUNITY DETECTED:");
     println!("   Symbol: BTC-USD");
-    println!("   Buy Price: $49,850 (Coinbase)");
-    println!("   Sell Price: $50,125 (Binance.us)");
+    println!("   Buy Price: $98,850 (Kraken)");
+    println!("   Sell Price: $99,200 (Binance.us)");
     println!("   Profit: $275 (0.55%)");
     println!("   Confidence: 94.2% 🎯");
     println!("   Risk Score: 0.15 (LOW) ✅");
     println!();
 
     println!("⚡ EXECUTING GEKKO-STYLE ARBITRAGE:");
-    println!("   1. Emergency capital allocation: $50,000 → Coinbase");
+    println!("   1. Emergency capital allocation: $50,000 → Kraken");
     println!("   2. Simultaneous buy/sell execution");
     println!("   3. Real-time P&L monitoring");
     println!("   4. Automatic position rebalancing");

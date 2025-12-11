@@ -21,9 +21,10 @@ pub mod arbitrage;
 pub mod chat;
 pub mod intel;
 pub mod accounts;
+pub mod orchestrator;
 
 // Re-export all handler functions
-pub use auth_utils::{login_handler, refresh_handler, logout_handler};
+pub use chat::{get_chat_history, send_message, get_persona, update_persona, pause_trading, get_news_headlines, research_sonar, summon_swarm, get_models};
 pub use trades::{list_trades, create_trade, get_trade, update_trade, delete_trade};
 pub use portfolio::{get_portfolio, get_positions, get_position, get_performance_metrics};
 pub use market_data::{get_market_data, get_batch_market_data, get_historical_data};

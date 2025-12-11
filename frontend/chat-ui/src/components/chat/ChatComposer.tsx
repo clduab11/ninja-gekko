@@ -58,6 +58,17 @@ const ChatComposer = ({ disabled, onSend }: Props) => {
           placeholder="Direct line to Gordon..."
           value={value}
           onChange={(event) => setValue(event.target.value)}
+          onKeyDown={(event) => {
+            // Submit on Cmd+Enter (Mac) or Ctrl+Enter (Windows)
+            if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+              event.preventDefault();
+              if (!disabled && value.trim()) {
+                onSend(value.trim());
+                setValue('');
+                setShowTools(false);
+              }
+            }
+          }}
           disabled={disabled}
         />
         

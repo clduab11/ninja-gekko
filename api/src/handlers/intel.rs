@@ -37,22 +37,26 @@ pub async fn get_intel_stream(
 ) -> ApiResult<Json<ApiResponse<Vec<IntelItem>>>> {
     let mut items = Vec::new();
 
-    // Fetch live market data for key assets to generate "Intel"
-    let symbols = vec!["BTC-USD", "ETH-USD", "SOL-USD"];
+    // ---------------------------------------------------------
+    // 1. Live Market Data (High Priority)
+    // ---------------------------------------------------------
+    let symbols = vec!["XBT/USD", "ETH/USD", "SOL/USD"];
     
     for symbol in symbols {
         if let Ok(data) = state.market_data_service.get_latest_data(symbol).await {
-             let sentiment = if data.price > 0.0 { 0.6 } else { 0.4 }; // Simple placeholder sentiment
-             
+             // Simple sentiment logic
+             let sentiment = if data.change_24h > 0.0 { 0.7 } else { 0.3 };
+             let direction = if data.change_24h >= 0.0 { "📈" } else { "📉" };
+
              items.push(IntelItem {
                 id: uuid::Uuid::new_v4().to_string(),
-                source: "KRAKEN MARKET INTEL".to_string(),
-                title: format!("{} trading at ${:.2}", symbol, data.price),
-                summary: Some(format!("Live price update from Kraken exchange. Volume: {:.2}", data.volume_24h)),
+                source: "KRAKEN MARKET FEED".to_string(),
+                title: format!("{} {} ${:.2} ({:+.2}%)", direction, symbol, data.price, data.change_24h),
+                summary: Some(format!("24h Volume: ${:.2}M", data.volume_24h / 1_000_000.0)),
                 url: None,
                 sentiment: Some(sentiment),
-                published_at: Utc::now(),
-                relevance_score: 0.9,
+                published_at: data.timestamp,
+                relevance_score: 0.95,
             });
         }
     }

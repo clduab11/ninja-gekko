@@ -65,6 +65,7 @@ pub struct ConnectionInfo {
 
 /// Types of subscriptions a client can have
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum SubscriptionType {
     /// Market data for specific symbols
     MarketData(Vec<String>),
@@ -224,6 +225,9 @@ impl WebSocketManager {
 
         // Start market data streaming task
         self.start_market_data_streaming(app_state.clone()).await;
+
+        // Start intel streaming task
+        self.start_intel_streaming().await;
 
         // Start periodic cleanup task
         self.start_connection_cleanup().await;
@@ -404,7 +408,56 @@ impl WebSocketManager {
                 // Mock implementation until method is available
                 let mut symbols = symbols_clone.write().await;
                 if symbols.is_empty() {
-                    *symbols = vec!["BTC-USD".to_string(), "ETH-USD".to_string()];
+                    *symbols = vec!["XBT/USD".to_string(), "ETH/USD".to_string(), "SOL/USD".to_string()];
+                }
+            }
+        });
+    }
+
+    /// Start background intel streaming (Simulated)
+    async fn start_intel_streaming(&self) {
+        let intel_updates_tx = self.intel_updates_tx.clone();
+
+        tokio::spawn(async move {
+            // Wait a bit before starting
+            tokio::time::sleep(Duration::from_secs(5)).await;
+            
+            let mut interval = interval(Duration::from_secs(15));
+
+            loop {
+                interval.tick().await;
+
+                // Generate a simulated intel item
+                // In production, this would come from an event bus or external service
+                let sources = vec!["BLOOMBERG", "COINDESK", "WHALE ALERT", "KRAKEN INTEL", "SOCIAL", "ON-CHAIN"];
+                let rand_idx = (chrono::Utc::now().timestamp_subsec_millis() as usize) % sources.len();
+                let source = sources[rand_idx];
+                
+                let (title, sentiment) = match source {
+                    "BLOOMBERG" => ("Fed Chair Powell hints at rate cuts later this year", 0.7),
+                    "COINDESK" => ("Major protocol upgrade scheduled for Ethereum network", 0.8),
+                    "WHALE ALERT" => ("1,000 BTC transferred from Coinbase to unknown wallet", 0.4),
+                    "KRAKEN INTEL" => ("Significant sell wall detected on BTC/USD at $98k", 0.2),
+                    "SOCIAL" => ("Retail sentiment index reaches monthly high", 0.6),
+                    "ON-CHAIN" => ("Stablecoin inflows to exchanges increase by $500M", 0.9),
+                    _ => ("Market volatility expected to increase", 0.5),
+                };
+
+                let item = crate::handlers::intel::IntelItem {
+                    id: Uuid::new_v4().to_string(),
+                    source: source.to_string(),
+                    title: title.to_string(),
+                    summary: Some("Simulated intel stream item for testing.".to_string()),
+                    url: None,
+                    sentiment: Some(sentiment),
+                    published_at: chrono::Utc::now(),
+                    relevance_score: 0.8,
+                };
+
+                let message = IntelUpdateMessage { item };
+
+                if let Err(e) = intel_updates_tx.send(message) {
+                    warn!("Failed to broadcast intel update: {}", e);
                 }
             }
         });

@@ -52,7 +52,7 @@ pnpm dev --filter ninja-gekko-chat-ui
 | `POST /api/research/sonar` | Kick off deep research tasks (returns citations)                      |
 | `POST /api/agents/swarm` | Simulate launching an agentic swarm                                     |
 
-The service currently uses in-memory state and deterministic stubs, providing a scaffold to connect real brokerage (OANDA, Coinbase, Binance.us) and research (Perplexity, Sonar, MCP plugins) integrations.
+The service currently uses in-memory state and deterministic stubs, providing a scaffold to connect real brokerage (OANDA, Kraken, Binance.us) and research (Perplexity, Sonar, MCP plugins) integrations.
 
 ## Agentic Workflow Hooks
 

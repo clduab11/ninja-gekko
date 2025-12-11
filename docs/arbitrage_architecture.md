@@ -24,7 +24,7 @@ graph TB
     end
     
     subgraph "Exchange Connectors"
-        CB[Coinbase Connector]
+        KR[Kraken Connector]
         BN[Binance.us Connector]
         OA[OANDA Connector]
     end
@@ -36,7 +36,7 @@ graph TB
     end
     
     subgraph "External APIs"
-        CBAPI[Coinbase API]
+        KRAPI[Kraken API]
         BNAPI[Binance.us API]
         OAAPI[OANDA API]
     end
@@ -63,14 +63,14 @@ graph TB
     AE --> OD
     AE --> EE
     
-    VS --> CB
+    VS --> KR
     VS --> BN
     VS --> OA
     
     CA --> MCP
     EE --> SR
     
-    CB --> CBAPI
+    KR --> KRAPI
     BN --> BNAPI
     OA --> OAAPI
     
@@ -112,7 +112,7 @@ The core orchestrator that implements Gordon Gekko's aggressive trading mentalit
 Unified interface for all supported exchanges with specific implementations.
 
 **Supported Exchanges:**
-- **Coinbase Pro/Advanced Trade**: Full REST + WebSocket implementation
+- **Kraken**: Full REST + WebSocket implementation with spot trading
 - **Binance.us**: Spot and futures trading with HMAC authentication
 - **OANDA v20**: Forex trading with bearer token authentication
 
@@ -184,7 +184,7 @@ sequenceDiagram
 ```mermaid
 graph LR
     subgraph "Capital Sources"
-        C1[Coinbase: $450K]
+        C1[Kraken: $450K]
         C2[Binance.us: $380K]
         C3[OANDA: $170K]
     end
@@ -332,9 +332,9 @@ scan_frequency_ms = 100
 target_return_min = 5.0
 target_return_max = 20.0
 
-[exchanges.coinbase]
+[exchanges.kraken]
 enabled = true
-api_key = "${COINBASE_API_KEY}"
+api_key = "${KRAKEN_API_KEY}"
 rate_limit_requests_per_second = 10
 
 [risk_management]

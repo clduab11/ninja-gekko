@@ -42,6 +42,7 @@ pub mod auth_validation;
 pub mod auth;
 pub mod managers;
 pub mod env_validation;
+pub mod llm;
 
 use crate::managers::{PortfolioManager, MarketDataService, StrategyManager};
 use crate::websocket::WebSocketManager;
@@ -213,6 +214,7 @@ impl ApiServer {
 
             // Chat & Frontend routes
             .route("/api/chat/history", get(handlers::chat::get_chat_history))
+            .route("/api/chat/models", get(handlers::chat::get_models))
             .route("/api/chat/message", post(handlers::chat::send_message))
             .route("/api/chat/persona", get(handlers::chat::get_persona))
             .route("/api/chat/persona", post(handlers::chat::update_persona)) // Handle both GET and POST
@@ -225,6 +227,13 @@ impl ApiServer {
             .route("/api/news/headlines", get(handlers::chat::get_news_headlines))
             .route("/api/research/sonar", post(handlers::chat::research_sonar))
             .route("/api/agents/swarm", post(handlers::chat::summon_swarm))
+
+            // Orchestrator Controls
+            .route("/api/orchestrator/engage", post(handlers::orchestrator::engage))
+            .route("/api/orchestrator/wind-down", post(handlers::orchestrator::wind_down))
+            .route("/api/orchestrator/emergency-halt", post(handlers::orchestrator::emergency_halt))
+            .route("/api/orchestrator/risk-throttle", post(handlers::orchestrator::risk_throttle))
+            .route("/api/orchestrator/state", get(handlers::orchestrator::get_state))
 
             // Intel Stream
             .route("/api/v1/intel/stream", get(handlers::intel::get_intel_stream))

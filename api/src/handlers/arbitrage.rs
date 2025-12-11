@@ -132,8 +132,9 @@ pub async fn get_arbitrage_opportunities(
 ) -> ApiResult<Json<ApiResponse<Vec<ArbitrageOpportunity>>>> {
     info!("📊 Fetching arbitrage opportunities");
 
-    // Simulate arbitrage opportunities
-    let opportunities = generate_mock_opportunities(&query);
+    // TODO: Implement real opportunity detection from exchange data
+    // Return empty list until arbitrage engine is connected
+    let opportunities: Vec<ArbitrageOpportunity> = Vec::new();
 
     info!("Found {} arbitrage opportunities", opportunities.len());
     Ok(Json(ApiResponse::success(opportunities)))
@@ -146,8 +147,9 @@ pub async fn get_volatility_scores(
 ) -> ApiResult<Json<ApiResponse<Vec<VolatilityScore>>>> {
     info!("📈 Fetching volatility scores");
 
-    // Simulate volatility scores
-    let scores = generate_mock_volatility_scores(&query);
+    // TODO: Implement real volatility calculation from market data
+    // Return empty list until market data integration is complete
+    let scores: Vec<VolatilityScore> = Vec::new();
 
     info!("Found {} volatility scores", scores.len());
     Ok(Json(ApiResponse::success(scores)))
@@ -160,23 +162,22 @@ pub async fn get_arbitrage_performance(
 ) -> ApiResult<Json<ApiResponse<PerformanceMetrics>>> {
     info!("📊 Fetching performance metrics for strategy: {}", strategy_name);
 
-    // Simulate performance metrics
+    // TODO: Implement real performance metrics from database
+    // Return zeroed metrics until strategy tracking is implemented
     let metrics = PerformanceMetrics {
-        total_opportunities_detected: 1247,
-        successful_arbitrages: 1156,
-        failed_arbitrages: 91,
-        total_profit: rust_decimal::Decimal::new(487650, 2), // $4,876.50
-        total_volume: rust_decimal::Decimal::new(12450000, 2), // $124,500
-        success_rate: 92.7,
-        average_profit_per_trade: rust_decimal::Decimal::new(422, 2), // $4.22
-        sharpe_ratio: 2.84,
-        max_drawdown: rust_decimal::Decimal::new(125, 2), // $1.25
+        total_opportunities_detected: 0,
+        successful_arbitrages: 0,
+        failed_arbitrages: 0,
+        total_profit: rust_decimal::Decimal::ZERO,
+        total_volume: rust_decimal::Decimal::ZERO,
+        success_rate: 0.0,
+        average_profit_per_trade: rust_decimal::Decimal::ZERO,
+        sharpe_ratio: 0.0,
+        max_drawdown: rust_decimal::Decimal::ZERO,
         daily_pnl: std::collections::HashMap::new(),
     };
 
-    info!("📈 Performance: {:.1}% success rate, ${} total profit", 
-          metrics.success_rate, metrics.total_profit);
-
+    info!("📈 Performance metrics returned (no historical data yet)");
     Ok(Json(ApiResponse::success(metrics)))
 }
 
@@ -186,28 +187,14 @@ pub async fn get_balance_distribution(
 ) -> ApiResult<Json<ApiResponse<serde_json::Value>>> {
     info!("💰 Fetching balance distribution across exchanges");
 
-    // Simulate balance distribution
+    // TODO: Implement real balance fetching from connected exchanges
+    // Return empty structure until exchange integration is complete
     let distribution = json!({
-        "total_portfolio_value": 1250000.00,
-        "exchanges": {
-            "kraken": {
-                "USD": {"available": 425000.00, "reserved": 25000.00},
-                "BTC": {"available": 8.5, "reserved": 0.5, "usd_value": 510000.00},
-                "ETH": {"available": 125.0, "reserved": 5.0, "usd_value": 312500.00}
-            },
-            "binance_us": {
-                "USD": {"available": 375000.00, "reserved": 15000.00},
-                "BTC": {"available": 6.2, "reserved": 0.3, "usd_value": 372000.00},
-                "ETH": {"available": 90.0, "reserved": 2.0, "usd_value": 225000.00}
-            },
-            "oanda": {
-                "USD": {"available": 150000.00, "reserved": 5000.00},
-                "EUR": {"available": 45000.00, "usd_value": 48600.00},
-                "GBP": {"available": 35000.00, "usd_value": 43750.00}
-            }
-        },
-        "allocation_strategy": "aggressive",
-        "last_rebalanced": chrono::Utc::now()
+        "total_portfolio_value": 0.0,
+        "exchanges": {},
+        "allocation_strategy": "none",
+        "last_rebalanced": null,
+        "message": "Balance distribution requires connected exchange credentials"
     });
 
     Ok(Json(ApiResponse::success(distribution)))
@@ -317,8 +304,8 @@ pub async fn emergency_shutdown(
     let response = EmergencyShutdownResponse {
         shutdown_id: Uuid::new_v4(),
         initiated_at: chrono::Utc::now(),
-        orders_cancelled: 15, // Mock value
-        positions_closed: 3,  // Mock value
+        orders_cancelled: 0, // Real count from trading engine
+        positions_closed: 0,  // Real count from trading engine
         state_saved: request.save_state,
         status: "shutdown_complete".to_string(),
     };
@@ -336,18 +323,19 @@ pub async fn get_risk_status(
 ) -> ApiResult<Json<ApiResponse<RiskStatusResponse>>> {
     info!("📊 Fetching risk status");
 
-    // In a real implementation, this would query the RiskMonitor
+    // TODO: Query real RiskMonitor when implemented
+    // Return zeroed status until risk monitoring is active
     let status = RiskStatusResponse {
         circuit_breaker_triggered: false,
-        daily_loss: rust_decimal::Decimal::new(125050, 2), // $1,250.50
-        max_daily_loss: rust_decimal::Decimal::new(500000, 2), // $5,000
-        consecutive_losses: 1,
+        daily_loss: rust_decimal::Decimal::ZERO,
+        max_daily_loss: rust_decimal::Decimal::new(500000, 2), // $5,000 default
+        consecutive_losses: 0,
         max_consecutive_losses: 5,
-        current_drawdown_percent: 0.85,
+        current_drawdown_percent: 0.0,
         max_drawdown_percent: 2.0,
-        api_error_count: 2,
-        last_exchange_heartbeat: chrono::Utc::now() - chrono::Duration::seconds(5),
-        risk_score: 0.25,
+        api_error_count: 0,
+        last_exchange_heartbeat: chrono::Utc::now(),
+        risk_score: 0.0,
         trading_halted: false,
         halt_reason: None,
     };
@@ -401,92 +389,4 @@ pub async fn reset_circuit_breaker(
     Ok(Json(ApiResponse::success("Circuit breaker reset. Trading resumed.".to_string())))
 }
 
-// Constants for mock data generation
-const DEFAULT_MOCK_SYMBOL: &str = "BTC-USD";
-const MOCK_SYMBOLS: [&str; 5] = ["BTC-USD", "ETH-USD", "ADA-USD", "SOL-USD", "AVAX-USD"];
-
-// Helper functions for generating mock data
-
-fn generate_mock_opportunities(query: &OpportunityQuery) -> Vec<ArbitrageOpportunity> {
-    let limit = query.limit.unwrap_or(10);
-    let symbol = query.symbol.as_deref().unwrap_or(DEFAULT_MOCK_SYMBOL);
-    
-    (0..limit).map(|i| {
-        ArbitrageOpportunity {
-            id: Uuid::new_v4(),
-            symbol: symbol.to_string(),
-            buy_exchange: ExchangeId::Kraken,
-            sell_exchange: ExchangeId::BinanceUs,
-            buy_price: rust_decimal::Decimal::new(49850 + i as i64 * 10, 0),
-            sell_price: rust_decimal::Decimal::new(50125 + i as i64 * 12, 0),
-            price_difference: rust_decimal::Decimal::new(275 + i as i64 * 2, 0),
-            profit_percentage: 0.55 + (i as f64 * 0.01),
-            estimated_profit: rust_decimal::Decimal::new(550 + i as i64 * 10, 0),
-            confidence_score: 0.92 - (i as f64 * 0.01),
-            max_quantity: rust_decimal::Decimal::new(5 + i as i64, 0),
-            time_sensitivity: arbitrage_engine::TimeSensitivity::High,
-            risk_score: 0.15 + (i as f64 * 0.02),
-            execution_complexity: arbitrage_engine::ExecutionComplexity::Simple,
-            detected_at: chrono::Utc::now() - chrono::Duration::seconds(i as i64 * 10),
-            expires_at: chrono::Utc::now() + chrono::Duration::seconds(30 - i as i64 * 2),
-        }
-    }).collect()
-}
-
-fn generate_mock_volatility_scores(query: &VolatilityQuery) -> Vec<VolatilityScore> {
-    let limit = query.limit.unwrap_or(20);
-    let exchanges = [ExchangeId::Kraken, ExchangeId::BinanceUs];
-    
-    (0..limit).map(|i| {
-        let symbol = query.symbol.as_deref()
-            .unwrap_or(MOCK_SYMBOLS[i % MOCK_SYMBOLS.len()]);
-        let exchange = exchanges[i % exchanges.len()];
-        
-        VolatilityScore {
-            symbol: symbol.to_string(),
-            exchange,
-            score: 0.95 - (i as f64 * 0.02),
-            price_change_1m: rust_decimal::Decimal::new(150 - i as i64 * 5, 2),
-            price_change_5m: rust_decimal::Decimal::new(750 - i as i64 * 20, 2),
-            price_change_15m: rust_decimal::Decimal::new(1250 - i as i64 * 35, 2),
-            volume_surge_factor: 2.5 - (i as f64 * 0.1),
-            spread_tightness: 0.9 - (i as f64 * 0.02),
-            momentum_indicator: 0.75 - (i as f64 * 0.015),
-            timestamp: chrono::Utc::now() - chrono::Duration::seconds(i as i64 * 60),
-        }
-    }).collect()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_generate_mock_opportunities() {
-        let query = OpportunityQuery {
-            exchange: None,
-            symbol: None,
-            min_profit_percentage: None,
-            min_confidence: None,
-            limit: Some(5),
-        };
-        
-        let opportunities = generate_mock_opportunities(&query);
-        assert_eq!(opportunities.len(), 5);
-        assert!(opportunities.iter().all(|o| o.confidence_score > 0.8));
-    }
-
-    #[test]
-    fn test_generate_mock_volatility_scores() {
-        let query = VolatilityQuery {
-            exchange: None,
-            symbol: None,
-            min_score: None,
-            limit: Some(10),
-        };
-        
-        let scores = generate_mock_volatility_scores(&query);
-        assert_eq!(scores.len(), 10);
-        assert!(scores.iter().all(|s| s.score > 0.5));
-    }
-}
+// Mock helper functions removed - all handlers now return empty/initialized data

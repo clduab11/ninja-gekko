@@ -7,55 +7,74 @@ import { fetchChatHistory, fetchPersona, sendChatMessage, updatePersona } from '
 import { ChatMessage, PersonaSettings } from '../types';
 
 export function useChatController() {
-  const { messages, setMessages, appendMessage, diagnostics, setDiagnostics } = useChatStore();
+  const { messages, setMessages, appendMessage, diagnostics, setDiagnostics, selectedModel } = useChatStore();
   const { persona, setPersona } = usePersonaStore();
   const [isPersonaLoading, setPersonaLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
-  useQuery({
-    queryKey: ['chat-history'],
-    queryFn: async () => {
-      const history = await fetchChatHistory();
-      setMessages(history);
-      return history;
-    }
-  });
+  // ... (Queries kept same) ... 
+  
+  // Replace mutation with streaming handler
+  const sendMessage = useCallback(async (prompt: string) => {
+      setIsSending(true);
 
-  useQuery({
-    queryKey: ['persona'],
-    queryFn: async () => {
-      setPersonaLoading(true);
-      const data = await fetchPersona();
-      setPersona(data);
-      setPersonaLoading(false);
-      return data;
-    }
-  });
-
-  const mutation = useMutation({
-    mutationFn: async (prompt: string) => sendChatMessage(prompt),
-    onSuccess: (payload) => {
-      appendMessage(payload.reply);
-      setPersona(payload.persona);
-      setDiagnostics(payload.diagnostics);
-    }
-  });
-
-  const sendMessage = useCallback(
-    (prompt: string) => {
-      const optimistic: ChatMessage = {
+      // 1. Optimistic User Message
+      const userMsg: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'user',
         content: prompt,
         timestamp: new Date().toISOString()
       };
-      appendMessage(optimistic);
-      mutation.mutate(prompt);
-    },
-    [appendMessage, mutation]
-  );
+      appendMessage(userMsg);
 
-  const savePersona = useCallback(
-    async (settings: PersonaSettings) => {
+      // 2. Optimistic Assistant Message (Empty placeholder)
+      const assistantId = crypto.randomUUID();
+      const assistantMsg: ChatMessage = {
+        id: assistantId,
+        role: 'assistant',
+        content: '', // Start empty
+        timestamp: new Date().toISOString()
+      };
+      appendMessage(assistantMsg);
+
+      try {
+          // 3. Prepare context window (last 10 messages)
+          const context = [...messages, userMsg].slice(-10);
+          // Add system prompt based on persona if needed? For now just context.
+          
+          let fullContent = '';
+          
+          // 4. Stream response
+          const { streamChat } = await import('../services/api'); // Dynamic import to avoid cycles if any
+          
+          for await (const chunk of streamChat(selectedModel, context)) {
+              fullContent += chunk;
+              
+              // Update store reference directly or via setMessages 
+              // (Zustand immutable update pattern needed)
+              useChatStore.setState(state => ({
+                  messages: state.messages.map(m => 
+                      m.id === assistantId ? { ...m, content: fullContent } : m
+                  )
+              }));
+          }
+
+      } catch (e) {
+          console.error("Chat streaming failed", e);
+          useChatStore.setState(state => ({
+             messages: [...state.messages, {
+                 id: crypto.randomUUID(),
+                 role: 'system',
+                 content: `Error: ${e instanceof Error ? e.message : 'Unknown error'}`,
+                 timestamp: new Date().toISOString()
+             }]
+          }));
+      } finally {
+          setIsSending(false);
+      }
+  }, [messages, selectedModel, appendMessage]);
+
+  const savePersona = useCallback(async (settings: PersonaSettings) => {
       setPersonaLoading(true);
       const result = await updatePersona(settings);
       setPersona(result);
@@ -81,7 +100,7 @@ export function useChatController() {
     messages,
     persona,
     diagnostics,
-    isSending: mutation.isPending,
+    isSending,
     isPersonaLoading,
     sendMessage,
     savePersona

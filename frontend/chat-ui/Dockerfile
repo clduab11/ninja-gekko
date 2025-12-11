@@ -6,6 +6,9 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+# Accept OpenRouter API key as build arg
+ARG VITE_OPENROUTER_API_KEY
+ENV VITE_OPENROUTER_API_KEY=$VITE_OPENROUTER_API_KEY
 # Ensure all types are available
 RUN npm run build
 

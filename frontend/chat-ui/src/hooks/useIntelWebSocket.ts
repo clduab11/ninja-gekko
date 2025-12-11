@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
-import { IntelItem } from '../services/api';
+import { IntelItem, fetchIntelStream } from '../services/api';
 
-const WS_URL = 'ws://localhost:8787/ws';
 
 export function useIntelWebSocket() {
   const [items, setItems] = useState<IntelItem[]>([]);
@@ -9,8 +8,23 @@ export function useIntelWebSocket() {
   const socketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
+    // Fetch initial history
+    fetchIntelStream(50).then(initialItems => {
+        setItems(initialItems);
+    }).catch(err => {
+        console.error('Failed to fetch initial intel stream:', err);
+    });
+
+    // Determine WS protocol and host
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host; // e.g. "localhost:5173" or "api.ninja-gekko.com"
+    // Note: In development with Vite proxy, we might target the API port directly or use the proxy path.
+    // If using the proxy setup in vite.config.ts (which proxies /api), we want:
+    // ws://localhost:5173/api/v1/ws
+    const wsUrl = `${protocol}//${host}/api/v1/ws`;
+    
     // Create WebSocket connection
-    const socket = new WebSocket(WS_URL);
+    const socket = new WebSocket(wsUrl);
     socketRef.current = socket;
 
     socket.onopen = () => {

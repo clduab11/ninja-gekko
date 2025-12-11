@@ -50,6 +50,8 @@ services:
     build:
       context: frontend/chat-ui
       dockerfile: Dockerfile
+      args:
+        VITE_OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
     ports:
       - "5173:80" # Map host 5173 to container 80 (nginx)
     depends_on:

@@ -112,14 +112,8 @@ pub struct SwarmResponse {
 // --- Handlers ---
 
 pub async fn get_chat_history() -> ApiResult<Json<Vec<ChatMessage>>> {
-    Ok(Json(vec![
-        ChatMessage {
-            id: "1".to_string(),
-            role: "assistant".to_string(),
-            content: "Hello! I am Gordon. How can I help you dominate the market today?".to_string(),
-            timestamp: chrono::Utc::now().to_rfc3339(),
-        }
-    ]))
+    // Return empty history - actual chat is stored client-side
+    Ok(Json(vec![]))
 }
 
 pub async fn send_message(
@@ -167,44 +161,15 @@ pub async fn pause_trading(
 }
 
 pub async fn get_account_snapshot() -> ApiResult<Json<AccountSnapshot>> {
-    Ok(Json(AccountSnapshot {
-        generated_at: chrono::Utc::now().to_rfc3339(),
-        total_equity: 1250000.0,
-        net_exposure: 450000.0,
-        brokers: vec![
-            BrokerSnapshot {
-                broker: "Kraken".to_string(),
-                balance: 750000.0,
-                open_positions: 5,
-                risk_score: 0.2,
-            },
-            BrokerSnapshot {
-                broker: "BinanceUS".to_string(),
-                balance: 500000.0,
-                open_positions: 3,
-                risk_score: 0.3,
-            },
-        ],
-    }))
+    // TODO: Implement real account snapshot from connected exchanges
+    Err(ApiError::NotImplemented {
+        message: "Account snapshot requires connected exchange credentials".to_string(),
+    })
 }
 
 pub async fn get_news_headlines() -> ApiResult<Json<Vec<NewsHeadline>>> {
-    Ok(Json(vec![
-        NewsHeadline {
-            id: "1".to_string(),
-            title: "Bitcoin breaks $100k barrier".to_string(),
-            source: "Bloomberg".to_string(),
-            published_at: chrono::Utc::now().to_rfc3339(),
-            url: "https://bloomberg.com/crypto".to_string(),
-        },
-        NewsHeadline {
-            id: "2".to_string(),
-            title: "Fed announces surprise rate cut".to_string(),
-            source: "Reuters".to_string(),
-            published_at: chrono::Utc::now().to_rfc3339(),
-            url: "https://reuters.com/finance".to_string(),
-        },
-    ]))
+    // TODO: Implement real news headlines from Perplexity/Sonar API
+    Ok(Json(vec![]))
 }
 
 pub async fn research_sonar(
@@ -216,6 +181,13 @@ pub async fn research_sonar(
         summary: format!("Research completed for: {}", request.query),
         citations: vec![],
     }))
+}
+
+
+use crate::llm::models::{LlmModel, MODEL_REGISTRY};
+
+pub async fn get_models() -> ApiResult<Json<Vec<LlmModel>>> {
+    Ok(Json(MODEL_REGISTRY.to_vec()))
 }
 
 pub async fn summon_swarm(

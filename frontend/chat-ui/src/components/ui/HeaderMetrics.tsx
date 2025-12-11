@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchAggregateAccount } from '../../services/api';
 import { DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
 
+import ModelSelector from './ModelSelector';
+
 const HeaderMetrics = () => {
     const { data: aggregateAccount, isLoading } = useQuery({ 
         queryKey: ['aggregate-account'], 
@@ -26,6 +28,8 @@ const HeaderMetrics = () => {
 
     return (
         <div className="flex items-center gap-6 px-4 py-1 rounded bg-white/[0.02] border border-white/5 mx-6">
+            <ModelSelector />
+            <div className="h-6 w-px bg-white/10" />
             <div className="flex flex-col gap-0.5">
                 <span className="text-[9px] uppercase tracking-wider text-slate-500 font-bold flex items-center gap-1">
                     <DollarSign className="h-2.5 w-2.5" /> Net Liq

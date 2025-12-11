@@ -75,6 +75,10 @@ pub enum ApiError {
     /// Bad request errors
     #[error("Bad request: {message}")]
     BadRequest { message: String },
+
+    /// Not implemented errors
+    #[error("Not implemented: {message}")]
+    NotImplemented { message: String },
 }
 
 impl ApiError {
@@ -164,6 +168,13 @@ impl ApiError {
         }
     }
 
+    /// Create a not implemented error
+    pub fn not_implemented<S: Into<String>>(message: S) -> Self {
+        Self::NotImplemented {
+            message: message.into(),
+        }
+    }
+
     /// Get the appropriate HTTP status code for the error
     pub fn status_code(&self) -> StatusCode {
         match self {
@@ -181,6 +192,7 @@ impl ApiError {
             ApiError::ExternalService { .. } => StatusCode::BAD_GATEWAY,
             ApiError::NotFound { .. } => StatusCode::NOT_FOUND,
             ApiError::BadRequest { .. } => StatusCode::BAD_REQUEST,
+            ApiError::NotImplemented { .. } => StatusCode::NOT_IMPLEMENTED,
         }
     }
 
@@ -202,6 +214,7 @@ impl ApiError {
             ApiError::Internal { .. } => "INTERNAL_ERROR",
             ApiError::NotFound { .. } => "NOT_FOUND",
             ApiError::BadRequest { .. } => "BAD_REQUEST",
+            ApiError::NotImplemented { .. } => "NOT_IMPLEMENTED",
         }
     }
 

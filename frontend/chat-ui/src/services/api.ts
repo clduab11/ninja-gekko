@@ -14,6 +14,8 @@ import {
   SwarmResponse,
   MarketDataPoint,
   PaginatedResponse,
+  OrchestratorState,
+  LlmModel,
 } from '../types';
 
 export interface IntelItem {
@@ -133,6 +135,118 @@ export async function fetchHistoricalCandles(symbol: string, timeframe: string =
   // OR better: use the types if I can validly import them.
   // I'll update the whole file import set.
   
+
   const envelope = await handleResponse<PaginatedResponse<MarketDataPoint>>(res);
   return envelope.data;
+}
+
+// Orchestrator endpoints
+export async function getOrchestratorState(): Promise<OrchestratorState> {
+  const res = await fetch('/api/orchestrator/state');
+  const envelope = await handleResponse<any>(res);
+  return envelope.data;
+}
+
+export async function engage(): Promise<OrchestratorState> {
+  const res = await fetch('/api/orchestrator/engage', {
+    method: 'POST',
+    headers: JSON_HEADERS,
+  });
+  const envelope = await handleResponse<any>(res);
+  return envelope.data;
+}
+
+export async function windDown(duration_seconds: number): Promise<OrchestratorState> {
+  const res = await fetch('/api/orchestrator/wind-down', {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ command: 'wind_down', duration_seconds }),
+  });
+  const envelope = await handleResponse<any>(res);
+  return envelope.data;
+}
+
+export async function emergencyHalt(reason: string): Promise<OrchestratorState> {
+  const res = await fetch('/api/orchestrator/emergency-halt', {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ command: 'emergency_halt', reason }),
+  });
+  const envelope = await handleResponse<any>(res);
+  return envelope.data;
+}
+
+export async function setRiskThrottle(value: number): Promise<OrchestratorState> {
+  const res = await fetch('/api/orchestrator/risk-throttle', {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ command: 'set_risk_throttle', value }),
+  });
+  const envelope = await handleResponse<any>(res);
+  return envelope.data;
+}
+
+// ------------------------------------------------------------------
+// LLM & Chat Services
+// ------------------------------------------------------------------
+
+export async function fetchModels(): Promise<LlmModel[]> {
+  const res = await fetch('/api/chat/models');
+  return handleResponse<LlmModel[]>(res);
+}
+
+export async function* streamChat(
+  model: string,
+  messages: any[]
+): AsyncGenerator<string, void, unknown> {
+  const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+  if (!apiKey) throw new Error('VITE_OPENROUTER_API_KEY is not set');
+
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'HTTP-Referer': 'http://localhost:5173',
+      'X-Title': 'Ninja Gekko',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model,
+      messages: messages.map(m => ({ 
+        role: m.role, 
+        content: m.content 
+      })),
+      stream: true,
+      temperature: 0.7,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error?.message || res.statusText);
+  }
+
+  const reader = res.body?.getReader();
+  const decoder = new TextDecoder();
+  if (!reader) return;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    
+    const chunk = decoder.decode(value, { stream: true });
+    const lines = chunk.split('\n');
+    
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        const data = line.slice(6);
+        if (data === '[DONE]') return;
+        try {
+          const parsed = JSON.parse(data);
+          const content = parsed.choices[0]?.delta?.content || '';
+          if (content) yield content;
+        } catch (e) { /* ignore partial json */ }
+      }
+    }
+  }
 }

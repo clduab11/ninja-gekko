@@ -36,18 +36,17 @@ pub async fn list_trades(
     pagination.validate().map_err(|e| ApiError::validation(e.to_string(), None))?;
 
     // TODO: Implement actual database query with filtering
-    // For now, return mock data
-    let mock_trades = create_mock_trades();
-    let filtered_trades = mock_trades; // Apply filters here when implemented
+    // Return empty list until database integration is complete
+    let trades: Vec<Order> = Vec::new();
 
     // Calculate pagination
     let offset = pagination.offset();
     let limit = pagination.limit.unwrap_or(50);
-    let total = filtered_trades.len();
-    let total_pages = (total + limit - 1) / limit;
+    let total = trades.len();
+    let total_pages = if total > 0 { (total + limit - 1) / limit } else { 0 };
 
     let paginated_trades = if offset < total {
-        filtered_trades
+        trades
             .into_iter()
             .skip(offset)
             .take(limit)
@@ -109,14 +108,7 @@ pub async fn get_trade(
     info!("Getting trade: {}", trade_id);
 
     // TODO: Implement actual database lookup
-    // For now, return mock data
-    match find_mock_trade(&trade_id) {
-        Some(order) => {
-            let trade_response = TradeResponse::from(order);
-            Ok(Json(ApiResponse::success(trade_response)))
-        }
-        None => Err(ApiError::not_found(format!("Trade {}", trade_id))),
-    }
+    Err(ApiError::not_found(format!("Trade {}", trade_id)))
 }
 
 /// Update a trade
@@ -127,34 +119,8 @@ pub async fn update_trade(
 ) -> ApiResult<Json<ApiResponse<TradeResponse>>> {
     info!("Updating trade: {}", trade_id);
 
-    // TODO: Implement actual trade update
-    // For now, simulate update
-    match find_mock_trade(&trade_id) {
-        Some(mut order) => {
-            // Check if trade can be updated
-            if order.status == OrderStatus::Filled {
-                return Err(ApiError::trading("Cannot update filled trade"));
-            }
-
-            // Update fields
-            if let Some(price) = request.price {
-                if let Some(dec_price) = Decimal::from_f64(price) {
-                     order.price = Some(dec_price);
-                }
-            }
-            if let Some(quantity) = request.quantity {
-               if let Some(dec_qty) = Decimal::from_f64(quantity) {
-                    order.quantity = dec_qty;
-               }
-            }
-
-            // order.updated_at = chrono::Utc::now(); // Field not available in core Order type
-            
-            let trade_response = TradeResponse::from(order);
-            Ok(Json(ApiResponse::success(trade_response)))
-        }
-        None => Err(ApiError::not_found(format!("Trade {}", trade_id))),
-    }
+    // TODO: Implement actual trade update via database
+    Err(ApiError::not_found(format!("Trade {}", trade_id)))
 }
 
 /// Delete/cancel a trade
@@ -164,27 +130,8 @@ pub async fn delete_trade(
 ) -> ApiResult<Json<ApiResponse<serde_json::Value>>> {
     info!("Deleting trade: {}", trade_id);
 
-    // TODO: Implement actual trade cancellation
-    // For now, simulate deletion
-    match find_mock_trade(&trade_id) {
-        Some(order) => {
-            // Check if trade can be cancelled
-            if order.status == OrderStatus::Filled {
-                return Err(ApiError::trading("Cannot cancel filled trade"));
-            }
-
-            let response = ApiResponse::success(json!({
-                "message": format!("Trade {} cancelled successfully", trade_id),
-                "cancelled_at": chrono::Utc::now()
-            }));
-
-            info!("Trade cancelled successfully: {}", trade_id);
-            Ok(Json(response))
-        }
-        None => {
-            Err(ApiError::not_found(format!("Trade {}", trade_id)))
-        }
-    }
+    // TODO: Implement actual trade cancellation via trading engine
+    Err(ApiError::not_found(format!("Trade {}", trade_id)))
 }
 
 /// Cancel multiple trades
@@ -198,30 +145,12 @@ pub async fn cancel_trades(
         return Err(ApiError::bad_request("Trade IDs list cannot be empty"));
     }
 
-    // TODO: Implement batch cancellation
-    // For now, simulate batch operation
-    let mut cancelled = Vec::new();
-    let mut failed = Vec::new();
-
-    for trade_id in trade_ids {
-        match find_mock_trade(&trade_id) {
-            Some(order) => {
-                if order.status == OrderStatus::Filled {
-                    failed.push(trade_id);
-                } else {
-                    cancelled.push(trade_id);
-                }
-            }
-            None => {
-                failed.push(trade_id);
-            }
-        }
-    }
-
+    // TODO: Implement batch cancellation via trading engine
+    // For now, return all as failed since we have no database
     let response_data = json!({
-        "message": format!("Processed {} trades", cancelled.len() + failed.len()),
-        "cancelled": cancelled,
-        "failed": failed,
+        "message": "Batch cancellation not yet implemented",
+        "cancelled": [],
+        "failed": trade_ids,
         "cancelled_at": chrono::Utc::now()
     });
 
@@ -236,88 +165,34 @@ pub async fn get_trade_stats(
 ) -> ApiResult<Json<ApiResponse<serde_json::Value>>> {
     info!("Getting trade statistics");
 
-    // TODO: Implement actual statistics calculation
-    // For now, return mock statistics
+    // TODO: Implement actual statistics calculation from database
+    // Return empty stats until database integration is complete
     let stats = json!({
-        "total_trades": 42,
-        "open_trades": 8,
-        "filled_trades": 34,
-        "cancelled_trades": 5,
-        "total_volume": 1250000.0,
-        "total_pnl": 15420.50,
-        "win_rate": 0.68,
-        "avg_trade_duration": "2.3 hours",
-        "largest_win": 1250.75,
-        "largest_loss": -890.25,
+        "total_trades": 0,
+        "open_trades": 0,
+        "filled_trades": 0,
+        "cancelled_trades": 0,
+        "total_volume": 0.0,
+        "total_pnl": 0.0,
+        "win_rate": 0.0,
+        "avg_trade_duration": "N/A",
+        "largest_win": 0.0,
+        "largest_loss": 0.0,
         "period": {
             "start": chrono::Utc::now() - chrono::Duration::days(30),
             "end": chrono::Utc::now()
-        }
+        },
+        "message": "Statistics require database integration"
     });
 
     let response = ApiResponse::success(stats);
     Ok(Json(response))
 }
 
-// Helper functions for mock data (to be replaced with actual database operations)
-
-/// Create mock trades for testing
-/// Create mock trades for testing
-fn create_mock_trades() -> Vec<Order> {
-    let mut trades = Vec::new();
-
-    // Mock trade 1
-    trades.push(Order::new(
-        "AAPL".to_string(),
-        OrderType::Limit,
-        OrderSide::Buy,
-        Decimal::from_f64(100.0).unwrap(),
-        Some(Decimal::from_f64(150.0).unwrap()),
-        "acc_001".to_string(),
-    ));
-    
-    // Mock trade 2
-    trades.push(Order::new(
-        "GOOGL".to_string(),
-        OrderType::Market,
-        OrderSide::Sell,
-        Decimal::from_f64(50.0).unwrap(),
-        None,
-        "acc_001".to_string(),
-    ));
-
-    // Mock trade 3
-    trades.push(Order::new(
-        "TSLA".to_string(),
-        OrderType::Stop,
-        OrderSide::Buy,
-        Decimal::from_f64(25.0).unwrap(),
-        Some(Decimal::from_f64(220.0).unwrap()),
-        "acc_002".to_string(),
-    ));
-
-    trades
-}
-
-/// Find a mock trade by ID
-fn find_mock_trade(trade_id: &str) -> Option<Order> {
-    // Basic implementation
-    let trades = create_mock_trades();
-    // Simulate lookup
-    if let Ok(uuid) = Uuid::parse_str(trade_id) {
-        trades.into_iter().find(|order| order.id == uuid)
-    } else {
-        None
-    }
-}
-
 /// Simulate trade creation (placeholder for actual trading engine integration)
 fn simulate_trade_creation(mut order: Order) -> Order {
     order.status = OrderStatus::Pending;
-    // order.filled_quantity = 0.0; // Not in Order
-    // order.average_fill_price = 0.0; // Not in Order
     order.timestamp = chrono::Utc::now();
-    // order.updated_at = chrono::Utc::now(); // Not in Order
     order
 }
 

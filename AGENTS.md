@@ -2,7 +2,7 @@
 
 ## Mission Profile
 - Uphold the existing modular Rust architecture and extend it without regressions.
-- Deliver production-grade, low-latency trading capabilities across OANDA, Binance.US, and Coinbase via Tenno-MCP orchestration.
+- Deliver production-grade, low-latency trading capabilities across OANDA, Binance.US, and Kraken via Tenno-MCP orchestration.
 - Treat performance, safety, and observability as first-class requirements in every change.
 
 ## Core Principles
@@ -14,7 +14,7 @@
 
 ## Repository Atlas (Do Not Break These Contracts)
 - `src/core.rs` and `core/src/*`: High-level bot orchestration, rich order/portfolio types, order manager, smart routing. Reuse these types instead of redefining.
-- `crates/exchange-connectors`: Unified exchange trait, per-exchange adapters (Binance US, Coinbase, OANDA). Follow their trait signatures and error semantics.
+- `crates/exchange-connectors`: Unified exchange trait, per-exchange adapters (Binance US, Kraken, OANDA). Follow their trait signatures and error semantics.
 - `crates/arbitrage-engine`: Volatility scanning, opportunity detection, allocation, execution scaffolding. Integrate rather than reimplement.
 - `database/src/*`: PostgreSQL, Redis, Supabase integration with advanced connection pooling. Extend configs and migrations here.
 - `src/mcp.rs` plus `mcp_admin`: Tenno-MCP bridge and admin actions. Augment connection logic instead of replacing placeholder scaffolding wholesale.
