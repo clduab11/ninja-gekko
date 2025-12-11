@@ -46,7 +46,9 @@ pub mod llm;
 
 use crate::managers::{PortfolioManager, MarketDataService, StrategyManager};
 use crate::websocket::WebSocketManager;
+use crate::handlers::orchestrator::OrchestratorState;
 use exchange_connectors::ExchangeConnector;
+use tokio::sync::RwLock;
 
 /// Application state shared across all handlers
 #[derive(Clone)]
@@ -63,6 +65,8 @@ pub struct AppState {
     pub strategy_manager: Arc<StrategyManager>,
     /// Server configuration
     pub config: Arc<config::ApiConfig>,
+    /// Orchestrator state (thread-safe mutable)
+    pub orchestrator_state: Arc<RwLock<OrchestratorState>>,
 }
 
 impl AppState {
@@ -82,6 +86,25 @@ impl AppState {
             .await
             .map_err(|e| error::ApiError::database(e.to_string()))?
         );
+
+        // Run database migrations
+        let migration_config = ninja_gekko_database::config::MigrationConfig {
+            migration_dir: "database/migrations".to_string(),
+            ..Default::default()
+        };
+        
+        let migration_manager = ninja_gekko_database::migrations::MigrationManager::new(
+            migration_config, 
+            "database/migrations"
+        ).map_err(|e| error::ApiError::internal(format!("Failed to init migration manager: {}", e)))?;
+
+        info!("Running matching migrations...");
+        if let Err(e) = migration_manager.run_migrations(db_manager.pool()).await {
+             tracing::error!("Failed to run migrations: {}", e);
+             // Fail startup if migrations fail? Yes, usually safer.
+             return Err(error::ApiError::internal(format!("Migration failed: {}", e)));
+        }
+        info!("Migrations completed successfully");
 
         let portfolio_manager = Arc::new(
             PortfolioManager::new(db_manager.clone())
@@ -113,7 +136,7 @@ impl AppState {
                 
                 Some(Arc::new(Box::new(kraken_connector)))
             } else {
-                info!("No Kraken credentials found, using mock market data");
+                info!("No Kraken credentials found, market data service will return errors");
                 None
             };
 
@@ -135,6 +158,7 @@ impl AppState {
             websocket_manager,
             strategy_manager,
             config: Arc::new(config),
+            orchestrator_state: Arc::new(RwLock::new(OrchestratorState::default())),
         })
     }
 }

@@ -16,6 +16,9 @@ strategy-engine = { path = "../crates/strategy-engine" }
 event-bus = { path = "../crates/event-bus" }
 home = "=0.5.9"
 
+# Database
+sqlx = { workspace = true, features = ["macros", "rust_decimal"] }
+
 # Axum web framework
 axum = { version = "0.7", features = ["ws", "macros", "tracing", "multipart"] }
 axum-extra = { version = "0.9", features = ["cookie"] }
@@ -65,6 +68,9 @@ validator = { version = "0.18", features = ["derive"] }
 
 # HTTP client for external APIs
 reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+
+# RSS Feed Parsing
+feed-rs = "2.0"
 
 # Environment variables
 dotenvy = "0.15"

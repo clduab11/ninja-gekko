@@ -4,15 +4,18 @@
 //! that don't fit into the core REST API structure yet.
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{State},
     response::Json,
 };
 use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use sqlx::FromRow;
+use chrono::{DateTime, Utc};
+use tracing::{info, error};
+
 use crate::{
     error::{ApiError, ApiResult},
-    models::ApiResponse,
     AppState,
 };
 
@@ -26,9 +29,35 @@ pub struct ChatMessage {
     pub timestamp: String,
 }
 
+#[derive(Debug, FromRow)]
+struct ChatHistoryRow {
+    id: uuid::Uuid,
+    role: String,
+    content: String,
+    #[allow(dead_code)]
+    input_tokens: Option<i32>,
+    #[allow(dead_code)]
+    output_tokens: Option<i32>,
+    #[allow(dead_code)]
+    model: Option<String>,
+    timestamp: DateTime<Utc>,
+}
+
+impl From<ChatHistoryRow> for ChatMessage {
+    fn from(row: ChatHistoryRow) -> Self {
+        ChatMessage {
+            id: row.id.to_string(),
+            role: row.role,
+            content: row.content,
+            timestamp: row.timestamp.to_rfc3339(),
+        }
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct SendMessageRequest {
     pub prompt: String,
+    pub model: Option<String>, // Allowing model selection
 }
 
 #[derive(Debug, Serialize)]
@@ -111,21 +140,69 @@ pub struct SwarmResponse {
 
 // --- Handlers ---
 
-pub async fn get_chat_history() -> ApiResult<Json<Vec<ChatMessage>>> {
-    // Return empty history - actual chat is stored client-side
-    Ok(Json(vec![]))
+pub async fn get_chat_history(
+    State(state): State<Arc<AppState>>,
+) -> ApiResult<Json<Vec<ChatMessage>>> {
+    let rows = sqlx::query_as::<_, ChatHistoryRow>(
+        "SELECT * FROM chat_history ORDER BY timestamp ASC LIMIT 100"
+    )
+    .fetch_all(state.db_manager.pool())
+    .await
+    .map_err(|e| {
+        error!("Failed to fetch chat history: {}", e);
+        ApiError::database(format!("Failed to fetch chat history: {}", e))
+    })?;
+
+    let messages: Vec<ChatMessage> = rows.into_iter().map(ChatMessage::from).collect();
+    Ok(Json(messages))
 }
 
 pub async fn send_message(
+    State(state): State<Arc<AppState>>,
     Json(request): Json<SendMessageRequest>,
 ) -> ApiResult<Json<ChatResponse>> {
+    info!("Received message: {}", request.prompt);
+
+    // 1. Save User Message
+    let user_msg_id = uuid::Uuid::new_v4();
+    sqlx::query(
+        "INSERT INTO chat_history (id, role, content, timestamp) VALUES ($1, $2, $3, NOW())"
+    )
+    .bind(user_msg_id)
+    .bind("user")
+    .bind(&request.prompt)
+    .execute(state.db_manager.pool())
+    .await
+    .map_err(|e| ApiError::database(e.to_string()))?;
+
+    // 2. Generate AI Response (Mock for now, or could integrate actual LLM here if ready)
+    // The previous implementation implied it was a mock or simple response.
+    // Ideally this should call an LLM service.
+    
+    // For now, we will stick to the previous simple logic but persist it.
+    let reply_content = format!("I received your message: '{}'. Market analysis is running.", request.prompt);
+    let reply_id = uuid::Uuid::new_v4();
+    
+    sqlx::query(
+        "INSERT INTO chat_history (id, role, content, timestamp) VALUES ($1, $2, $3, NOW())"
+    )
+    .bind(reply_id)
+    .bind("assistant")
+    .bind(&reply_content)
+    .execute(state.db_manager.pool())
+    .await
+    .map_err(|e| ApiError::database(e.to_string()))?;
+    
+    // Fetch the inserted reply to get the timestamp correct or just use NOW
+    let reply_msg = ChatMessage {
+        id: reply_id.to_string(),
+        role: "assistant".to_string(),
+        content: reply_content,
+        timestamp: chrono::Utc::now().to_rfc3339(),
+    };
+
     Ok(Json(ChatResponse {
-        reply: ChatMessage {
-            id: uuid::Uuid::new_v4().to_string(),
-            role: "assistant".to_string(),
-            content: format!("I received your message: '{}'. Market analysis is running.", request.prompt),
-            timestamp: chrono::Utc::now().to_rfc3339(),
-        },
+        reply: reply_msg,
         persona: PersonaSettings {
             tone: "dramatic".to_string(),
             style: "direct".to_string(),

@@ -94,6 +94,9 @@ COPY --from=builder /app/target/release/ninja-gekko /app/ninja-gekko
 # Copy configuration files
 COPY config/arbitrage.toml /etc/ninja-gekko/arbitrage.toml
 
+# Copy migrations
+COPY database/migrations /app/database/migrations
+
 # Create log directory
 RUN mkdir -p /var/log/ninja-gekko && chown -R ninja-gekko:ninja-gekko /var/log/ninja-gekko
 

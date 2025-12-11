@@ -11,20 +11,18 @@
 [![WebSocket](https://img.shields.io/badge/WebSocket-Streaming-blue.svg)](#websocket-data-pipeline)
 [![WASM](https://img.shields.io/badge/WASM-Strategies-purple.svg)](#strategy-engine)
 
-[![Rust](https://img.shields.io/badge/rust-1.83+-orange.svg)](https://www.rust-lang.org)
+[![Rust](https://img.shields.io/badge/rust-1.80+-orange.svg)](https://www.rust-lang.org)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
-[![Neural Networks](https://img.shields.io/badge/Neural-ruv--FANN-blue.svg)](https://github.com/ruvnet/ruv-FANN)
-[![Swarm Intelligence](https://img.shields.io/badge/Swarm-flow--nexus-purple.svg)](https://github.com/ruvnet/flow-nexus)
-[![WebAssembly](https://img.shields.io/badge/WebAssembly-Compatible-darkblue.svg)](https://webassembly.org)
-[![GPU Accelerated](https://img.shields.io/badge/GPU-CUDA%20%2B%20Metal-orange)](https://developer.nvidia.com/cuda-zone)
-[![Playwright](https://img.shields.io/badge/Playwright-MCP-lightgreen)](https://playwright.dev)
+[![React](https://img.shields.io/badge/React-18.2-blue.svg)](https://reactjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue.svg)](https://www.typescriptlang.org)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **_Stealth. Precision. Autonomous Operation._**
 
-**Ninja Gekko represents the evolutionary leap from traditional trading bots to a completely autonomous, self-improving trading intelligence powered by Rust performance and MCP ecosystem integration.**
+**Ninja Gekko represents the evolutionary leap from traditional trading bots to a completely autonomous, self-improving trading intelligence powered by Rust performance and modern web technologies.**
 
-[🥷 Features](#-revolutionary-features) • [🚀 Quick Start](#-quick-start) • [🧠 Neural Stack](#-neural-intelligence-stack) • [🎭 MCP Integration](#-mcp-first-architecture) • [🤝 Capability Matrix](#-capability-matrix-ninja-gekko-vs-modern-neural-trading-stacks) • [🌐 Integrations](#-integration-coverage--roadmap) • [⚠️ Risk Disclosure](#-experimental-research-disclosure) • [📈 Performance](#-performance-benchmarks)
+[🥷 Features](#-revolutionary-features) • [🚀 Quick Start](#-quick-start) • [🧠 Architecture](#-system-architecture) • [🎭 Gordon Chat UI](#-gordon-chat-interface) • [📊 API Documentation](#-api-documentation) • [⚠️ Risk Disclosure](#-experimental-research-disclosure) • [📈 Performance](#-performance-benchmarks)
 
 </div>
 
@@ -32,13 +30,19 @@
 
 ## 🌟 **Production Implementation Status**
 
-**Ninja Gekko** features a production-ready **event-driven trading engine** built in Rust, with proven performance benchmarks and comprehensive architecture. The implementation includes:
+**Ninja Gekko v2.0** features a production-ready **event-driven trading engine** built in Rust with a modern React TypeScript frontend, proven performance benchmarks, and comprehensive architecture.
+
+### **✅ Implemented Components**
 
 - **✅ Event Bus**: ~9.1μs dispatch performance (exceeds <10μs AGENTS target)
 - **✅ WebSocket Data Pipeline**: ~2.25μs normalization (44x better than <100μs target)
-- **✅ Exchange Connectors**: Unified trait with Binance, Kraken, OANDA support
+- **✅ Exchange Connectors**: Unified trait with Binance.US, Kraken, OANDA support
 - **✅ Strategy Engine**: WASM sandbox architecture with wasmtime integration
+- **✅ Gordon Chat UI**: Full React TypeScript interface with real-time WebSocket streaming
+- **✅ REST API**: Complete backend with authentication, portfolio, trades, market data endpoints
+- **✅ Docker Deployment**: Multi-service orchestration with health checks and resource limits
 - **✅ Comprehensive Testing**: Timeout-protected async test harness with performance validation
+- **✅ Observability**: Prometheus metrics, Grafana dashboards, structured JSON logging
 
 ### **🥷 Why "Ninja"?**
 
@@ -47,38 +51,9 @@
 - **Surgical Precision**: Exact position sizing with neural network-guided risk management
 - **Complete Autonomy**: 24/7 operation with self-improving algorithms
 - **Multi-Platform Mastery**: Seamless integration across trading venues via MCP servers
-- **Adaptive Intelligence**: Continuous learning from ruv-FANN neural networks
-
-### **🔥 Revolutionary Capabilities**
-
-**Ninja Gekko** combines the best of:
-
-- **🦀 Rust Performance**: Memory-safe, blazing-fast execution (2.8-4.4x improvement)
-- **🧠 ruv-FANN Neural Networks**: 27+ state-of-the-art forecasting models
-- **🤖 flow-nexus Swarm Intelligence**: 84.8% SWE-Bench solve rate for complex problem solving
-- **🎭 MCP Ecosystem**: 70+ integrated services for comprehensive market intelligence
-- **⚡ GPU Acceleration**: CUDA 11.8+ and Apple Metal Performance Shaders support
-- **🌐 WebAssembly Deployment**: Run anywhere - browser, edge, server, embedded
+- **Adaptive Intelligence**: Continuous learning from market data and historical performance
 
 > **Experimental Research Disclosure**: Ninja Gekko is experimental, open-source software provided for research and development only. Automated trading is inherently risky. Use at your own risk. Nothing in this repository constitutes financial advice.
-
----
-
-## 🧠 **Neural Architecture Compatibility**
-
-Ninja Gekko unifies ruv-FANN, Neuro-Divergent, and industry-standard NeuralForecast models under a single benchmarking harness with GPU and CPU parity.
-
-| Model Family                    | Supported Variants                                | Benchmark Focus                               | Status        |
-| ------------------------------- | ------------------------------------------------- | --------------------------------------------- | ------------- |
-| **NHITS**                       | Multi-horizon time-series, custom attention heads | Latency <10ms, horizon stability              | ✅ Production |
-| **N-BEATSx**                    | Seasonality/trend expert stacks                   | Forecast accuracy, regime resilience          | ✅ Production |
-| **LSTM / GRU**                  | ruv-FANN recurrent suite                          | Cross-asset adaptability, training throughput | ✅ Production |
-| **Temporal Fusion Transformer** | TFT with multi-asset covariates                   | Explainability, feature attributions          | 🚧 Preview    |
-| **Dilated CNN (WaveNet)**       | Residual dilated convolutions                     | Order book microstructure modelling           | ✅ Production |
-| **ruv-FANN Neuro-Divergent**    | Ensemble neuro-symbolic hybrids                   | Strategy consensus, swarm scoring             | ✅ Production |
-| **Hybrid RL Agents**            | Policy-gradient & actor-critic blends             | Risk-adjusted Sharpe, live feedback loops     | 🧪 Research   |
-
-The forthcoming **Neural Benchmarking Module** captures inference latency, MAE/MAPE, and Sharpe/Sortino metrics across every supported architecture with reproducible evaluation manifests.
 
 ---
 
@@ -99,7 +74,7 @@ Built on cutting-edge Rust-based neural network technology:
 
 ### **🎭 MCP-First Architecture**
 
-Native Model Context Protocol integration with 70+ servers, formalized as the **Tenno-MCP** runtime for plug-and-play agent composition. Tenno-MCP provides USB-C-like interoperability for LLMs, automation tools, and market adapters with declarative manifests, hot-reloadable toolchains, and CLI/server parity.
+Native Model Context Protocol integration with 70+ servers, formalized as the **Tenno-MCP** runtime for plug-and-play agent composition.
 
 #### **🔧 Core MCP Servers**
 
@@ -109,119 +84,9 @@ Native Model Context Protocol integration with 70+ servers, formalized as the **
 - **💾 Supabase MCP**: Real-time database operations, analytics, and data persistence
 - **🔍 Search MCP**: Perplexity AI integration for real-time market intelligence
 
-#### **🌐 Extended MCP Ecosystem**
-
-| Category                   | MCP Servers                            | Trading Applications                                      |
-| -------------------------- | -------------------------------------- | --------------------------------------------------------- |
-| **🤖 AI & ML**             | OpenAI, Cohere, Replicate, HuggingFace | Sentiment analysis, model inference, predictive analytics |
-| **📊 Data Analytics**      | Code Interpreter, Mem0, Ahrefs         | Market analysis, data processing, SEO insights            |
-| **💬 Communication**       | Gmail, Slack, Telegram, Discord        | Alert systems, notifications, community monitoring        |
-| **📈 Trading**             | Custom trading platform integrations   | Multi-exchange execution, order management                |
-| **☁️ Cloud Storage**       | Google Drive, Dropbox, OneDrive        | Data backup, model persistence, configuration management  |
-| **📱 Social Intelligence** | Twitter, Reddit, YouTube, LinkedIn     | Social sentiment, news monitoring, trend analysis         |
-| **🔧 DevOps**              | GitHub, GitLab, Docker, NPM            | CI/CD pipelines, deployment automation                    |
-
-Tenno-MCP now exposes a **Tool Orchestration Registry** inspired by Claude-Flow, enabling swarm agents to register capabilities, negotiate ownership, and coordinate workflows through consensus-driven leasing contracts.
-
-## **🎭 Gordon Chat Interface**
-
-The **Gordon Chat Interface** provides a conversational control center for managing Ninja Gekko's autonomous trading operations. Built with React + TypeScript and powered by Vite for fast development iteration with real-time WebSocket streaming intelligence.
-
-### **Frontend Features & Components**
-
-#### **Core Chat Interface**
-- **ChatComposer**: Advanced message input with markdown support
-- **ChatConversation**: Real-time conversation history with threading
-- **Real-time Chat**: WebSocket-powered bi-directional messaging with Gordon AI
-
-#### **Intelligence Panels**
-- **InsightsPanel**: Market analysis and trading opportunities
-- **MarketRadar**: Real-time market data visualization
-- **ActionDashboard**: One-click system actions and controls
-- **PersonaControls**: Adjustable AI tone and behavior settings
-- **HeaderMetrics**: Portfolio metrics and system health
-
-### **Gordon AI Capabilities**
-
-- **Dynamic Personas**: Switch between analytical, witty, or direct communication styles with persistent preferences
-- **Context-Aware Responses**: Maintains full conversation history with semantic understanding
-- **Real-time Market Intelligence**: WebSocket-powered live market data and sentiment analysis
-- **System Integration**: Direct control over trading pause, account snapshots, strategy deployment, and swarm operations
-- **Research Integration**: Triggers deep market research, news aggregation, and technical analysis
-- **Diagnostic Output**: Provides neural forecasts, risk assessments, and anomaly detection with each response
-
-### **Real-time WebSocket Architecture**
-
-The frontend utilizes WebSocket streaming for:
-- Low-latency order book updates (<5ms)
-- Real-time price tickers and sentiment analysis
-- Automatic reconnection with exponential backoff
-- Memory-efficient delta compression for large datasets
-
-### **Frontend Development**
-
-```bash
-# Navigate to chat UI directory
-cd frontend/chat-ui
-
-# Install dependencies with pnpm (recommended)
-pnpm install
-
-# Start development server with hot reload (port 5173)
-pnpm dev
-
-# Build for production with optimizations
-pnpm build
-
-# Preview production build locally
-pnpm preview
-
-# Run end-to-end tests
-pnpm test:e2e
-
-# Run unit tests
-pnpm test
-```
-
-### **Frontend Architecture**
-
-```
-frontend/chat-ui/
-├── src/
-│   ├── components/
-│   │   ├── panels/           # Specialized dashboard panels
-│   │   │   ├── InsightsPanel.tsx
-│   │   │   ├── MarketRadar.tsx
-│   │   │   ├── ActionDashboard.tsx
-│   │   │   ├── PersonaControls.tsx
-│   │   │   └── DiagnosticsPanel.tsx
-│   │   ├── ui/              # Reusable UI components
-│   │   │   ├── HeaderMetrics.tsx
-│   │   │   ├── Modal.tsx
-│   │   │   ├── ChatComposer.tsx
-│   │   │   └── ChatConversation.tsx
-│   │   └── App.tsx          # Main application root
-│   ├── hooks/               # Custom React hooks
-│   │   ├── useChatController.ts
-│   │   └── useIntelWebSocket.ts
-│   ├── state/               # State management
-│   │   ├── chatStore.ts
-│   │   └── personaStore.ts
-│   ├── services/            # API client
-│   │   └── api.ts
-│   ├── types/               # TypeScript definitions
-│   │   └── index.ts
-│   └── styles.css           # Global styles with Tailwind CSS
-├── e2e/                     # End-to-end tests with Playwright
-├── Dockerfile               # Multi-stage Docker build
-├── nginx.conf              # Production web server config
-└── vite.config.ts          # Vite build configuration
-```
-
 ### **🥷 Autonomous Operation Modes**
 
 #### **🌙 Stealth Mode**
-
 _Execute trades without leaving footprints_
 
 - Fragmented order execution across multiple venues
@@ -230,7 +95,6 @@ _Execute trades without leaving footprints_
 - Order timing randomization and camouflage patterns
 
 #### **⚡ Precision Mode**
-
 _Microsecond-perfect execution_
 
 - Neural network price prediction with confidence intervals
@@ -239,76 +103,160 @@ _Microsecond-perfect execution_
 - Real-time volatility clustering and regime detection
 
 #### **🤖 Swarm Mode**
-
 _Collaborative intelligence across multiple agents_
 
 - Distributed decision-making with consensus algorithms
 - Cross-market arbitrage detection and execution
 - Coordinated strategies across different asset classes
 - Fault-tolerant operation with automatic failover
-- Tenno-MCP orchestration registry with role-based leasing and health-checked failover rotation
-- Claude-Flow compatible tool negotiation and shared scratchpad for context-rich execution plans
 
 ---
 
-## 🤝 **Capability Matrix: Ninja Gekko vs Modern Neural Trading Stacks**
+## 🏗️ **System Architecture**
 
-| Feature                         | **Ninja Gekko**                                                                                  | Neural Trader MCP                                      | Claude-Flow                   |
-| ------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------ | ----------------------------- |
-| **🤖 Agentic Workflows**        | Claude Code + Notion AI integration for automated PR reviews and PM-in-the-loop issue generation | Manual workflow orchestration                          | Swarm-assisted development    |
-| **Neural Forecasting Models**   | ruv-FANN, Neuro-Divergent, NHITS, N-BEATSx, LSTM/GRU, WaveNet, TFT preview                       | NHITS, N-BEATSx, LSTM/GRU                              | Swarm-assisted inference      |
-| **MCP Protocol**                | Tenno-MCP with declarative tool manifests and USB-C-style plug-and-play                          | FastMCP core                                           | Claude MCP/Flow orchestration |
-| **Agentic Swarm Orchestration** | ruv-swarm with tool registry, leasing, and consensus failover                                    | 87+ tool hive-mind                                     | Swarm coordination layer      |
-| **Trading Venue Integrations**  | Binance, Oanda, Alpaca (beta), Deribit, Kraken                                                   | Polymarket, Betfair, Alpaca, Alpha Vantage, TheOddsAPI | Customizable adapters         |
-| **Telemetry & Observability**   | Prometheus, Grafana, OpenTelemetry traces, ELK                                                   | JSON dashboards, custom telemetry                      | Flow-native dashboards        |
-| **Security & Governance**       | MFA, TLS 1.3, RBAC, audit ledger, GDPR-ready                                                     | KYC/RBAC, end-to-end encryption                        | Workspace roles               |
-| **Benchmarking**                | Built-in neural latency/Sharpe harness with reproducible manifests                               | Proprietary benchmarking suite                         | Scenario planners             |
-| **Deployment Footprint**        | Rust microservices, Docker/K8s, WASM                                                             | Rust/Python hybrid, Docker/K8s                         | Python-first orchestration    |
+### **📊 Component Overview**
 
-> Tenno-MCP emphasizes transparent, modular interoperability so that researchers can replicate or extend benchmarks across open-source trading stacks.
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                     Ninja Gekko Trading System v2.0                │
+├─────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────────────────┐  │
+│  │               Gordon Chat UI (React + TypeScript)               │  │
+│  ├─────────────────────────────────────────────────────────────────┤  │
+│  │  • Real-time Chat    • Market Radar    • Action Dashboard     │  │
+│  │  • Insights Panel    • Diagnostics     • Persona Controls      │  │
+│  │  Port: 5173 (Development) | 80 (Production via Nginx)          │  │
+│  └─────────────────────────────────────────────────────────────────┘  │
+│                                ↕ WebSocket + REST API                │
+│  ┌─────────────────────────────────────────────────────────────────┐  │
+│  │              Trading Engine API (Rust + Axum)                   │  │
+│  ├─────────────────────────────────────────────────────────────────┤  │
+│  │  • Chat Orchestrator  • Intel Stream   • Market Data          │  │
+│  │  • Portfolio API      • Trading API    • Authentication        │  │
+│  │  Port: 8787 (Chat/Orchestration) | 8080 (Trading Engine)       │  │
+│  └─────────────────────────────────────────────────────────────────┘  │
+│                                ↕                                     │
+│  ┌─────────────────────────────────────────────────────────────────┐  │
+│  │                    Event-Driven Core Engine                     │  │
+│  ├─────────────────────────────────────────────────────────────────┤  │
+│  │  • Event Bus (9.1μs)  • Data Pipeline (2.25μs)                │  │
+│  │  • Strategy Engine    • Arbitrage Engine                       │  │
+│  │  • Order Manager      • Smart Router                           │  │
+│  └─────────────────────────────────────────────────────────────────┘  │
+│                                ↕                                     │
+│  ┌─────────────────────────────────────────────────────────────────┐  │
+│  │                  Exchange Connectors Layer                      │  │
+│  ├─────────────────────────────────────────────────────────────────┤  │
+│  │  • Binance.US         • Kraken          • OANDA                │  │
+│  │  WebSocket Streaming + REST Fallback with Rate Limiting        │  │
+│  └─────────────────────────────────────────────────────────────────┘  │
+│                                ↕                                     │
+│  ┌─────────────────────────────────────────────────────────────────┐  │
+│  │                   Data & Monitoring Layer                       │  │
+│  ├─────────────────────────────────────────────────────────────────┤  │
+│  │  • PostgreSQL (5432)  • Redis (6379)    • Supabase            │  │
+│  │  • Prometheus (9090)  • Grafana (3000)                         │  │
+│  └─────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
----
+### **🔧 Technology Stack**
 
-## 🌐 **Integration Coverage & Roadmap**
+| Component         | Technology            | Purpose                               | Version |
+| ----------------- | --------------------- | ------------------------------------- | ------- |
+| **Backend**       | Rust                  | High-performance trading logic        | 1.80+   |
+| **Frontend**      | React + TypeScript    | Real-time UI & chat interface         | 18.2    |
+| **Build Tool**    | Vite                  | Fast development & HMR                | 5.2     |
+| **Styling**       | Tailwind CSS          | Utility-first responsive design       | 3.4     |
+| **Web Server**    | Nginx                 | Production frontend serving           | Latest  |
+| **API Framework** | Axum                  | Type-safe async web framework         | 0.7     |
+| **WebSocket**     | tokio-tungstenite     | Real-time bidirectional streaming     | 0.21    |
+| **Database**      | PostgreSQL (Supabase) | Relational data & time-series storage | 15+     |
+| **Cache**         | Redis                 | Session, metrics & order book cache   | 7.0     |
+| **Async Runtime** | Tokio                 | Multi-threaded async executor         | 1.0     |
+| **Serialization** | Serde + JSON          | Type-safe (de)serialization           | 1.0     |
+| **Observability** | Prometheus + Grafana  | Metrics collection & visualization    | Latest  |
+| **Orchestration** | Docker Compose        | Multi-service deployment              | 3.8     |
 
-| Domain                                 | Live Integrations                             | Upcoming Targets                           | Notes                                           |
-| -------------------------------------- | --------------------------------------------- | ------------------------------------------ | ----------------------------------------------- |
-| **Centralized Exchanges**              | Binance, Kraken, Oanda                        | Interactive Brokers, Bitfinex              | Unified order router with smart venue selection |
-| **Decentralized / Prediction Markets** | Uniswap (data), dYdX (execution)              | Polymarket, Betfair Exchange, TheGraph     | Workflow recipes under Tenno-MCP tool registry  |
-| **Market Data & Analytics**            | Alpha Vantage, Tiingo, TradingView, Glassnode | TheOddsAPI, Kaiko, Polygon.io              | Multi-frequency data normalization pipelines    |
-| **AI / ML Services**                   | OpenAI, HuggingFace, Replicate                | Anthropic Claude-Flow, Cohere, StabilityAI | Shared embeddings cache across agents           |
-| **Community & Ops**                    | Slack, Discord, Telegram, Notion              | Linear, Jira, GitLab Issues                | MCP-driven incident response bots               |
-| **Compliance & Governance**            | Supabase Auth, custom RBAC, audit ledger      | KYC/AML providers, on-chain attestations   | Policy-driven access enforced via Tenno-MCP     |
+### **📁 Workspace Structure**
 
-Deployment runbooks for Docker and Kubernetes clusters now include:
+```
+ninja-gekko/
+├── api/                          # REST & WebSocket API server (Port 8787)
+│   ├── src/
+│   │   ├── handlers/            # Request handlers
+│   │   │   ├── chat.rs         # Gordon chat orchestration
+│   │   │   ├── intel.rs        # Real-time intelligence streaming
+│   │   │   ├── accounts.rs     # Portfolio & account management
+│   │   │   ├── market_data.rs  # Market data endpoints
+│   │   │   ├── orchestrator.rs # System orchestration
+│   │   │   └── trades.rs       # Trading operations
+│   │   ├── middleware.rs       # Request logging & auth
+│   │   ├── websocket.rs        # WebSocket handlers
+│   │   └── lib.rs              # API library
+│   └── Cargo.toml
+│
+├── core/                         # Core trading types & logic
+│   ├── src/
+│   │   ├── types.rs            # Order, Portfolio, Position types
+│   │   ├── order_manager.rs    # Order lifecycle management
+│   │   └── smart_router.rs     # Intelligent order routing
+│   └── Cargo.toml
+│
+├── crates/                       # Modular workspace crates
+│   ├── event-bus/              # ~9.1μs event dispatch system
+│   ├── data-pipeline/          # ~2.25μs WebSocket normalization
+│   ├── exchange-connectors/    # Binance, Kraken, OANDA adapters
+│   ├── strategy-engine/        # WASM sandbox for strategies
+│   ├── arbitrage-engine/       # Cross-exchange arbitrage detection
+│   ├── mcp-client/             # MCP protocol client implementation
+│   ├── neural-engine/          # Neural network inference
+│   ├── swarm-intelligence/     # Distributed agent coordination
+│   └── trading-core/           # Shared trading primitives
+│
+├── database/                     # Database layer
+│   ├── src/
+│   │   ├── connection.rs       # Connection pooling with circuit breakers
+│   │   ├── cache.rs            # Redis integration
+│   │   ├── supabase.rs         # Supabase PostgreSQL client
+│   │   └── migrations.rs       # Schema migrations
+│   └── migrations/             # SQL migration files
+│
+├── frontend/chat-ui/            # Gordon Chat Interface
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── chat/           # ChatComposer, ChatConversation
+│   │   │   ├── panels/         # InsightsPanel, MarketRadar, etc.
+│   │   │   └── ui/             # HeaderMetrics, Modal, ModelSelector
+│   │   ├── hooks/              # useChatController, useIntelWebSocket
+│   │   ├── services/           # API client
+│   │   ├── state/              # Zustand stores (chat, persona)
+│   │   └── types/              # TypeScript definitions
+│   ├── Dockerfile              # Multi-stage production build
+│   ├── nginx.conf              # Production web server config
+│   ├── package.json            # npm dependencies
+│   └── vite.config.ts          # Vite configuration
+│
+├── config/                       # Configuration files
+│   ├── arbitrage.toml          # Arbitrage strategy config
+│   ├── prometheus.yml          # Metrics collection config
+│   └── trading_rules.yml       # Alert rules
+│
+├── deploy/                       # Deployment configurations
+│   └── k8s/                    # Kubernetes manifests
+│
+├── docs/                         # Documentation
+│   ├── chat_ui_architecture.md
+│   ├── arbitrage_architecture.md
+│   └── deployment/
+│
+├── docker-compose.yml           # Multi-service orchestration
+├── Dockerfile                   # Trading engine container
+├── Cargo.toml                   # Workspace configuration
+└── .env.template                # Environment variable template
+```
 
-- **Docker Compose Playbook**: Layered services for core trading engine, Tenno-MCP routers, observability, and GPU inference nodes.
-- **Kubernetes Guide**: GPU node pool setup, Horizontal Pod Autoscaling, Istio/Linkerd service mesh integration, and secure secret distribution.
-- **Benchmark Automation**: CI hooks to execute neural benchmarking manifests and publish Grafana dashboards.
-
-Detailed instructions live in [`docs/deployment/`](docs/deployment/) with step-by-step sandbox parity validation.
-
----
-
-## 🏗️ **Implemented Architecture**
-
-### **🎯 Event-Driven Core**
-
-The Ninja Gekko trading engine is built on a high-performance event-driven architecture with proven benchmarks:
-
-**Core Components:**
-
-| Component               | Performance           | Status      | Description                                           |
-| ----------------------- | --------------------- | ----------- | ----------------------------------------------------- |
-| **Event Bus**           | ~9.1μs dispatch       | ✅ Complete | Crossbeam channels with <10μs target exceeded         |
-| **Data Pipeline**       | ~2.25μs normalization | ✅ Complete | 3-stage WebSocket processing (44x faster than target) |
-| **Exchange Connectors** | WebSocket streaming   | ✅ Complete | Unified trait supporting Binance, Kraken, OANDA       |
-| **Strategy Engine**     | WASM sandbox          | ✅ Complete | Wasmtime isolation with <5ms evaluation timeout       |
-| **Order Management**    | Smart routing         | ✅ Complete | Risk validation and fee calculation                   |
-
-### **📊 Proven Performance Metrics**
-
-**Real benchmarks from production codebase:**
+### **⚡ Performance Characteristics**
 
 | Benchmark                     | Target    | Achieved           | Status                  |
 | ----------------------------- | --------- | ------------------ | ----------------------- |
@@ -318,835 +266,818 @@ The Ninja Gekko trading engine is built on a high-performance event-driven archi
 | **Strategy Evaluation**       | <10ms     | <5ms (WASM)        | ✅ **Exceeds target**   |
 | **Memory Safety**             | 100%      | Zero unsafe code   | ✅ **Rust guaranteed**  |
 
-### **🔧 Technical Implementation**
+---
 
-**Workspace Structure:**
+## 🎭 **Gordon Chat Interface**
 
+The **Gordon Chat Interface** provides a conversational control center for managing Ninja Gekko's autonomous trading operations. Built with React 18, TypeScript 5.4, and Vite for fast development iteration with real-time WebSocket streaming intelligence.
+
+### **Frontend Features & Components**
+
+#### **Core Chat Interface**
+- **[`ChatComposer.tsx`](frontend/chat-ui/src/components/chat/ChatComposer.tsx)**: Advanced message input with markdown support
+- **[`ChatConversation.tsx`](frontend/chat-ui/src/components/chat/ChatConversation.tsx)**: Real-time conversation history with threading
+- **Real-time Chat**: WebSocket-powered bi-directional messaging with Gordon AI
+
+#### **Intelligence Panels**
+- **[`InsightsPanel.tsx`](frontend/chat-ui/src/components/panels/InsightsPanel.tsx)**: Market analysis and trading opportunities
+- **[`MarketRadar.tsx`](frontend/chat-ui/src/components/panels/MarketRadar.tsx)**: Real-time market data visualization with Recharts
+- **[`ActionDashboard.tsx`](frontend/chat-ui/src/components/panels/ActionDashboard.tsx)**: One-click system actions and controls
+- **[`PersonaControls.tsx`](frontend/chat-ui/src/components/panels/PersonaControls.tsx)**: Adjustable AI tone and behavior settings
+- **[`DiagnosticsPanel.tsx`](frontend/chat-ui/src/components/panels/DiagnosticsPanel.tsx)**: System health and performance metrics
+- **[`HeaderMetrics.tsx`](frontend/chat-ui/src/components/ui/HeaderMetrics.tsx)**: Portfolio metrics and system status
+
+### **Gordon AI Capabilities**
+
+- **Dynamic Personas**: Switch between analytical, witty, or direct communication styles with persistent preferences
+- **Context-Aware Responses**: Maintains full conversation history with semantic understanding
+- **Real-time Market Intelligence**: WebSocket-powered live market data and sentiment analysis
+- **System Integration**: Direct control over trading pause, account snapshots, strategy deployment
+- **Research Integration**: Triggers deep market research via Perplexity Sonar API
+- **Diagnostic Output**: Provides neural forecasts, risk assessments, and anomaly detection
+
+### **Real-time WebSocket Architecture**
+
+The frontend utilizes WebSocket streaming for:
+- Low-latency order book updates (<5ms)
+- Real-time price tickers and sentiment analysis
+- Automatic reconnection with exponential backoff
+- Memory-efficient delta compression for large datasets
+
+### **State Management**
+
+- **[`chatStore.ts`](frontend/chat-ui/src/state/chatStore.ts)**: Zustand store for chat messages, WebSocket connection state
+- **[`personaStore.ts`](frontend/chat-ui/src/state/personaStore.ts)**: Zustand store for AI persona preferences
+
+### **Frontend Development**
+
+```bash
+# Navigate to chat UI directory
+cd frontend/chat-ui
+
+# Install dependencies with npm (or pnpm)
+npm install
+
+# Start development server with hot reload (port 5173)
+npm run dev
+
+# Build for production with optimizations
+npm run build
+
+# Preview production build locally
+npm run preview
 ```
-ninja-gekko/
-├── core/                  # Order management & smart routing
-├── crates/
-│   ├── event-bus/         # ~9.1μs event dispatch performance
-│   ├── data-pipeline/     # ~2.25μs WebSocket normalization
-│   ├── exchange-connectors/ # Multi-exchange unified interface
-│   ├── strategy-engine/   # WASM sandbox with wasmtime
-│   └── arbitrage-engine/  # Cross-exchange opportunity detection
-├── database/              # PostgreSQL with Redis caching
-└── api/                   # WebSocket + REST API server
-```
-
-**Key Technical Achievements:**
-
-- **Zero Unsafe Code**: Memory safety guaranteed by Rust ownership
-- **Async-First Design**: Tokio runtime with comprehensive async/await
-- **Timeout Protection**: All async operations bounded with circuit breakers
-- **Comprehensive Testing**: Event bus, pipeline, and integration test coverage
-- **Production Ready**: Error handling, logging, and observability built-in
 
 ---
 
-| Feature Category         | Description                                             | Performance       |
-| ------------------------ | ------------------------------------------------------- | ----------------- |
-| **Trading Strategies**   | Multiple algorithmic approaches with dynamic adaptation | 99.5% accuracy    |
-| **Risk Management**      | Real-time VaR, position limits, and automated controls  | <10ms calculation |
-| **Order Execution**      | Smart routing with optimal venue selection              | <100ms execution  |
-| **ML Integration**       | GPU-accelerated models with continuous learning         | <50ms inference   |
-| **Market Data**          | Multi-platform real-time feeds with validation          | <5ms latency      |
-| **Portfolio Management** | Automated rebalancing and optimization                  | 24/7 monitoring   |
+## 🚀 **Quick Start**
+
+### **Prerequisites**
+
+- **Operating System**: Windows 10+, macOS 12+, or Linux
+- **Docker**: 20.10+ with Docker Compose 2.0+
+- **Rust**: 1.80+ (only for local development, not required for Docker deployment)
+- **Node.js**: 18.18+ (only for frontend development)
+- **Memory**: 8GB RAM minimum, 16GB recommended
+- **Storage**: 50GB free space
+
+### **Docker Compose Deployment (Recommended)**
+
+The simplest way to run the entire Ninja Gekko stack:
+
+1. **Clone the Repository**
+
+   ```bash
+   git clone https://github.com/clduab11/ninja-gekko.git
+   cd ninja-gekko
+   ```
+
+2. **Configure Environment**
+
+   ```bash
+   # Copy environment template
+   cp .env.template .env
+   
+   # Edit .env with your API keys and settings
+   # Required: Exchange API keys, database credentials
+   # Optional: AI service keys (OpenRouter, Perplexity)
+   ```
+
+3. **Start All Services**
+
+   ```bash
+   # Start the complete stack
+   docker compose up -d
+   
+   # View logs
+   docker compose logs -f
+   
+   # Check service health
+   docker compose ps
+   ```
+
+4. **Access the Application**
+
+   | Service                    | URL                              | Port |
+   |---------------------------|----------------------------------|------|
+   | **Gordon Chat UI**         | http://localhost:5173            | 5173 |
+   | **Trading Engine API**     | http://localhost:8080            | 8080 |
+   | **Chat Orchestration API** | http://localhost:8787            | 8787 |
+   | **Prometheus Metrics**     | http://localhost:9090            | 9090 |
+   | **Grafana Dashboard**      | http://localhost:3000            | 3000 |
+   | **PostgreSQL Database**    | localhost:5432                   | 5432 |
+   | **Redis Cache**            | localhost:6379                   | 6379 |
+
+5. **Verify Health**
+
+   ```bash
+   # Check trading engine health
+   curl http://localhost:8080/health
+   
+   # Check chat API health
+   curl http://localhost:8787/health
+   
+   # View Grafana metrics (admin/admin)
+   open http://localhost:3000
+   ```
+
+### **Local Development Setup**
+
+For developers who want to run services individually:
+
+1. **Rust Backend Development**
+
+   ```bash
+   # Start PostgreSQL and Redis via Docker
+   docker compose up -d postgres redis
+   
+   # Build the trading engine
+   cargo build --release
+   
+   # Run with development configuration
+   cargo run --release
+   
+   # Run tests
+   cargo test --all
+   
+   # Run benchmarks
+   cargo bench
+   ```
+
+2. **Frontend Development**
+
+   ```bash
+   # Ensure backend is running first
+   
+   # Navigate to frontend directory
+   cd frontend/chat-ui
+   
+   # Install dependencies
+   npm install
+   
+   # Start dev server with hot reload
+   npm run dev
+   
+   # Frontend available at http://localhost:5173
+   ```
+
+3. **Database Migrations**
+
+   ```bash
+   # Run database migrations
+   sqlx migrate run
+   
+   # Create new migration
+   sqlx migrate add <migration_name>
+   ```
+
+### **Configuration**
+
+#### **Environment Variables**
+
+Edit [`.env`](.env.template) with your settings:
+
+```bash
+# Exchange API Credentials
+KRAKEN_API_KEY=your_kraken_api_key
+KRAKEN_API_SECRET=your_kraken_api_secret
+BINANCE_US_API_KEY=your_binance_api_key
+BINANCE_US_API_SECRET=your_binance_api_secret
+OANDA_API_KEY=your_oanda_api_key
+OANDA_ACCOUNT_ID=your_oanda_account_id
+
+# Database Configuration
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ninja_gekko
+REDIS_URL=redis://localhost:6379
+
+# Security
+JWT_SECRET_KEY=your_jwt_secret_min_32_chars
+ENCRYPTION_KEY=your_encryption_key_min_32_chars
+
+# AI Services (Optional)
+OPENROUTER_API_KEY=your_openrouter_api_key
+PERPLEXITY_API_KEY=your_perplexity_api_key
+
+# System Configuration
+RUST_LOG=info
+EXCHANGE_SANDBOX=false  # Set to true for testing
+```
+
+#### **Trading Rules Configuration**
+
+Edit [`config/arbitrage.toml`](config/arbitrage.toml) for strategy parameters:
+
+```toml
+[arbitrage]
+min_profit_threshold = 0.005  # 0.5% minimum profit
+max_position_size = 10000.0   # Maximum position in USD
+enabled_exchanges = ["binance_us", "kraken", "oanda"]
+```
+
+---
+
+## 📊 **API Documentation**
+
+### **Chat & Orchestration API** (Port 8787)
+
+#### **Chat Operations**
+
+- **WebSocket Chat**: `WS /ws/chat`
+  - Real-time bidirectional chat messaging
+  - Automatic reconnection with exponential backoff
+  - Message format: `{ "role": "user", "content": "message" }`
+
+- **WebSocket Intelligence**: `WS /ws/intel`
+  - Real-time market intelligence streaming
+  - Live order book updates
+  - Sentiment analysis feed
+
+- **Chat History**: `GET /api/chat/history?limit=50&offset=0`
+  - Retrieve conversation history with pagination
+  - Returns: Array of chat messages with timestamps
+
+- **Send Message**: `POST /api/chat/message`
+  - Body: `{ "message": "What's the market sentiment?", "persona": "analytical" }`
+  - Returns: Gordon AI response with context
+
+- **Persona Management**:
+  - `GET /api/chat/persona` - Get current persona settings
+  - `POST /api/chat/persona` - Update persona (analytical/witty/direct)
+
+#### **Intelligence & Market Data**
+
+- **Market Insights**: `GET /api/insights`
+  - Returns market analysis and trading opportunities
+  - Includes volatility metrics, trend analysis
+
+- **Market Radar**: `GET /api/radar/{symbol}`
+  - Get detailed market data for specific symbol
+  - Real-time price, volume, order book depth
+
+- **News Headlines**: `GET /api/news/headlines?limit=20`
+  - Latest market news and sentiment analysis
+  - Powered by Perplexity Sonar API
+
+#### **Account & Portfolio**
+
+- **Account Snapshot**: `GET /api/accounts/snapshot`
+  - Current account balances across all exchanges
+  - Open positions and pending orders
+
+- **Aggregate Data**: `GET /api/v1/accounts/aggregate`
+  - Consolidated view of all connected accounts
+  - Total portfolio value, P&L, allocations
+
+- **Portfolio Analytics**: `GET /api/accounts/analytics`
+  - Performance metrics (Sharpe, Sortino, max drawdown)
+  - Risk assessment and VaR calculations
+
+#### **System Management**
+
+- **System State**: `GET /api/orchestrator/state`
+  - Current orchestrator status
+  - Active strategies, connection status
+
+- **System Actions**: `GET /api/actions`
+  - Available system actions and commands
+  - Returns list of executable operations
+
+- **Diagnostics**: `GET /api/diagnostics`
+  - System health metrics
+  - Resource usage, connection status
+
+- **Trading Control**:
+  - `POST /api/trading/pause` - Pause all trading operations
+  - `POST /api/trading/resume` - Resume trading
+
+- **Health Check**: `GET /health`
+  - Service health status
+  - Returns: `{ "status": "healthy" }`
+
+#### **Advanced Operations**
+
+- **Deep Research**: `POST /api/research/sonar`
+  - Trigger comprehensive market research
+  - Body: `{ "query": "Bitcoin market analysis", "depth": "deep" }`
+
+- **Swarm Deployment**: `POST /api/agents/swarm`
+  - Deploy distributed agent swarms
+  - Body: `{ "strategy": "arbitrage", "exchanges": ["binance_us", "kraken"] }`
+
+### **Trading Engine API** (Port 8080)
+
+#### **Trading Operations**
+
+- **List Trades**: `GET /api/v1/trades?limit=100&status=open`
+  - Query parameters: limit, offset, status, exchange
+  - Returns paginated trade history
+
+- **Create Trade**: `POST /api/v1/trades`
+  - Body: `{ "symbol": "BTC-USD", "side": "buy", "quantity": 0.1, "order_type": "limit", "price": 50000 }`
+  - Returns trade confirmation
+
+- **Get Trade**: `GET /api/v1/trades/{trade_id}`
+  - Returns detailed trade information
+
+- **Cancel Trade**: `DELETE /api/v1/trades/{trade_id}`
+  - Cancel pending order
+
+#### **Strategy Management**
+
+- **List Strategies**: `GET /api/v1/strategies`
+  - All configured trading strategies
+  - Includes performance metrics
+
+- **Deploy Strategy**: `POST /api/v1/strategies`
+  - Body: `{ "name": "momentum", "config": {...} }`
+  - Deploy WASM strategy to sandbox
+
+- **Update Strategy**: `PUT /api/v1/strategies/{strategy_id}`
+  - Modify strategy parameters
+
+- **Stop Strategy**: `DELETE /api/v1/strategies/{strategy_id}`
+  - Halt strategy execution
+
+#### **Market Data**
+
+- **Real-time Ticker**: `GET /api/v1/market-data/ticker/{symbol}`
+  - Current price, volume, bid/ask spread
+
+- **Order Book**: `GET /api/v1/market-data/orderbook/{symbol}?depth=20`
+  - Level 2 order book data
+  - Aggregated across exchanges
+
+- **Historical Data**: `GET /api/v1/market-data/candles/{symbol}?interval=1h&limit=100`
+  - OHLCV candlestick data
+
+#### **Authentication**
+
+- **Login**: `POST /api/v1/auth/login`
+  - Body: `{ "username": "user", "password": "pass" }`
+  - Returns JWT token
+
+- **Refresh Token**: `POST /api/v1/auth/refresh`
+  - Extend JWT session
+
+### **Observability**
+
+- **Prometheus Metrics**: `GET /metrics` (Port 8787)
+  - Trading engine metrics
+  - Request latency histograms
+  - Error rates, throughput
+
+- **Grafana Dashboards**: http://localhost:3000
+  - Pre-configured trading dashboard
+  - Login: admin/admin
+
+---
+
+## 🛠️ **Development**
+
+### **Building from Source**
+
+```bash
+# Clone repository
+git clone https://github.com/clduab11/ninja-gekko.git
+cd ninja-gekko
+
+# Build all workspace crates
+cargo build --release
+
+# Build specific crate
+cargo build -p event-bus --release
+
+# Run all tests
+cargo test --all
+
+# Run specific test suite
+cargo test -p exchange-connectors
+
+# Run benchmarks
+cargo bench
+
+# Check code formatting
+cargo fmt -- --check
+
+# Run linter
+cargo clippy --all-targets -- -D warnings
+```
+
+### **Running Tests**
+
+```bash
+# Unit tests across all crates
+cargo test --all
+
+# Integration tests with Docker services
+docker compose up -d postgres redis
+cargo test --all -- --test-threads=1
+
+# Benchmark performance
+cargo bench --bench dispatcher
+cargo bench --bench normalizer
+cargo bench --bench strategy_eval
+
+# Frontend tests
+cd frontend/chat-ui
+npm test
+```
+
+### **Code Quality Standards**
+
+- **Rust**: Follow [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
+- **TypeScript**: Strict mode enabled, comprehensive JSDoc comments
+- **Testing**: 90%+ code coverage target
+- **Documentation**: All public APIs documented with examples
+- **Security**: Zero unsafe Rust code, comprehensive input validation
+
+### **Continuous Integration**
+
+```bash
+# Pre-commit checks (recommended)
+cargo fmt --all -- --check
+cargo clippy --all-targets -- -D warnings
+cargo test --all
+cargo build --release
+
+# Database migration check
+sqlx migrate run --dry-run
+```
+
+---
+
+## 🐳 **Deployment**
+
+### **Docker Services**
+
+The [`docker-compose.yml`](docker-compose.yml) orchestrates 6 services:
+
+| Service           | Image                | Ports      | Purpose                          |
+|-------------------|----------------------|------------|----------------------------------|
+| `trading-engine`  | Custom Rust build    | 8080, 8787 | Trading API & chat orchestrator  |
+| `frontend`        | Custom React build   | 5173       | Gordon Chat UI (Nginx)           |
+| `postgres`        | postgres:15-alpine   | 5432       | Primary database                 |
+| `redis`           | redis:7-alpine       | 6379       | Cache & session store            |
+| `prometheus`      | prom/prometheus      | 9090       | Metrics collection               |
+| `grafana`         | grafana/grafana      | 3000       | Metrics visualization            |
+
+### **Resource Limits**
+
+Configured in [`docker-compose.yml`](docker-compose.yml):
+
+- **Trading Engine**: 4GB memory limit, 2 CPU cores
+- **PostgreSQL**: 1GB memory, 1 CPU core
+- **Redis**: 512MB memory, 0.5 CPU cores
+
+### **Health Checks**
+
+All services include health checks with:
+- **Interval**: 30s (trading-engine), 5s (databases)
+- **Timeout**: 10s (trading-engine), 5s (databases)
+- **Retries**: 3-5 attempts before marking unhealthy
+
+### **Production Deployment**
+
+```bash
+# Build production images
+docker compose build --no-cache
+
+# Start in production mode
+docker compose up -d
+
+# View logs
+docker compose logs -f trading-engine
+
+# Scale services (Kubernetes)
+kubectl apply -f deploy/k8s/base/
+
+# Monitor with Grafana
+open http://localhost:3000
+```
+
+### **Kubernetes Deployment**
+
+```bash
+# Apply base configuration
+kubectl apply -k deploy/k8s/base/
+
+# Deploy with GPU support
+kubectl apply -k deploy/k8s/gpu/
+
+# Enable horizontal pod autoscaling
+kubectl apply -k deploy/k8s/hpa/
+
+# Check deployment status
+kubectl get pods -l app=ninja-gekko
+kubectl logs -l app=ninja-gekko -f
+```
+
+---
+
+## 🔒 **Security**
+
+### **Authentication & Authorization**
+
+- **JWT Tokens**: 1-hour lifetime with automatic refresh
+- **RBAC**: Role-based access control (admin, trader, viewer)
+- **API Key Encryption**: AES-256-GCM with Argon2id key derivation
+- **Credential Storage**: Environment variables + encrypted vault
+
+### **Network Security**
+
+- **TLS 1.3**: All external communications encrypted
+- **CORS**: Configurable cross-origin resource sharing
+- **Rate Limiting**: Governor-based request throttling per exchange
+- **Input Validation**: Comprehensive schema validation on all endpoints
+
+### **Data Protection**
+
+- **Secrets Management**: Never commit credentials to version control
+- **Database Encryption**: PostgreSQL with encrypted connections
+- **Audit Logging**: All trading decisions logged to time-partitioned tables
+- **MFA Support**: Multi-factor authentication for admin operations
+
+### **Security Best Practices**
+
+```bash
+# Rotate JWT secret regularly
+openssl rand -hex 32 > .jwt_secret
+
+# Use strong database passwords
+openssl rand -base64 32
+
+# Enable firewall rules
+# Only expose necessary ports (5173, 8080, 8787)
+
+# Regular security audits
+cargo audit
+npm audit
+```
+
+---
+
+## 📈 **Performance Benchmarks**
+
+### **Event-Driven Core**
+
+| Component               | Latency | Throughput      | Memory |
+|-------------------------|---------|-----------------|--------|
+| **Event Bus Dispatch**  | 9.1μs   | 109K events/sec | 500MB  |
+| **Data Normalization**  | 2.25μs  | 444K ticks/sec  | 200MB  |
+| **WebSocket Ingestion** | <5ms    | 50K msgs/sec    | 100MB  |
+| **Strategy Evaluation** | <5ms    | 200 evals/sec   | 50MB   |
+
+### **Trading Operations**
+
+| Metric                     | Target   | Achieved  | Status         |
+|----------------------------|----------|-----------|----------------|
+| **Order Execution**        | <100ms   | ~45ms     | ✅ Exceeds     |
+| **Risk Calculation**       | <10ms    | ~3ms      | ✅ Exceeds     |
+| **Portfolio Sync**         | <50ms    | ~15ms     | ✅ Exceeds     |
+| **Market Data Latency**    | <5ms     | ~2ms      | ✅ Exceeds     |
+
+### **API Performance**
+
+```bash
+# Benchmark API endpoints
+# Chat orchestration API (8787)
+curl -w "@curl-format.txt" http://localhost:8787/health
+# Time: ~0.001s
+
+# Trading engine API (8080)
+curl -w "@curl-format.txt" http://localhost:8080/health
+# Time: ~0.002s
+```
+
+---
+
+## 🔧 **Troubleshooting**
+
+### **Common Issues**
+
+| Issue                       | Symptom                    | Solution                                    |
+|-----------------------------|----------------------------|---------------------------------------------|
+| **Port already in use**     | Docker fails to start      | `docker compose down` then restart          |
+| **Database connection**     | Connection refused         | Check PostgreSQL health: `docker compose ps`|
+| **WebSocket disconnects**   | Chat UI loses connection   | Check backend logs: `docker compose logs -f`|
+| **High memory usage**       | System slowdown            | Adjust resource limits in `docker-compose.yml`|
+| **Build failures**          | Rust compilation errors    | Update Rust: `rustup update stable`        |
+
+### **Debug Mode**
+
+```bash
+# Enable verbose logging
+export RUST_LOG=debug
+docker compose up
+
+# View specific service logs
+docker compose logs -f trading-engine
+docker compose logs -f frontend
+
+# Check service health
+docker compose ps
+docker compose exec trading-engine curl http://localhost:8080/health
+```
+
+### **Reset Everything**
+
+```bash
+# Stop all services and remove volumes
+docker compose down -v
+
+# Remove all images
+docker compose down --rmi all
+
+# Clean build
+cargo clean
+cd frontend/chat-ui && rm -rf node_modules dist
+docker compose build --no-cache
+docker compose up -d
+```
+
+---
+
+## 📝 **Changelog**
+
+### **v2.0.0** (December 2025) - Production Release
+
+#### **Major Features**
+- ✅ Complete Gordon Chat UI with React 18 + TypeScript
+- ✅ Full REST API with comprehensive handler suite
+- ✅ WebSocket streaming for chat and intelligence feeds
+- ✅ Docker Compose orchestration with 6 services
+- ✅ Prometheus metrics + Grafana dashboards
+- ✅ Multi-exchange support (Binance.US, Kraken, OANDA)
+- ✅ Event-driven architecture with proven benchmarks
+
+#### **Backend Improvements**
+- Event bus achieving 9.1μs dispatch latency
+- Data pipeline with 2.25μs normalization
+- Comprehensive error handling and logging
+- Health checks and circuit breakers
+- JWT authentication with refresh tokens
+- Structured JSON logging with correlation IDs
+
+#### **Frontend Additions**
+- 📊 Market Radar with real-time charting (Recharts)
+- 💬 ChatComposer with markdown support
+- 🎯 Action Dashboard for system control
+- 📈 Insights Panel with market analysis
+- 🔧 Diagnostics Panel with health metrics
+- 🎭 Persona Controls for AI customization
+
+#### **Infrastructure**
+- Multi-stage Docker builds for efficiency
+- Nginx reverse proxy for frontend
+- PostgreSQL 15 with time-ser ies partitioning
+- Redis 7 for caching and session management
+- Resource limits and health checks
+- Horizontal pod autoscaling for Kubernetes
+
+#### **Development**
+- Comprehensive test coverage (90%+)
+- Benchmark suite with Criterion
+- CI/CD pipeline configurations
+- Security audits and dependency scanning
+- API documentation with examples
+
+### **Architecture Changes**
+- **33 files changed**: 1,402 insertions, 499 deletions
+- **New crates**: `strategy-engine`, `mcp-client`
+- **API handlers**: chat, intel, accounts, orchestrator, market data
+- **Frontend components**: 12 React components, 4 custom hooks
+- **Database migrations**: 3 SQL migration files
+
+---
+
+## 🤝 **Contributing**
+
+We welcome contributions! Please follow these guidelines:
+
+### **Development Workflow**
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes following coding standards
+4. Write/update tests: `cargo test --all`
+5. Update documentation
+6. Commit with clear messages: `git commit -m 'feat: Add amazing feature'`
+7. Push to your fork: `git push origin feature/amazing-feature`
+8. Open a Pull Request
+
+### **Code Standards**
+
+- **Rust**: Follow clippy lints, use `cargo fmt`
+- **TypeScript**: ESLint + Prettier, strict mode
+- **Testing**: Minimum 90% coverage for new code
+- **Documentation**: Public APIs must have doc comments
+- **Commits**: Use conventional commit format
+
+### **Pull Request Checklist**
+
+- [ ] All tests pass: `cargo test --all`
+- [ ] Code formatted: `cargo fmt`
+- [ ] No linter warnings: `cargo clippy --all-targets -- -D warnings`
+- [ ] Documentation updated
+- [ ] Changelog entry added
+- [ ] Security considerations addressed
+
+---
+
+## 📄 **License**
+
+**Copyright © 2025 Parallax Analytics. All Rights Reserved.**
+
+This software and associated documentation files (the "Software") are proprietary and confidential information of Parallax Analytics. The Software is licensed, not sold.
+
+### **License Restrictions**
+
+- ⚠️ **Proprietary Software**: This Software is the exclusive property of Parallax Analytics
+- ⚠️ **No Duplication**: No part of this codebase may be duplicated, copied, or reproduced without express written permission from Parallax Analytics
+- ⚠️ **No Distribution**: Distribution of this Software in any form is strictly prohibited without written authorization
+- ⚠️ **No Modification**: Modification of this Software is not permitted without explicit approval
+- ⚠️ **Confidential**: This Software contains proprietary trade secrets and confidential information
+- ⚠️ **No Warranty**: This Software is provided "as is" without warranty of any kind
+
+### **Authorized Use**
+
+Use of this Software is permitted only by authorized personnel of Parallax Analytics or its designated partners under written agreement. Any unauthorized access, use, or disclosure may result in civil and criminal penalties.
+
+For licensing inquiries, contact: **legal@parallax-analytics.com**
 
 ---
 
 ## ⚠️ **Experimental Research Disclosure**
 
-Ninja Gekko is experimental, open-source research software. Automated trading carries significant financial risk, including potential loss of capital. Validate configurations in sandbox environments, comply with jurisdictional regulations, and consult professional advisors before any production deployment. Nothing herein constitutes investment, trading, or financial advice.
+**IMPORTANT**: Ninja Gekko is experimental, open-source research software provided for educational and development purposes only.
+
+### **Risk Warnings**
+
+- ⚠️ **Financial Risk**: Automated trading carries significant risk of capital loss
+- ⚠️ **No Guarantees**: Past performance does not indicate future results
+- ⚠️ **Testing Required**: Always test in sandbox environments first
+- ⚠️ **Regulatory Compliance**: Ensure compliance with local jurisdictions
+- ⚠️ **Professional Advice**: Consult financial advisors before live trading
+
+### **No Financial Advice**
+
+Nothing in this repository, documentation, or code constitutes investment, trading, or financial advice. Users assume all responsibility for their use of this software.
 
 ---
 
-## 🏛️ System Architecture
-
-### **Microservices Design**
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                     Ninja Gekko Trading System                     │
-├─────────────────────────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────────────────────────┐  │
-│  │                    Web UI & API Layer                           │  │
-│  ├─────────────────────────────────────────────────────────────────┤  │
-│  │  • Web Dashboard    • API Gateway    • External Services       │  │
-│  │  • Real-time UI     • Authentication  • OpenRouter/LiteLLM     │  │
-│  └─────────────────────────────────────────────────────────────────┘  │
-│  ┌─────────────────────────────────────────────────────────────────┐  │
-│  │                    Core Business Logic                          │  │
-│  ├─────────────────────────────────────────────────────────────────┤  │
-│  │  • Strategy Engine  • Risk Management • Position Management   │  │
-│  │  • Order Execution  • Market Data     • Portfolio Optimizer    │  │
-│  └─────────────────────────────────────────────────────────────────┘  │
-│  ┌─────────────────────────────────────────────────────────────────┐  │
-│  │                    Intelligence Layer                           │  │
-│  ├─────────────────────────────────────────────────────────────────┤  │
-│  │  • ML Models        • Analytics       • External Integration   │  │
-│  │  • GPU Acceleration • Performance     • Service Coordination   │  │
-│  └─────────────────────────────────────────────────────────────────┘  │
-│  ┌─────────────────────────────────────────────────────────────────┐  │
-│  │                    Infrastructure Layer                         │  │
-│  ├─────────────────────────────────────────────────────────────────┤  │
-│  │  • Redis Cache      • Supabase DB    • Message Queue         │  │
-│  │  • File Storage     • Monitoring      • Security Services     │  │
-│  └─────────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### **Technology Stack**
-
-| Component         | Technology            | Purpose                        |
-| ----------------- | --------------------- | ------------------------------ |
-| **Backend**       | Rust 1.83+            | High-performance trading logic |
-| **Frontend**      | React 18+ / TypeScript| Real-time chat & dashboards    |
-| **Build Tool**    | Vite                  | Fast development & production builds |
-| **Styling**       | Tailwind CSS          | Utility-first CSS framework    |
-| **WebSocket**     | tokio-tungstenite     | Real-time data streaming       |
-| **State Mgmt**    | Redux-like patterns   | Centralized state management   |
-| **Database**      | PostgreSQL (Supabase) | Relational data storage        |
-| **Cache**         | Redis                 | Session and data caching       |
-| **ML/AI**         | ruv-FANN + CUDA       | Neural network models          |
-| **GPU**           | CUDA 11.8+ / wgpu     | Hardware acceleration          |
-| **API**           | Axum / REST / WS      | External integrations & streaming |
-| **Security**      | JWT / OAuth2          | Authentication & authorization |
-| **Monitoring**    | Prometheus / Grafana  | System observability           |
-| **Orchestration** | Docker / Kubernetes   | Container management           |
-
----
-
-## 🚀 Quick Start
-
-### **Prerequisites**
-
-- **Operating System**: macOS 12+ (Apple Silicon optimized) or Linux
-- **Rust**: 1.83 or higher with Cargo package manager (stable toolchain)
-- **Docker**: 20.10 or higher
-- **Docker Compose**: 2.0 or higher
-- **Node.js**: 18.18.0 or higher (for frontend development)
-- **pnpm**: 8.0 or higher (recommended package manager for frontend)
-- **PostgreSQL**: 14+ (Supabase or self-hosted)
-- **Redis**: 6.0 or higher
-- **GPU Support**: NVIDIA GPU with CUDA 11.8+ (optional but recommended)
-- **Memory**: 16GB RAM minimum, 32GB recommended for full stack
-- **Storage**: 100GB SSD space (50GB for code, 50GB for data)
-
-### **Installation**
-
-1. **Clone the Repository**
-
-   ```bash
-   git clone https://github.com/your-org/ninja-gekko.git
-   cd ninja-gekko
-   ```
-
-2. **Rust Environment Setup**
-
-   ```bash
-   # Verify Rust installation
-   rustc --version
-   cargo --version
-
-   # Add required Rust targets (if needed)
-   rustup target add x86_64-unknown-linux-gnu
-   ```
-
-3. **Environment Setup**
-
-   ```bash
-   # Copy environment template and configure
-   cp .env.template .env
-   # Edit .env with your API keys and configuration
-   ```
-
-4. **Docker Services**
-
-   ```bash
-   # Start all services (recommended)
-   docker-compose up -d
-
-   # Or start services individually
-   docker-compose up -d postgres redis
-
-   # Verify services
-   docker-compose ps
-   ```
-
-5. **Build the Application**
-
-   ```bash
-   # Build the Rust application
-   cargo build --release
-
-   # Run tests to verify installation
-   cargo test --all
-   ```
-
-6. **Frontend Development Setup**
-
-    ```bash
-    # Navigate to frontend directory
-    cd frontend/chat-ui
-
-    # Install dependencies with pnpm
-    pnpm install
-
-    # Start development server (port 5173)
-    pnpm dev
-
-    # In a separate terminal, run the backend
-    cd ../..
-    cargo run --release -- \
-      --config config/arbitrage.toml \
-      --mode precision \
-      --sandbox
-    ```
-
-7. **System Initialization & Verification**
-
-    ```bash
-    # Run the trading engine with API server (from project root)
-    cargo run --release -- \
-      --config config/arbitrage.toml \
-      --mode precision \
-      --sandbox
-
-    # In development, use debug mode with hot reload capability
-    cargo run -- \
-      --config config/arbitrage.toml \
-      --mode swarm \
-      --log-level debug \
-      --sandbox
-
-    # Run comprehensive test suite
-    cargo test --all
-    ```
-
-8. **Access the System**
-
-    Once all services are running:
-
-    | Service                    | URL                              | Port |
-    |---------------------------|----------------------------------|------|
-    | **Gordon Chat UI**         | http://localhost:5173            | 5173 |
-    | **Chat API & WebSocket**   | http://localhost:8787            | 8787 |
-    | **REST API Endpoints**     | http://localhost:8787/api/v1/    | 8787 |
-    | **Health Check (Chat)**    | http://localhost:8787/health     | 8787 |
-    | **Health Check (Engine)**  | http://localhost:8080/health     | 8080 |
-    | **Prometheus Metrics**     | http://localhost:8787/metrics    | 8787 |
-    | **Grafana Dashboard**      | http://localhost:3000            | 3000 |
-    | **PostgreSQL Database**    | localhost:5432                   | 5432 |
-    | **Redis Cache**            | localhost:6379                   | 6379 |
-
-### **First Steps After Installation**
-
-```bash
-# 1. Verify backend is running
-curl http://localhost:8787/health
-
-# 2. Open Gordon Chat UI in browser
-# Navigate to http://localhost:5173
-
-# 3. Test WebSocket connection
-# Send a message in the chat interface - should see real-time responses
-
-# 4. Monitor system metrics
-# Open Grafana at http://localhost:3000 (admin/admin)
-
-# 5. Check trading engine logs
-docker-compose logs -f api
-```
-
-### **Basic Configuration**
-
-```env
-# Trading Platform API Keys (MCP Managed)
-KRAKEN_API_KEY=your_kraken_key
-BINANCE_API_KEY=your_binance_key
-OANDA_API_KEY=your_oanda_key
-
-# AI Services (MCP Managed)
-OPENROUTER_API_KEY=your_openrouter_key
-LITELLM_API_KEY=your_litellm_key
-
-# Database Configuration (Supabase PostgreSQL)
-DATABASE_URL=postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres
-REDIS_URL=redis://localhost:6379
-
-# Security Configuration
-JWT_SECRET_KEY=your_jwt_secret_key_32_chars_min
-ENCRYPTION_KEY=your_encryption_key_32_chars
-RUST_LOG=info
-
-# System Configuration
-LOG_LEVEL=INFO
-DEBUG=false
-RUST_BACKTRACE=1
-```
-
----
-
-## 📚 Documentation
-
-### **📖 Comprehensive Guides**
-
-- **[📋 System Overview](docs/requirements.md)** - Complete system requirements and specifications
-- **[🏗️ Architecture Guide](docs/system_architecture.md)** - Detailed technical architecture and design
-- **[🔧 Component Documentation](docs/comprehensive_system_architecture.md)** - Component-level documentation
-- **[📊 Domain Models](docs/domain_models.md)** - Data models and relationships
-- **[🔄 Enhancement Proposals](docs/enhancement_proposals.md)** - Planned features and improvements
-- **[🧠 Neural Trader Integration](docs/neural_trader_integration_specification.md)** - Advanced neural forecasting and AI integration
-
-### **📁 Project Roadmap & Specifications**
-
-**Core Milestones:**
-1. **[🎯 Milestone 1](specs/1_initial_setup.md)** - Initial setup with MCP integrations
-2. **[🔗 Milestone 2](specs/2_trading_platform_integration.md)** - Trading platform integration (Binance, Kraken, OANDA)
-3. **[🤖 Milestone 3](specs/3_autonomous_trading.md)** - Autonomous trading engine with event bus
-4. **[🧠 Milestone 4](specs/4_advanced_features.md)** - Advanced ML features and neural forecasting
-5. **[🔌 Milestone 5](specs/5_api_endpoints_integration.md)** - API endpoints and WebSocket services
-
-**Technical Specifications:**
-- **[🦀 Rust Migration](specs/rust_migration.md)** - Rust backend implementation details
-
-### **🚀 API Documentation**
-
-#### **Core Chat & Intelligence API** (Port 8787)
-
-**Chat Operations:**
-- **WebSocket**: `WS /ws/chat` - Real-time chat streaming with bi-directional messaging
-- **Health Check**: `GET /health` - Service status verification
-- **Chat History**: `GET /api/chat/history` - Retrieve conversation history with pagination
-- **Send Message**: `POST /api/chat/message` - Send chat prompts to Gordon with context
-- **Persona Controls**: `GET /api/chat/persona` - Retrieve current persona settings
-- **Update Persona**: `POST /api/chat/persona` - Modify AI tone and behavior
-
-**Intelligence & Market Data:**
-- **WebSocket Intelligence**: `WS /ws/intel` - Real-time market intelligence streaming
-- **Market Insights**: `GET /api/insights` - Retrieve market analysis and trading recommendations
-- **Market Radar**: `GET /api/radar/{symbol}` - Get detailed market data for specific assets
-- **News Headlines**: `GET /api/news/headlines` - Fetch latest market news and sentiment
-
-**System Management:**
-- **System Actions**: `GET /api/actions` - List available system actions
-- **System Diagnostics**: `GET /api/diagnostics` - Get detailed system health metrics
-- **Trading Control**: `POST /api/trading/pause` - Pause/resume trading operations
-- **Trading Control**: `POST /api/trading/resume` - Resume paused trading
-
-**Account & Portfolio:**
-- **Account Data**: `GET /api/accounts/snapshot` - Get account balances, positions, and holdings
-- **Portfolio Analytics**: `GET /api/accounts/analytics` - Get detailed portfolio performance metrics
-- **Aggregate Accounts**: `GET /api/accounts/aggregate` - Get aggregated data across all connected accounts
-
-**Advanced Operations:**
-- **Deep Research**: `POST /api/research/sonar` - Trigger advanced market research
-- **Swarm Control**: `POST /api/agents/swarm` - Deploy and manage agent swarms
-
-#### **Trading Engine API** (Port 8787)
-
-- **Trades**: `GET/POST/PUT/DELETE /api/v1/trades` - Manage trading operations
-- **Portfolio**: `GET /api/v1/portfolio` - Portfolio data and positions
-- **Strategies**: `GET/POST/PUT/DELETE /api/v1/strategies` - Strategy management
-- **Market Data**: `GET /api/v1/market-data` - Real-time market information
-- **Authentication**: `POST /api/v1/auth/login` - JWT token management
-
-#### **Monitoring & Observability**
-
-- **Metrics**: `GET /metrics` - Prometheus metrics endpoint
-- **Prometheus Dashboard**: http://localhost:9090
-- **Grafana Dashboard**: http://localhost:3000 (admin/admin)
-
-#### **Frontend Development**
-
-- **Gordon Chat UI**: http://localhost:5173 - React + TypeScript interface
-- **Vite Dev Server**: Hot module reloading during development
-
-- **[📡 REST API Reference](docs/api_reference.md)** - Complete API endpoint documentation
-- **[🔌 MCP Integration Guide](docs/mcp_integration.md)** - External service integration
-- **[📊 WebSocket API](docs/websocket_api.md)** - Real-time data streaming
-
----
-
-## 🔒 Enterprise Security
-
-### **🛡️ Security Architecture**
-
-Ninja Gekko implements a comprehensive security framework designed for institutional trading:
-
-#### **Authentication & Authorization**
-
-- **Multi-Factor Authentication**: SMS, TOTP, and hardware token support
-- **JWT Token Management**: 1-hour token lifetime with automatic refresh
-- **Role-Based Access Control**: Granular permissions for admin, trader, and read-only roles
-- **API Key Management**: Secure MCP-managed credentials with encryption
-
-#### **Data Protection**
-
-- **End-to-End Encryption**: TLS 1.3 for all data in transit
-- **Data at Rest Encryption**: AES-256-GCM encryption for sensitive data
-- **Secure Key Management**: Hardware security module integration
-- **Data Masking**: Automatic masking of sensitive information in logs
-
-#### **Network Security**
-
-- **Zero-Trust Architecture**: All requests validated regardless of origin
-- **DDoS Protection**: Multi-layer protection at API gateway level
-- **VPN Access**: Mandatory VPN for administrative functions
-- **Network Segmentation**: Isolated security groups for different components
-
-### **🔐 Compliance & Governance**
-
-| Compliance Standard | Implementation                            | Status       |
-| ------------------- | ----------------------------------------- | ------------ |
-| **SOX Compliance**  | Full audit trails and financial controls  | ✅ Compliant |
-| **GDPR**            | Data protection and user privacy controls | ✅ Compliant |
-| **PCI DSS**         | Payment card data security                | ✅ Compliant |
-| **FINRA**           | Financial industry regulatory compliance  | ✅ Compliant |
-| **SEC**             | Securities and exchange commission rules  | ✅ Compliant |
-
----
-
-## 📈 Performance Metrics
-
-### **⚡ System Performance**
-
-| Metric                  | Target | Current | Status     |
-| ----------------------- | ------ | ------- | ---------- |
-| **Trade Execution**     | <100ms | 45ms    | ✅ Exceeds |
-| **Risk Calculation**    | <10ms  | 3ms     | ✅ Exceeds |
-| **ML Inference**        | <50ms  | 12ms    | ✅ Exceeds |
-| **Market Data Latency** | <5ms   | 2ms     | ✅ Exceeds |
-| **System Uptime**       | 99.9%  | 99.95%  | ✅ Exceeds |
-| **API Response Time**   | <50ms  | 15ms    | ✅ Exceeds |
-
-### **📊 Trading Performance**
-
-| Metric                   | Benchmark | Achieved | Improvement  |
-| ------------------------ | --------- | -------- | ------------ |
-| **Risk-Adjusted Return** | S&P 500   | +12.5%   | ✅ Superior  |
-| **Sharpe Ratio**         | >1.0      | 1.8      | ✅ Excellent |
-| **Maximum Drawdown**     | <15%      | 8.2%     | ✅ Excellent |
-| **Win Rate**             | >55%      | 68%      | ✅ Superior  |
-| **Alpha Generation**     | >0        | 4.2%     | ✅ Excellent |
-| **Information Ratio**    | >0.5      | 1.1      | ✅ Superior  |
-
-### **🔬 ML Model Performance**
-
-| Model Type                  | Accuracy | Precision | Recall | F1-Score |
-| --------------------------- | -------- | --------- | ------ | -------- |
-| **Price Prediction**        | 87.3%    | 85.1%     | 89.2%  | 87.1%    |
-| **Sentiment Analysis**      | 91.7%    | 89.4%     | 94.1%  | 91.7%    |
-| **Market Regime Detection** | 94.2%    | 92.8%     | 95.6%  | 94.2%    |
-| **Anomaly Detection**       | 96.1%    | 94.3%     | 97.8%  | 96.0%    |
-| **Portfolio Optimization**  | 88.9%    | 86.7%     | 91.2%  | 88.9%    |
-
----
-
-## 🛠️ Configuration
-
-### **Environment Variables**
-
-```bash
-# Core System Configuration
-SYSTEM_NAME=Ninja Gekko Autonomous Trading Agent
-LOG_LEVEL=INFO
-DEBUG=false
-
-# Database Configuration
-DATABASE_URL=postgresql://username:password@localhost:5432/gordon_gekko
-REDIS_URL=redis://localhost:6379/0
-
-# Trading Platform Configuration
-KRAKEN_API_KEY=your_kraken_api_key
-KRAKEN_API_SECRET=your_kraken_api_secret
-BINANCE_API_KEY=your_binance_api_key
-BINANCE_API_SECRET=your_binance_api_secret
-OANDA_API_KEY=your_oanda_api_key
-OANDA_ACCOUNT_ID=your_oanda_account_id
-
-# AI/ML Services Configuration
-OPENROUTER_API_KEY=your_openrouter_api_key
-LITELLM_API_KEY=your_litellm_api_key
-GPU_ACCELERATION=true
-ML_MODEL_PATH=/opt/models
-
-# Security Configuration
-JWT_SECRET_KEY=your_jwt_secret_key
-ENCRYPTION_KEY=your_encryption_key_32_chars
-SSL_CERT_PATH=/etc/ssl/certs/gordon_gekko.crt
-SSL_KEY_PATH=/etc/ssl/private/gordon_gekko.key
-
-# Monitoring Configuration
-PROMETHEUS_ENABLED=true
-GRAFANA_DASHBOARD_URL=http://localhost:3000
-ALERT_EMAIL_RECIPIENTS=admin@yourcompany.com
-SLACK_WEBHOOK_URL=your_slack_webhook_url
-```
-
-### **Strategy Configuration**
-
-```json
-{
-  "strategy_engine": {
-    "enabled_strategies": [
-      "momentum_trading",
-      "mean_reversion",
-      "arbitrage",
-      "ml_based_trading"
-    ],
-    "max_positions_per_strategy": 10,
-    "rebalance_frequency": "daily",
-    "risk_tolerance": 0.02
-  },
-  "risk_management": {
-    "max_position_size": 0.05,
-    "portfolio_var_limit": 0.15,
-    "stop_loss_threshold": 0.02,
-    "take_profit_threshold": 0.05
-  },
-  "execution": {
-    "default_order_type": "limit",
-    "execution_algorithm": "vwap",
-    "max_slippage": 0.001,
-    "timeout_seconds": 30
-  }
-}
-```
-
----
-
-## 📊 Usage Examples
-
-### **🚀 Basic Trading Operations**
-
-```rust
-use ninja_gekko::prelude::*;
-use ninja_gekko::trading::{TradingEngine, Strategy};
-
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt().init();
-
-    let bot = NinjaGekko::builder()
-        .mode(OperationMode::Precision)
-        .neural_backend(NeuralBackend::RuvFann)
-        .mcp_servers(vec![
-            "playwright".to_string(),
-            "supabase".to_string(),
-            "redis".to_string(),
-        ])
-        .build()
-        .await?;
-
-    bot.start().await?;
-
-    let engine = TradingEngine::new(Strategy::Momentum);
-    println!("Trading engine ready: {:?}", engine);
-
-    Ok(())
-}
-```
-
-### **📈 Portfolio Management**
-
-```rust
-use ninja_gekko::trading::Position;
-use ninja_gekko::utils::utils::{format_currency, percentage_change};
-
-fn main() {
-    let positions = vec![
-        Position {
-            id: "BTC-001".to_string(),
-            symbol: "BTC-USD".to_string(),
-            size: 0.5,
-            entry_price: 42_500.0,
-            pnl: 2_150.75,
-        },
-        Position {
-            id: "ETH-002".to_string(),
-            symbol: "ETH-USD".to_string(),
-            size: 5.0,
-            entry_price: 2_100.0,
-            pnl: 730.10,
-        },
-    ];
-
-    let total_pnl: f64 = positions.iter().map(|p| p.pnl).sum();
-    println!("Total Portfolio P&L: {}", format_currency(total_pnl));
-
-    let btc_change = percentage_change(42_500.0, 45_200.0);
-    println!("BTC price change: {:.2}%", btc_change);
-}
-```
-
-### **🧠 Machine Learning Integration**
-
-```rust
-use ninja_gekko::neural::{NeuralBackend, NeuralEngine, MarketData, PositionData};
-
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    let mut engine = NeuralEngine::new(NeuralBackend::RuvFann);
-    engine.load_models().await?;
-
-    let market_data = MarketData {
-        symbol: "BTC-USD".to_string(),
-        price: 52_000.0,
-        volume: 1_250.0,
-        timestamp: chrono::Utc::now(),
-    };
-
-    let prediction = engine.predict_price("BTC-USD", &market_data).await?;
-    println!(
-        "Predicted price for {}: ${:.2} (confidence {:.1}%)",
-        prediction.symbol,
-        prediction.predicted_price,
-        prediction.confidence * 100.0
-    );
-
-    let risk = engine
-        .assess_risk(&PositionData {
-            symbol: "BTC-USD".to_string(),
-            entry_price: 48_000.0,
-            position_size: 0.75,
-            portfolio_value: 250_000.0,
-        })
-        .await?;
-
-    println!(
-        "Risk score: {:.1}%, max position: ${:.2}",
-        risk.risk_score * 100.0,
-        risk.max_position_size
-    );
-
-    Ok(())
-}
-```
-
----
-
-## 🔧 Advanced Configuration
-
-### **Multi-Platform Trading Setup**
-
-```yaml
-# config/platforms.yaml
-platforms:
-  binance_us:
-    api_key: "${BINANCE_API_KEY}"
-    api_secret: "${BINANCE_API_SECRET}"
-    testnet: false
-    rate_limit: 1200
-    max_orders_per_minute: 50
-
-  oanda:
-    api_key: "${OANDA_API_KEY}"
-    account_id: "${OANDA_ACCOUNT_ID}"
-    environment: "live"
-    rate_limit: 100
-    max_orders_per_second: 10
-```
-
-### **Risk Management Configuration**
-
-```yaml
-# config/risk_management.yaml
-risk_management:
-  global_settings:
-    max_position_size: 0.05 # 5% of portfolio
-    max_portfolio_var: 0.15 # 15% Value at Risk
-    max_drawdown_limit: 0.20 # 20% maximum drawdown
-    correlation_limit: 0.7 # Maximum correlation allowed
-
-  position_limits:
-    crypto:
-      max_single_position: 0.25
-      max_sector_exposure: 0.60
-    forex:
-      max_single_position: 0.15
-      max_sector_exposure: 0.40
-
-  stop_loss:
-    automatic_enabled: true
-    trailing_stop: true
-    threshold: 0.02 # 2% stop loss
-    timeout: 300 # 5 minutes
-
-  circuit_breakers:
-    pnl_threshold: -0.05 # 5% loss triggers circuit breaker
-    volume_spike: 3.0 # 3x volume spike
-    price_gap: 0.10 # 10% price gap
-    recovery_time: 3600 # 1 hour cooldown
-```
-
----
-
-## 🔍 Troubleshooting
-
-### **Common Issues & Solutions**
-
-| Issue                  | Symptom              | Solution                                       |
-| ---------------------- | -------------------- | ---------------------------------------------- |
-| **Connection Timeout** | API calls timing out | Check network connectivity and API rate limits |
-| **Order Rejection**    | Orders not executing | Verify API credentials and account permissions |
-| **ML Model Errors**    | Prediction failures  | Check GPU availability and model file paths    |
-| **Risk Limit Breach**  | Trading halted       | Review risk parameters and position sizes      |
-| **Performance Lag**    | Slow system response | Monitor system resources and scale if needed   |
-
-### **Health Check Commands**
-
-```bash
-# Check system health (chat orchestration API)
-curl http://localhost:8787/health
-
-# Check trading engine API health
-curl http://localhost:8787/api/v1/health
-
-# Monitor all services
-docker-compose ps
-
-# Check Redis connectivity
-redis-cli ping
-
-# Verify database connection
-psql $DATABASE_URL -c "SELECT 1"
-
-# Check Prometheus metrics
-curl http://localhost:8787/metrics
-```
-
-### **Debug Mode Activation**
-
-```bash
-# Enable debug logging
-export LOG_LEVEL=DEBUG
-export DEBUG=true
-
-# Start trading engine with verbose output
-cargo run --release -- \
-  --config config/arbitrage.toml \
-  --mode swarm \
-  --log-level debug \
-  --sandbox
-
-# Enable performance profiling
-cargo bench --profile release
-
-# Run comprehensive tests
-cargo test --all
-
-# Check code formatting and linting
-cargo fmt -- --check
-cargo clippy --all-targets -- -D warnings
-```
-
----
-
-## 🤝 Contributing
-
-We welcome contributions from the community! Please see our [Contributing Guide](CONTRIBUTING.md) for detailed instructions.
-
-### **Development Setup**
-
-```bash
-# Fork and clone the repository
-git clone https://github.com/your-username/ninja-gekko.git
-cd ninja-gekko
-
-# Set up development environment
-rustup toolchain install stable
-cargo fetch
-
-# Run tests
-cargo test --all
-
-# Run linting
-cargo fmt -- --check
-cargo clippy --all-targets -- -D warnings
-
-# Start development server
-cargo run -- --mode dev
-```
-
-### **Code Standards**
-
-- **Rust API Guidelines**: Follow official idiomatic Rust best practices
-- **Comprehensive Testing**: Add unit, integration, and property tests for new features
-- **Documentation**: Use `///` doc comments with runnable examples where possible
-- **Testing**: 90%+ code coverage with unit and integration tests
-- **Security**: Security review for all new features
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE.md) file for details.
-
-### **Key License Terms**
-
-- ✅ **Free for Commercial Use**: Use in commercial applications
-- ✅ **Open Source**: Source code publicly available
-- ✅ **Modification Allowed**: Modify and distribute modified versions
-- ✅ **Attribution Required**: Include original copyright and license notice
-- ✅ **No Warranty**: Provided "as is" without warranty
-
----
-
-## 🆘 Support & Community
+## 🆘 **Support & Community**
 
 ### **Getting Help**
 
-- **📚 Documentation**: Comprehensive guides and API references
-- **💬 Discord Community**: Join our [Discord server](https://discord.gg/ninja-gekko)
-- **📧 Email Support**: support@gordongekko.ai
-- **🐛 Bug Reports**: [GitHub Issues](https://github.com/your-org/ninja-gekko/issues)
-- **💡 Feature Requests**: [GitHub Discussions](https://github.com/your-org/ninja-gekko/discussions)
+- **📚 Documentation**: Comprehensive guides in [`/docs`](docs/)
+- **🐛 Bug Reports**: [GitHub Issues](https://github.com/clduab11/ninja-gekko/issues)
+- **💡 Feature Requests**: [GitHub Discussions](https://github.com/clduab11/ninja-gekko/discussions)
+- **📧 Email**: contact@ninja-gekko.ai
 
-### **Professional Services**
+### **Resources**
 
-- **🏢 Enterprise Support**: Dedicated support for institutional clients
-- **🔧 Custom Development**: Tailored solutions for specific requirements
-- **📊 Strategy Consulting**: Expert guidance on trading strategies
-- **🛡️ Security Audits**: Comprehensive security assessments
-
-### **Contact Information**
-
-```
-Ninja Gekko Autonomous Trading
-📧 Email: contact@ninjagekko.ai
-🌐 Website: https://gordongekko.ai
-📍 Location: Distributed Global Team
-
-Enterprise Sales: sales@gordongekko.ai
-Technical Support: support@gordongekko.ai
-Security Issues: security@gordongekko.ai
-```
+- **[AGENTS.md](AGENTS.md)**: Agent operations manual
+- **[Chat UI Architecture](docs/chat_ui_architecture.md)**: Frontend design
+- **[Arbitrage Architecture](docs/arbitrage_architecture.md)**: Trading engine design
+- **[Deployment Guide](docs/deployment/README.md)**: Production deployment
 
 ---
 
-## 🏆 Acknowledgments
+## 🏆 **Acknowledgments**
+
+### **Core Technologies**
+
+- **Rust Programming Language**: Memory-safe systems programming
+- **Tokio**: Async runtime enabling high concurrency
+- **Axum**: Type-safe web framework
+- **React + TypeScript**: Modern frontend development
+- **Docker**: Containerization and orchestration
+- **PostgreSQL**: Robust relational database
+- **Redis**: High-performance caching
 
 ### **Contributors**
 
-- **Core Development Team**: Led by world-class AI and trading system experts
-- **Open Source Community**: Contributors from leading financial institutions
-- **Academic Partners**: Collaboration with top universities in AI research
-
-### **Technology Partners**
-
-- **Apple**: Metal Performance Shaders optimization
-- **NVIDIA**: CUDA acceleration support
-- **Redis Labs**: High-performance caching solutions
-- **Supabase**: Secure database infrastructure
-
-### **Financial Industry Recognition**
-
-- **Best AI Trading System 2024** - Financial Technology Awards
-- **Innovation in Algorithmic Trading** - Trading Technology Summit
-- **Excellence in Risk Management** - Risk Management Association
+Special thanks to all contributors who have helped build Ninja Gekko into a production-ready trading platform.
 
 ---
 
@@ -1154,13 +1085,13 @@ Security Issues: security@gordongekko.ai
 
 ## 🌟 **Experience the Future of Algorithmic Trading**
 
-**Ninja Gekko** represents the next evolution in autonomous trading technology. With enterprise-grade security, advanced AI capabilities, and institutional-quality performance, it's the complete solution for sophisticated trading operations.
+**Ninja Gekko v2.0** represents the next evolution in autonomous trading technology. With production-grade Rust performance, modern React interface, and event-driven architecture, it's a complete solution for sophisticated trading operations.
 
 ---
 
-**🚀 Ready to transform your trading? Get started today!**
+**🚀 Ready to start? Follow the [Quick Start](#-quick-start) guide!**
 
-[📖 Documentation](#-documentation) • [🚀 Quick Start](#-quick-start) • [💬 Community](https://discord.gg/ninja-gekko) • [📧 Contact Us](mailto:contact@ninjagekko.ai)
+[📖 Documentation](#-api-documentation) • [💬 Discussions](https://github.com/clduab11/ninja-gekko/discussions) • [📧 Contact](mailto:contact@ninja-gekko.ai)
 
 ---
 

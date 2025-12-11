@@ -5,7 +5,6 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use std::sync::Arc;
-use tokio::sync::RwLock;
 use crate::AppState;
 use crate::models::ApiResponse;
 use tracing::{info, warn, error};
@@ -44,62 +43,58 @@ impl Default for OrchestratorState {
     }
 }
 
-// Global state for orchestrator (in-memory for now, could be moved to AppState)
-// Using a lazy static or adding to AppState would be better, but for this task I'll use a static RwLock for simplicity
-// or better yet, assume I can add it to AppState.
-// Since I cannot easily modify AppState struct definition without touching multiple files, 
-// I will implement a thread-safe singleton pattern here or just use a static for now.
-// Ideally, this should be in AppState. 
-
-// Actually, to follow best practices and "zero unsafe blocks", I should probably add this to AppState.
-// But that requires modifying `api/src/lib.rs` to add the field to AppState struct.
-// Let's check `api/src/lib.rs` again. `AppState` is struct.
-// I will modify `AppState` in `api/src/lib.rs` to include `orchestrator_state`.
-
-// For now, let's define the handlers.
-
+/// Engage the trading system
 pub async fn engage(
     State(state): State<Arc<AppState>>,
 ) -> Json<ApiResponse<OrchestratorState>> {
     info!("Orchestrator: ENGAGE command received");
     
-    // TODO: interactions with state.orchestrator_state
-    // For now, returning a mock state as if it succeeded
-    let new_state = OrchestratorState {
-        is_live: true,
-        last_updated: Utc::now(),
-        ..Default::default()
-    };
+    let mut orchestrator = state.orchestrator_state.write().await;
     
-    // In a real impl, we would start the trading engine here
+    // Clear emergency halt state on engage (allows recovery)
+    if orchestrator.emergency_halt_active {
+        info!("Orchestrator: Clearing emergency halt state on ENGAGE");
+        orchestrator.emergency_halt_active = false;
+        orchestrator.emergency_halt_reason = None;
+    }
     
-    Json(ApiResponse::success(new_state))
+    orchestrator.is_live = true;
+    orchestrator.is_winding_down = false;
+    orchestrator.wind_down_started_at = None;
+    orchestrator.risk_throttle = 1.0; // Reset throttle to 100%
+    orchestrator.last_updated = Utc::now();
+    
+    info!("Orchestrator: System ENGAGED - Trading is now LIVE");
+    
+    Json(ApiResponse::success(orchestrator.clone()))
 }
 
+/// Wind down trading gracefully over a specified duration
 pub async fn wind_down(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
     Json(payload): Json<OrchestratorCommand>,
 ) -> Json<ApiResponse<OrchestratorState>> {
     let duration = match payload {
         OrchestratorCommand::WindDown { duration_seconds } => duration_seconds,
-        _ => 0,
+        _ => 3600, // Default 1 hour
     };
     
     warn!("Orchestrator: WIND DOWN command received ({}s)", duration);
     
-    let new_state = OrchestratorState {
-        is_live: true,
-        is_winding_down: true,
-        wind_down_started_at: Some(Utc::now()),
-        last_updated: Utc::now(),
-        ..Default::default()
-    };
+    let mut orchestrator = state.orchestrator_state.write().await;
     
-    Json(ApiResponse::success(new_state))
+    orchestrator.is_winding_down = true;
+    orchestrator.wind_down_started_at = Some(Utc::now());
+    orchestrator.last_updated = Utc::now();
+    
+    info!("Orchestrator: Winding down over {} seconds", duration);
+    
+    Json(ApiResponse::success(orchestrator.clone()))
 }
 
+/// Emergency halt - immediately stop all trading
 pub async fn emergency_halt(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
     Json(payload): Json<OrchestratorCommand>,
 ) -> Json<ApiResponse<OrchestratorState>> {
     let reason = match payload {
@@ -109,42 +104,49 @@ pub async fn emergency_halt(
     
     error!("Orchestrator: EMERGENCY HALT triggered: {}", reason);
     
-    // CRITICAL: Immediately disconnect all exchange WebSocket connections
-    // This would typically involve calling a method on state.websocket_manager or similar
+    let mut orchestrator = state.orchestrator_state.write().await;
     
-    let new_state = OrchestratorState {
-        emergency_halt_active: true,
-        emergency_halt_reason: Some(reason),
-        risk_throttle: 0.0,
-        last_updated: Utc::now(),
-        ..Default::default()
-    };
+    // Full system halt
+    orchestrator.is_live = false;
+    orchestrator.is_winding_down = false;
+    orchestrator.wind_down_started_at = None;
+    orchestrator.emergency_halt_active = true;
+    orchestrator.emergency_halt_reason = Some(reason.clone());
+    orchestrator.risk_throttle = 0.0;
+    orchestrator.last_updated = Utc::now();
     
-    Json(ApiResponse::success(new_state))
+    // TODO: Disconnect all exchange connections via websocket_manager
+    // state.websocket_manager.disconnect_all_exchanges().await;
+    
+    error!("Orchestrator: EMERGENCY HALT ACTIVE - All trading STOPPED");
+    
+    Json(ApiResponse::success(orchestrator.clone()))
 }
 
+/// Set risk throttle (0.0 to 1.0)
 pub async fn risk_throttle(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
     Json(payload): Json<OrchestratorCommand>,
 ) -> Json<ApiResponse<OrchestratorState>> {
     let value = match payload {
-        OrchestratorCommand::SetRiskThrottle { value } => value,
+        OrchestratorCommand::SetRiskThrottle { value } => value.clamp(0.0, 1.0),
         _ => 1.0,
     };
     
     info!("Orchestrator: Risk throttle set to {:.1}%", value * 100.0);
     
-    let new_state = OrchestratorState {
-        risk_throttle: value,
-        last_updated: Utc::now(),
-        ..Default::default()
-    };
+    let mut orchestrator = state.orchestrator_state.write().await;
+    orchestrator.risk_throttle = value;
+    orchestrator.last_updated = Utc::now();
     
-    Json(ApiResponse::success(new_state))
+    Json(ApiResponse::success(orchestrator.clone()))
 }
 
+/// Get current orchestrator state
 pub async fn get_state(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
 ) -> Json<ApiResponse<OrchestratorState>> {
-    Json(ApiResponse::success(OrchestratorState::default()))
+    let orchestrator = state.orchestrator_state.read().await;
+    Json(ApiResponse::success(orchestrator.clone()))
 }
+

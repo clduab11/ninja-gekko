@@ -86,9 +86,10 @@ pub struct LogoutResponse {
 /// Login handler for user authentication
 ///
 /// Authenticates users with username/password and returns JWT tokens.
-/// This endpoint should be called to obtain initial authentication tokens.
+/// Note: Full database authentication pending implementation.
+/// Currently uses environment-based credentials for the primary admin user.
 pub async fn login_handler(
-    State(_state): State<Arc<crate::AppState>>,
+    State(state): State<Arc<crate::AppState>>,
     Json(login_request): Json<LoginRequest>,
 ) -> ApiResult<Json<ApiResponse<LoginResponse>>> {
     // Validate input
@@ -106,54 +107,51 @@ pub async fn login_handler(
         });
     }
 
-    // TODO: Implement actual authentication against user database
-    // For now, we'll use mock authentication
-    if !is_valid_credentials(&login_request.username, &login_request.password).await {
+    // Validate credentials
+    // In production: query database, verify password hash with argon2/bcrypt
+    // For now: check against environment-configured admin credentials
+    let admin_user = std::env::var("ADMIN_USERNAME").unwrap_or_else(|_| "admin".to_string());
+    let admin_pass = std::env::var("ADMIN_PASSWORD").unwrap_or_else(|_| "".to_string());
+    
+    if admin_pass.is_empty() {
+        return Err(ApiError::Auth {
+            message: "Authentication not configured. Set ADMIN_USERNAME and ADMIN_PASSWORD environment variables.".to_string(),
+        });
+    }
+    
+    if login_request.username != admin_user || login_request.password != admin_pass {
         return Err(ApiError::Auth {
             message: "Invalid username or password".to_string(),
         });
     }
 
-    // Get user information from database
-    let user = match get_user_by_username(&login_request.username).await {
-        Ok(Some(user)) => user,
-        Ok(None) => {
-            return Err(ApiError::Auth {
-                message: "User not found".to_string(),
-            });
-        }
-        Err(e) => {
-            return Err(ApiError::Database {
-                message: format!("Failed to retrieve user: {}", e),
-            });
-        }
-    };
+    // Create user context for authenticated session
+    let user_id = format!("user-{}", uuid::Uuid::new_v4());
+    let roles = vec!["admin".to_string(), "trader".to_string()];
+    let account_ids = vec!["default".to_string()];
 
     // Generate JWT tokens
-    let access_token = AuthMiddleware::generate_access_token(&user.id, user.roles.clone(), user.account_ids.clone())
+    let access_token = AuthMiddleware::generate_access_token(&user_id, roles.clone(), account_ids.clone())
         .await
         .map_err(|e| ApiError::Auth {
             message: format!("Failed to generate access token: {}", e),
         })?;
 
-    let refresh_token = AuthMiddleware::generate_refresh_token(&user.id, user.roles.clone(), user.account_ids.clone())
+    let refresh_token = AuthMiddleware::generate_refresh_token(&user_id, roles.clone(), account_ids.clone())
         .await
         .map_err(|e| ApiError::Auth {
             message: format!("Failed to generate refresh token: {}", e),
         })?;
-
-    // Store refresh token (TODO: implement proper token storage)
-    // store_refresh_token(user.id, refresh_token).await?;
 
     let response = LoginResponse {
         access_token,
         refresh_token,
         expires_at: (chrono::Utc::now() + chrono::Duration::hours(24)).timestamp() as usize,
         user: UserInfo {
-            id: user.id,
-            username: user.username,
-            roles: user.roles,
-            account_ids: user.account_ids,
+            id: user_id,
+            username: login_request.username,
+            roles,
+            account_ids,
         },
         token_type: "Bearer".to_string(),
     };
@@ -197,63 +195,20 @@ pub async fn refresh_handler(
 /// Logout handler
 ///
 /// Invalidates the user's refresh token and logs them out.
-/// This endpoint should be called when users want to log out.
+/// Requires authenticated request with valid JWT token.
 pub async fn logout_handler(
     State(_state): State<Arc<crate::AppState>>,
-    // Claims should be extracted by middleware and passed here, but for now we extract from extensions or assume middleware context
-    // Ideally: Extract State<Arc<AppState>>, Extension(claims): Extension<Claims>
+    // In production: extract user_id from JWT claims via middleware
+    // Extension(claims): Extension<Claims>
 ) -> ApiResult<Json<ApiResponse<LogoutResponse>>> {
-    // TODO: Get user ID from JWT token in request context
-    let user_id = "mock-user-id".to_string(); 
-
-    // Revoke tokens
-    AuthMiddleware::revoke_user_tokens(&user_id).await
-        .map_err(|e| ApiError::Database {
-            message: format!("Failed to revoke tokens: {}", e),
-        })?;
-
+    // TODO: Extract user_id from JWT token in request context
+    // For now, logout is a no-op that clears client-side tokens
+    // In production: invalidate refresh token in database/cache
+    
     let response = LogoutResponse {
         message: "Successfully logged out".to_string(),
         timestamp: chrono::Utc::now().to_rfc3339(),
     };
 
     Ok(Json(ApiResponse::success(response)))
-}
-
-/// Validate user credentials against secure database
-/// TODO: IMPLEMENT actual authentication: fetch user hash, verify with bcrypt/scrypt/argon2, check status
-async fn is_valid_credentials(username: &str, _password: &str) -> bool {
-    // Mock credentials check - assume true for demo users if they exist in get_user_by_username
-    username == "admin" || username == "trader"
-}
-
-/// Mock function to get user by username
-/// TODO: Replace with actual database query
-async fn get_user_by_username(username: &str) -> Result<Option<User>, String> {
-    // Mock user data - replace with actual database query
-    if username == "admin" {
-        Ok(Some(User {
-            id: "user-123".to_string(),
-            username: "admin".to_string(),
-            roles: vec!["admin".to_string(), "trader".to_string()],
-            account_ids: vec!["acc-001".to_string(), "acc-002".to_string()],
-        }))
-    } else if username == "trader" {
-        Ok(Some(User {
-            id: "user-456".to_string(),
-            username: "trader".to_string(),
-            roles: vec!["trader".to_string()],
-            account_ids: vec!["acc-003".to_string()],
-        }))
-    } else {
-        Ok(None)
-    }
-}
-
-/// User structure for internal use
-struct User {
-    id: String,
-    username: String,
-    roles: Vec<String>,
-    account_ids: Vec<String>,
 }

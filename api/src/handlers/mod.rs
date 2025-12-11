@@ -20,6 +20,7 @@ pub mod strategies;
 pub mod arbitrage;
 pub mod chat;
 pub mod intel;
+pub mod intel_rss;
 pub mod accounts;
 pub mod orchestrator;
 

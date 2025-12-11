@@ -19,7 +19,7 @@ fn bench_normalizer(c: &mut Criterion) {
                     volume_24h: Decimal::new(100, 0),
                     timestamp: chrono::Utc::now(),
                 });
-                let raw: RawMarketMessage = (ExchangeId::Coinbase, tick);
+                let raw: RawMarketMessage = (ExchangeId::Kraken, tick);
                 normalizer.normalize(raw)
             },
             BatchSize::SmallInput,

@@ -28,6 +28,8 @@ const ActionDashboard = () => {
   const [riskValue, setRiskValue] = useState(100);
   const [showHaltingConfirm, setShowHaltingConfirm] = useState(false);
 
+  const [showRecoveryConfirm, setShowRecoveryConfirm] = useState(false);
+
   useEffect(() => {
     // Initial fetch
     fetchState();
@@ -46,10 +48,19 @@ const ActionDashboard = () => {
     }
   };
 
+  const handleEngageClick = () => {
+    if (orchestratorState?.emergency_halt_active) {
+      setShowRecoveryConfirm(true);
+    } else {
+      handleEngage();
+    }
+  };
+
   const handleEngage = async () => {
     try {
       const newState = await engage();
       setOrchestratorState(newState);
+      setShowRecoveryConfirm(false);
     } catch (e) {
       console.error("Failed to engage", e);
     }
@@ -132,15 +143,15 @@ const ActionDashboard = () => {
       <div className="mx-2 mb-4 space-y-3 rounded bg-white/5 p-3">
         <div className="grid grid-cols-3 gap-2">
             <button
-                onClick={handleEngage}
-                disabled={isLive || isEmergency}
+                onClick={handleEngageClick}
+                disabled={isLive}
                 className={`
                     flex flex-col items-center justify-center rounded p-2 transition-all
                     ${isLive 
                         ? 'bg-emerald-500/20 text-emerald-400 cursor-default border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.2)]' 
                         : 'bg-white/5 hover:bg-emerald-500/20 hover:text-emerald-400 text-slate-400 border border-transparent'
                     }
-                    ${isEmergency ? 'opacity-30 cursor-not-allowed' : ''}
+                    ${isEmergency ? 'animate-pulse ring-1 ring-emerald-500/50' : ''}
                 `}
             >
                 <Play className="h-5 w-5 mb-1" />
@@ -219,6 +230,47 @@ const ActionDashboard = () => {
                         className="flex-1 rounded bg-red-600 py-2 text-xs font-bold text-white hover:bg-red-700"
                     >
                         CONFIRM HALT
+                    </button>
+                </div>
+            </div>
+        </div>
+      )}
+
+      {/* Recovery Confirmation Modal - shown when re-engaging after emergency halt */}
+      {showRecoveryConfirm && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 rounded-lg p-4 backdrop-blur-sm">
+            <div className="w-full max-w-sm rounded border border-amber-500 bg-slate-900 p-4 shadow-[0_0_30px_rgba(245,158,11,0.3)]">
+                <div className="flex items-center mb-3 text-amber-500">
+                    <ShieldAlert className="mr-2 h-6 w-6" />
+                    <h3 className="font-bold text-lg">RECOVERY MODE</h3>
+                </div>
+                <div className="mb-4 p-3 rounded bg-red-950/50 border border-red-500/30">
+                    <p className="text-xs text-red-400 font-bold mb-1">⚠️ KILL SWITCH WAS TRIGGERED</p>
+                    <p className="text-[10px] text-slate-400">
+                        Reason: {orchestratorState?.emergency_halt_reason || 'Unknown'}
+                    </p>
+                </div>
+                <p className="mb-4 text-xs text-slate-300">
+                    Before re-engaging, please verify:
+                </p>
+                <ul className="mb-4 text-[10px] text-slate-400 space-y-1 list-disc list-inside">
+                    <li>All exchange connections are stable</li>
+                    <li>Account balances are correct</li>
+                    <li>Risk parameters are configured properly</li>
+                    <li>No pending orders require manual review</li>
+                </ul>
+                <div className="flex space-x-2">
+                    <button 
+                        onClick={() => setShowRecoveryConfirm(false)}
+                        className="flex-1 rounded bg-slate-700 py-2 text-xs font-bold hover:bg-slate-600"
+                    >
+                        CANCEL
+                    </button>
+                    <button 
+                        onClick={handleEngage}
+                        className="flex-1 rounded bg-emerald-600 py-2 text-xs font-bold text-white hover:bg-emerald-700"
+                    >
+                        CONFIRM RE-ENGAGE
                     </button>
                 </div>
             </div>

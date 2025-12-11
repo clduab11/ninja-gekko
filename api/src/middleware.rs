@@ -443,9 +443,22 @@ pub mod security {
     }
 
     async fn validate_api_key(api_key: &str) -> bool {
-        // Mock API key validation - replace with real implementation
-        // In production, validate against database or external service
-        api_key == "your-api-key" || api_key.starts_with("sk-")
+        // Validate API key against configured keys from environment
+        // In production, this should validate against database or secret manager
+        if let Ok(valid_key) = std::env::var("API_KEY") {
+            if !valid_key.is_empty() && api_key == valid_key {
+                return true;
+            }
+        }
+        
+        // Check for OpenRouter-style keys if configured
+        if let Ok(openrouter_key) = std::env::var("OPENROUTER_API_KEY") {
+            if api_key == openrouter_key {
+                return true;
+            }
+        }
+        
+        false
     }
 }
 

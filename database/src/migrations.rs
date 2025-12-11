@@ -258,6 +258,20 @@ impl MigrationManager {
     async fn acquire_lock(&self, pool: &sqlx::PgPool, lock_id: &str) -> Result<()> {
         debug!("Acquiring migration lock: {}", lock_id);
 
+        // Ensure lock table exists
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS schema_migration_locks (
+                lock_id VARCHAR(255) PRIMARY KEY,
+                locked_by VARCHAR(255) NOT NULL,
+                expires_at BIGINT NOT NULL
+            )
+            "#
+        )
+        .execute(pool)
+        .await
+        .map_err(|e| anyhow::anyhow!("Failed to create migration lock table: {}", e))?;
+
         let expires_at = SystemTime::now() + self.config.lock_timeout;
 
         let result = sqlx::query(
@@ -338,6 +352,27 @@ impl MigrationManager {
     /// Run migrations with lock held
     #[instrument(skip(self, pool))]
     async fn run_migrations_locked(&self, pool: &sqlx::PgPool) -> Result<MigrationResult> {
+        // Ensure schema_migrations table exists
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS schema_migrations (
+                version BIGINT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                description TEXT,
+                checksum VARCHAR(64) NOT NULL,
+                applied_at TIMESTAMPTZ DEFAULT NOW(),
+                status VARCHAR(20) NOT NULL,
+                execution_time_ms BIGINT
+            );
+            "#
+        )
+        .execute(pool)
+        .await
+        .map_err(|e| anyhow!("Failed to create schema_migrations table: {}", e))?;
+
+        // Load applied migrations to match against pending ones
+        self.load_applied_migrations(pool).await?;
+
         let pending = self.get_pending_migrations().await?;
 
         if pending.is_empty() {
@@ -406,10 +441,7 @@ impl MigrationManager {
 
         let start_time = std::time::Instant::now();
 
-        // Begin transaction
-        let mut tx = pool.begin().await?;
-
-        // Create schema_migrations table if it doesn't exist
+        // Ensure schema_migrations table exists (outside transaction)
         sqlx::query(
             r#"
             CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -423,8 +455,12 @@ impl MigrationManager {
             )
             "#
         )
-        .execute(&mut *tx)
-        .await?;
+        .execute(pool)
+        .await
+        .map_err(|e| anyhow!("Failed to ensure schema_migrations table exists: {}", e))?;
+
+        // Begin transaction
+        let mut tx = pool.begin().await?;
 
         // Parse and execute the migration SQL
         match self.execute_migration_sql(&mut tx, migration_file).await {
@@ -471,8 +507,13 @@ impl MigrationManager {
                 Ok(())
             }
             Err(e) => {
-                // Record failed migration
-                sqlx::query(
+                // Rollback the failed transaction
+                if let Err(rollback_err) = tx.rollback().await {
+                   error!("Failed to rollback transaction after migration failure: {}", rollback_err);
+                }
+
+                // Record failed migration using a new connection from the pool
+                let record_result = sqlx::query(
                     r#"
                     INSERT INTO schema_migrations (version, name, description, checksum, applied_at, status, execution_time_ms)
                     VALUES ($1, $2, $3, $4, NOW(), 'failed', $5)
@@ -483,10 +524,12 @@ impl MigrationManager {
                 .bind(&migration_file.description)
                 .bind(&migration_file.checksum)
                 .bind(start_time.elapsed().as_millis() as i64)
-                .execute(&mut *tx)
-                .await?;
+                .execute(pool)
+                .await;
 
-                tx.commit().await?;
+                if let Err(record_err) = record_result {
+                    error!("Failed to record migration failure: {}", record_err);
+                }
 
                 error!(
                     "Failed to apply migration {} - {}: {}",
@@ -509,17 +552,51 @@ impl MigrationManager {
             migration_file.version, migration_file.name
         );
 
-        // Split SQL by statements (basic semicolon splitting)
-        let statements: Vec<&str> = migration_file
-            .content
-            .split(';')
-            .map(|s| s.trim())
-            .filter(|s| !s.is_empty() && !s.starts_with("--"))
-            .collect();
+        // Split SQL by statements (robust splitting handling quotes and blocks)
+        let mut statements = Vec::new();
+        let mut current_stmt = String::new();
+        let mut in_string = false;
+        let mut in_dollar_quote = false;
+        let mut chars = migration_file.content.chars().peekable();
+
+        while let Some(c) = chars.next() {
+            current_stmt.push(c);
+            match c {
+                '\'' if !in_dollar_quote => {
+                    // Toggle string state, handling escaped quotes '' loosely by just toggling back and forth
+                    // which works for the purpose of hiding semicolons.
+                    in_string = !in_string;
+                },
+                '$' if !in_string => {
+                    if let Some(&'$') = chars.peek() {
+                        in_dollar_quote = !in_dollar_quote;
+                        current_stmt.push(chars.next().unwrap()); // consume second $
+                    }
+                },
+                ';' if !in_string && !in_dollar_quote => {
+                    // Found a statement separator outside of any string or block
+                    if !current_stmt.trim().is_empty() {
+                        statements.push(current_stmt.trim().to_string());
+                    }
+                    current_stmt = String::new();
+                },
+                _ => {}
+            }
+        }
+        if !current_stmt.trim().is_empty() {
+            statements.push(current_stmt.trim().to_string());
+        }
 
         for statement in statements {
             if !statement.is_empty() {
-                sqlx::query(statement).execute(&mut **tx).await?;
+                info!("Executing statement: {}", statement);
+                match sqlx::query(&statement).execute(&mut **tx).await {
+                    Ok(_) => {},
+                    Err(e) => {
+                         error!("Failed to execute statement: '{}'. Error: {}", statement, e);
+                         return Err(anyhow::anyhow!("Statement failure: {}", e));
+                    }
+                }
             }
         }
 
