@@ -10,12 +10,9 @@
 //! 4. Store/Log results
 
 use exchange_connectors::{
-    credentials::ExchangeCredentials,
-    kraken::KrakenConnector,
-    ExchangeConnector,
-    ExchangeId,
+    credentials::ExchangeCredentials, kraken::KrakenConnector, ExchangeConnector, ExchangeId,
 };
-use tracing::{info, warn, error};
+use tracing::{error, info, warn};
 use tracing_subscriber;
 
 #[tokio::main]
@@ -26,16 +23,20 @@ async fn main() -> anyhow::Result<()> {
 
     // 1. Load Credentials
     dotenv::dotenv().ok();
-    
+
     let api_key = std::env::var("KRAKEN_API_KEY").ok();
     let api_secret = std::env::var("KRAKEN_API_SECRET").ok();
 
     if let Some(k) = &api_key {
-        info!("Loaded KRAKEN_API_KEY: Len={} Prefix={}", k.len(), k.chars().take(4).collect::<String>());
+        info!(
+            "Loaded KRAKEN_API_KEY: Len={} Prefix={}",
+            k.len(),
+            k.chars().take(4).collect::<String>()
+        );
     } else {
         warn!("KRAKEN_API_KEY not found in env");
     }
-    
+
     if let Some(s) = &api_secret {
         info!("Loaded KRAKEN_API_SECRET: Len={}", s.len());
     } else {
@@ -65,7 +66,10 @@ async fn main() -> anyhow::Result<()> {
     match connector.connect().await {
         Ok(_) => info!("✅ Connectivity established"),
         Err(e) => {
-            warn!("⚠️ Connection/Auth check failed: {}. Proceeding to check public endpoints...", e);
+            warn!(
+                "⚠️ Connection/Auth check failed: {}. Proceeding to check public endpoints...",
+                e
+            );
             // Do not return, let's try public endpoints
         }
     }
@@ -76,9 +80,12 @@ async fn main() -> anyhow::Result<()> {
         Ok(pairs) => {
             info!("✅ Fetched {} trading pairs", pairs.len());
             if let Some(pair) = pairs.first() {
-                info!("   Example pair: {} ({}/{})", pair.symbol, pair.base, pair.quote);
+                info!(
+                    "   Example pair: {} ({}/{})",
+                    pair.symbol, pair.base, pair.quote
+                );
             }
-        },
+        }
         Err(e) => error!("❌ Failed to fetch pairs: {}", e),
     }
 
@@ -93,13 +100,13 @@ async fn main() -> anyhow::Result<()> {
                         info!("   - {}: {}", b.currency, b.total);
                     }
                 }
-            },
+            }
             Err(e) => error!("❌ Failed to fetch balances: {}", e),
         }
     } else {
         info!("⚠️  Skipping Balance check (no credentials)");
     }
-    
+
     // 6. Ticker Check
     info!("Fetching Ticker for XBTUSD...");
     match connector.get_market_data("XBTUSD").await {
@@ -108,8 +115,8 @@ async fn main() -> anyhow::Result<()> {
             // Try different symbol format if XBTUSD fails
             warn!("   Failed XBTUSD, trying XXBTZUSD...");
             match connector.get_market_data("XXBTZUSD").await {
-                 Ok(tick) => info!("✅ Ticker (XXBTZUSD): Last={}", tick.last),
-                 Err(e2) => error!("❌ Failed ticker: {}", e2),
+                Ok(tick) => info!("✅ Ticker (XXBTZUSD): Last={}", tick.last),
+                Err(e2) => error!("❌ Failed ticker: {}", e2),
             }
         }
     }

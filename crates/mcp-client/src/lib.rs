@@ -8,17 +8,17 @@ pub mod execution;
 // pub mod perplexity_browser; // Deprecated
 pub mod perplexity_client;
 
-pub mod rate_limiter;
 pub mod openrouter_client;
+pub mod rate_limiter;
 
 use event_bus::EventBus;
 use serde::{Deserialize, Serialize};
 use tracing::{info, warn};
 
 // pub use perplexity_browser::{FallbackReason, PerplexityBrowser, PerplexityFinanceData, PlaywrightConfig, requires_visual_data}; // Deprecated
+pub use openrouter_client::{ChatMessage, OpenRouterClient};
 pub use perplexity_client::{classify_query, SonarClient, SonarConfig, SonarModel, SonarResponse};
 pub use rate_limiter::SonarRateLimiter;
-pub use openrouter_client::{OpenRouterClient, ChatMessage};
 
 /// MCP Client configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -180,7 +180,7 @@ impl McpClient {
     }
 
     /// Perform deep research via Sonar API
-    /// 
+    ///
     /// This method uses the Perplexity Sonar API for real-time financial research.
     /// Query classification automatically selects the appropriate model:
     /// - "sonar": Quick lookups (prices, basic info)
@@ -260,14 +260,14 @@ impl McpClient {
     ) -> anyhow::Result<String> {
         if let Some(client) = &self.openrouter_client {
             let response = client.chat_completion(messages, model).await?;
-            
+
             if let Some(choice) = response.choices.first() {
                 return Ok(choice.message.content.clone());
             } else {
                 return Err(anyhow::anyhow!("No choices returned from LLM"));
             }
         }
-        
+
         // Fallback or error if not configured
         Err(anyhow::anyhow!("OpenRouter client not configured"))
     }
@@ -326,11 +326,12 @@ impl McpClient {
 
     /// Get remaining Sonar API requests for a model
     pub fn sonar_remaining(&self, model: SonarModel) -> Option<u32> {
-        self.sonar_client.as_ref().map(|c| c.remaining_requests(model))
+        self.sonar_client
+            .as_ref()
+            .map(|c| c.remaining_requests(model))
     }
 }
 
 pub fn hello() {
     println!("MCP Client initialized");
 }
-

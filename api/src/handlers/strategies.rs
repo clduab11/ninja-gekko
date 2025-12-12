@@ -7,17 +7,17 @@ use axum::{
     extract::{Path, Query, State},
     response::Json,
 };
-use std::sync::Arc;
 use serde_json::json;
+use std::sync::Arc;
 use tracing::{info, warn};
 
 use crate::{
     error::{ApiError, ApiResult},
     models::{
-        ApiResponse, PaginationParams, PaginatedResponse,
-        CreateStrategyRequest, StrategyResponse, StrategyExecutionRequest,
-        StrategyExecutionResponse, BacktestRequest, BacktestResponse, StrategyOptimizationRequest, StrategyOptimizationResponse,
-        UpdateStrategyRequest, DetailedStrategyPerformance,
+        ApiResponse, BacktestRequest, BacktestResponse, CreateStrategyRequest,
+        DetailedStrategyPerformance, PaginatedResponse, PaginationParams, StrategyExecutionRequest,
+        StrategyExecutionResponse, StrategyOptimizationRequest, StrategyOptimizationResponse,
+        StrategyResponse, UpdateStrategyRequest,
     },
     AppState,
 };
@@ -32,16 +32,19 @@ pub async fn list_strategies(
     // Validate pagination parameters
     let mut params = params;
     if let Err(e) = params.validate() {
-        return Err(ApiError::Validation { message: e, field: Some("pagination".to_string()) });
+        return Err(ApiError::Validation {
+            message: e,
+            field: Some("pagination".to_string()),
+        });
     }
 
     match state.strategy_manager.list_strategies(params).await {
-        Ok(strategies) => {
-            Ok(Json(strategies))
-        }
+        Ok(strategies) => Ok(Json(strategies)),
         Err(e) => {
             warn!("Failed to list strategies: {}", e);
-            Err(ApiError::Strategy { message: format!("Failed to list strategies: {}", e) })
+            Err(ApiError::Strategy {
+                message: format!("Failed to list strategies: {}", e),
+            })
         }
     }
 }
@@ -54,13 +57,15 @@ pub async fn get_strategy(
     info!("Retrieving strategy: {}", strategy_id);
 
     match state.strategy_manager.get_strategy(&strategy_id).await {
-        Ok(Some(strategy)) => {
-            Ok(Json(ApiResponse::success(strategy)))
-        }
-        Ok(None) => Err(ApiError::NotFound { resource: format!("Strategy with ID {}", strategy_id) }),
+        Ok(Some(strategy)) => Ok(Json(ApiResponse::success(strategy))),
+        Ok(None) => Err(ApiError::NotFound {
+            resource: format!("Strategy with ID {}", strategy_id),
+        }),
         Err(e) => {
             warn!("Failed to retrieve strategy {}: {}", strategy_id, e);
-            Err(ApiError::Strategy { message: format!("Failed to retrieve strategy: {}", e) })
+            Err(ApiError::Strategy {
+                message: format!("Failed to retrieve strategy: {}", e),
+            })
         }
     }
 }
@@ -74,16 +79,19 @@ pub async fn create_strategy(
 
     // Validate the request
     if let Err(e) = request.validate() {
-        return Err(ApiError::Validation { message: e, field: Some("strategy".to_string()) });
+        return Err(ApiError::Validation {
+            message: e,
+            field: Some("strategy".to_string()),
+        });
     }
 
     match state.strategy_manager.create_strategy(request).await {
-        Ok(strategy) => {
-            Ok(Json(ApiResponse::success(strategy)))
-        }
+        Ok(strategy) => Ok(Json(ApiResponse::success(strategy))),
         Err(e) => {
             warn!("Failed to create strategy: {}", e);
-            Err(ApiError::Strategy { message: format!("Failed to create strategy: {}", e) })
+            Err(ApiError::Strategy {
+                message: format!("Failed to create strategy: {}", e),
+            })
         }
     }
 }
@@ -96,13 +104,17 @@ pub async fn update_strategy(
 ) -> ApiResult<Json<ApiResponse<StrategyResponse>>> {
     info!("Updating strategy: {}", strategy_id);
 
-    match state.strategy_manager.update_strategy(&strategy_id, request).await {
-        Ok(strategy) => {
-            Ok(Json(ApiResponse::success(strategy)))
-        }
+    match state
+        .strategy_manager
+        .update_strategy(&strategy_id, request)
+        .await
+    {
+        Ok(strategy) => Ok(Json(ApiResponse::success(strategy))),
         Err(e) => {
             warn!("Failed to update strategy {}: {}", strategy_id, e);
-            Err(ApiError::Strategy { message: format!("Failed to update strategy: {}", e) })
+            Err(ApiError::Strategy {
+                message: format!("Failed to update strategy: {}", e),
+            })
         }
     }
 }
@@ -125,7 +137,9 @@ pub async fn delete_strategy(
         }
         Err(e) => {
             warn!("Failed to delete strategy {}: {}", strategy_id, e);
-            Err(ApiError::Strategy { message: format!("Failed to delete strategy: {}", e) })
+            Err(ApiError::Strategy {
+                message: format!("Failed to delete strategy: {}", e),
+            })
         }
     }
 }
@@ -138,13 +152,17 @@ pub async fn execute_strategy(
 ) -> ApiResult<Json<ApiResponse<StrategyExecutionResponse>>> {
     info!("Executing strategy: {}", strategy_id);
 
-    match state.strategy_manager.execute_strategy(&strategy_id, request).await {
-        Ok(execution_result) => {
-            Ok(Json(ApiResponse::success(execution_result)))
-        }
+    match state
+        .strategy_manager
+        .execute_strategy(&strategy_id, request)
+        .await
+    {
+        Ok(execution_result) => Ok(Json(ApiResponse::success(execution_result))),
         Err(e) => {
             warn!("Failed to execute strategy {}: {}", strategy_id, e);
-            Err(ApiError::Strategy { message: format!("Failed to execute strategy: {}", e) })
+            Err(ApiError::Strategy {
+                message: format!("Failed to execute strategy: {}", e),
+            })
         }
     }
 }
@@ -155,15 +173,25 @@ pub async fn get_strategy_executions(
     Path(strategy_id): Path<String>,
     Query(params): Query<PaginationParams>,
 ) -> ApiResult<Json<PaginatedResponse<StrategyExecutionResponse>>> {
-    info!("Retrieving execution history for strategy: {} with params: {:?}", strategy_id, params);
+    info!(
+        "Retrieving execution history for strategy: {} with params: {:?}",
+        strategy_id, params
+    );
 
-    match state.strategy_manager.get_execution_history(&strategy_id, params).await {
-        Ok(executions) => {
-            Ok(Json(executions))
-        }
+    match state
+        .strategy_manager
+        .get_execution_history(&strategy_id, params)
+        .await
+    {
+        Ok(executions) => Ok(Json(executions)),
         Err(e) => {
-            warn!("Failed to retrieve execution history for {}: {}", strategy_id, e);
-            Err(ApiError::Strategy { message: format!("Failed to retrieve execution history: {}", e) })
+            warn!(
+                "Failed to retrieve execution history for {}: {}",
+                strategy_id, e
+            );
+            Err(ApiError::Strategy {
+                message: format!("Failed to retrieve execution history: {}", e),
+            })
         }
     }
 }
@@ -176,13 +204,17 @@ pub async fn backtest_strategy(
 ) -> ApiResult<Json<ApiResponse<BacktestResponse>>> {
     info!("Backtesting strategy: {}", strategy_id);
 
-    match state.strategy_manager.backtest_strategy(&strategy_id, request).await {
-        Ok(backtest_result) => {
-            Ok(Json(ApiResponse::success(backtest_result)))
-        }
+    match state
+        .strategy_manager
+        .backtest_strategy(&strategy_id, request)
+        .await
+    {
+        Ok(backtest_result) => Ok(Json(ApiResponse::success(backtest_result))),
         Err(e) => {
             warn!("Failed to backtest strategy {}: {}", strategy_id, e);
-            Err(ApiError::Strategy { message: format!("Failed to backtest strategy: {}", e) })
+            Err(ApiError::Strategy {
+                message: format!("Failed to backtest strategy: {}", e),
+            })
         }
     }
 }
@@ -195,13 +227,17 @@ pub async fn optimize_strategy(
 ) -> ApiResult<Json<ApiResponse<StrategyOptimizationResponse>>> {
     info!("Optimizing strategy: {}", strategy_id);
 
-    match state.strategy_manager.optimize_strategy(&strategy_id, request).await {
-        Ok(optimization_result) => {
-            Ok(Json(ApiResponse::success(optimization_result)))
-        }
+    match state
+        .strategy_manager
+        .optimize_strategy(&strategy_id, request)
+        .await
+    {
+        Ok(optimization_result) => Ok(Json(ApiResponse::success(optimization_result))),
         Err(e) => {
             warn!("Failed to optimize strategy {}: {}", strategy_id, e);
-            Err(ApiError::Strategy { message: format!("Failed to optimize strategy: {}", e) })
+            Err(ApiError::Strategy {
+                message: format!("Failed to optimize strategy: {}", e),
+            })
         }
     }
 }
@@ -211,15 +247,22 @@ pub async fn get_strategy_performance(
     State(state): State<Arc<AppState>>,
     Path(strategy_id): Path<String>,
 ) -> ApiResult<Json<ApiResponse<DetailedStrategyPerformance>>> {
-    info!("Retrieving detailed performance for strategy: {}", strategy_id);
+    info!(
+        "Retrieving detailed performance for strategy: {}",
+        strategy_id
+    );
 
-    match state.strategy_manager.get_detailed_performance(&strategy_id).await {
-        Ok(performance) => {
-            Ok(Json(ApiResponse::success(performance)))
-        }
+    match state
+        .strategy_manager
+        .get_detailed_performance(&strategy_id)
+        .await
+    {
+        Ok(performance) => Ok(Json(ApiResponse::success(performance))),
         Err(e) => {
             warn!("Failed to retrieve performance for {}: {}", strategy_id, e);
-            Err(ApiError::Strategy { message: format!("Failed to retrieve strategy performance: {}", e) })
+            Err(ApiError::Strategy {
+                message: format!("Failed to retrieve strategy performance: {}", e),
+            })
         }
     }
 }
@@ -233,7 +276,11 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_list_strategies_success() {
-        let state = Arc::new(AppState::new(crate::config::ApiConfig::default()).await.unwrap());
+        let state = Arc::new(
+            AppState::new(crate::config::ApiConfig::default())
+                .await
+                .unwrap(),
+        );
         let params = PaginationParams::default();
         let result = list_strategies(State(state), Query(params)).await;
 
@@ -243,7 +290,11 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_get_strategy_success() {
-        let state = Arc::new(AppState::new(crate::config::ApiConfig::default()).await.unwrap());
+        let state = Arc::new(
+            AppState::new(crate::config::ApiConfig::default())
+                .await
+                .unwrap(),
+        );
         let result = get_strategy(State(state), Path("test-strategy".to_string())).await;
 
         assert!(result.is_ok());
@@ -252,7 +303,11 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_create_strategy_success() {
-        let state = Arc::new(AppState::new(crate::config::ApiConfig::default()).await.unwrap());
+        let state = Arc::new(
+            AppState::new(crate::config::ApiConfig::default())
+                .await
+                .unwrap(),
+        );
         let request = CreateStrategyRequest {
             name: "Test Strategy".to_string(),
             description: Some("Test strategy description".to_string()),

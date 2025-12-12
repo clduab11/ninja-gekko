@@ -12,7 +12,7 @@ async-trait = { workspace = true }
 # Trading dependencies
 exchange-connectors = { path = "../exchange-connectors" }
 trading-core = { path = "../trading-core" }
-neural-engine = { path = "../neural-engine" }
+neural-engine = { path = "../neural-engine", default-features = false }
 
 # Data structures and math
 rust_decimal = { workspace = true }
@@ -39,6 +39,12 @@ futures-util = { workspace = true }
 # Collections
 dashmap = { workspace = true }
 indexmap = "2.6"
+
+[features]
+default = []
+candle = ["neural-engine/candle"]
+cuda = ["neural-engine/cuda"]
+metal = ["neural-engine/metal"]
 
 [dev-dependencies]
 rust_decimal_macros.workspace = true

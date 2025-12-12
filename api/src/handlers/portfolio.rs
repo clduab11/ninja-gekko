@@ -13,10 +13,10 @@ use tracing::{info, warn};
 use crate::{
     error::{ApiError, ApiResult},
     models::{
-        ApiResponse, PaginationParams, PaginatedResponse,
-        PortfolioResponse, PositionResponse, PerformanceMetricsResponse,
-        PortfolioSummaryRequest, RebalanceRequest, AllocationResponse,
-        RebalanceResponse, PortfolioHistoryResponse, RiskMetricsResponse,
+        AllocationResponse, ApiResponse, PaginatedResponse, PaginationParams,
+        PerformanceMetricsResponse, PortfolioHistoryResponse, PortfolioResponse,
+        PortfolioSummaryRequest, PositionResponse, RebalanceRequest, RebalanceResponse,
+        RiskMetricsResponse,
     },
     AppState,
 };
@@ -28,12 +28,12 @@ pub async fn get_portfolio(
     info!("Retrieving complete portfolio information");
 
     match state.portfolio_manager.get_portfolio().await {
-        Ok(portfolio) => {
-            Ok(Json(ApiResponse::success(portfolio)))
-        }
+        Ok(portfolio) => Ok(Json(ApiResponse::success(portfolio))),
         Err(e) => {
             warn!("Failed to retrieve portfolio: {}", e);
-            Err(ApiError::Portfolio { message: format!("Failed to retrieve portfolio: {}", e) })
+            Err(ApiError::Portfolio {
+                message: format!("Failed to retrieve portfolio: {}", e),
+            })
         }
     }
 }
@@ -46,12 +46,12 @@ pub async fn get_portfolio_summary(
     info!("Retrieving portfolio summary with params: {:?}", params);
 
     match state.portfolio_manager.get_portfolio_summary(params).await {
-        Ok(summary) => {
-            Ok(Json(ApiResponse::success(summary)))
-        }
+        Ok(summary) => Ok(Json(ApiResponse::success(summary))),
         Err(e) => {
             warn!("Failed to retrieve portfolio summary: {}", e);
-            Err(ApiError::Portfolio { message: format!("Failed to retrieve portfolio summary: {}", e) })
+            Err(ApiError::Portfolio {
+                message: format!("Failed to retrieve portfolio summary: {}", e),
+            })
         }
     }
 }
@@ -64,12 +64,12 @@ pub async fn get_positions(
     info!("Retrieving positions with pagination: {:?}", params);
 
     match state.portfolio_manager.get_positions(params).await {
-        Ok(positions) => {
-            Ok(Json(positions))
-        }
+        Ok(positions) => Ok(Json(positions)),
         Err(e) => {
             warn!("Failed to retrieve positions: {}", e);
-            Err(ApiError::Portfolio { message: format!("Failed to retrieve positions: {}", e) })
+            Err(ApiError::Portfolio {
+                message: format!("Failed to retrieve positions: {}", e),
+            })
         }
     }
 }
@@ -82,13 +82,15 @@ pub async fn get_position(
     info!("Retrieving position for symbol: {}", symbol);
 
     match state.portfolio_manager.get_position(&symbol).await {
-        Ok(Some(position)) => {
-            Ok(Json(ApiResponse::success(position)))
-        }
-        Ok(None) => Err(ApiError::NotFound { resource: format!("Position for symbol {}", symbol) }),
+        Ok(Some(position)) => Ok(Json(ApiResponse::success(position))),
+        Ok(None) => Err(ApiError::NotFound {
+            resource: format!("Position for symbol {}", symbol),
+        }),
         Err(e) => {
             warn!("Failed to retrieve position for {}: {}", symbol, e);
-            Err(ApiError::Portfolio { message: format!("Failed to retrieve position: {}", e) })
+            Err(ApiError::Portfolio {
+                message: format!("Failed to retrieve position: {}", e),
+            })
         }
     }
 }
@@ -100,12 +102,12 @@ pub async fn get_performance_metrics(
     info!("Retrieving portfolio performance metrics");
 
     match state.portfolio_manager.get_performance_metrics().await {
-        Ok(metrics) => {
-            Ok(Json(ApiResponse::success(metrics)))
-        }
+        Ok(metrics) => Ok(Json(ApiResponse::success(metrics))),
         Err(e) => {
             warn!("Failed to retrieve performance metrics: {}", e);
-            Err(ApiError::Portfolio { message: format!("Failed to retrieve performance metrics: {}", e) })
+            Err(ApiError::Portfolio {
+                message: format!("Failed to retrieve performance metrics: {}", e),
+            })
         }
     }
 }
@@ -117,12 +119,12 @@ pub async fn get_allocation_breakdown(
     info!("Retrieving portfolio allocation breakdown");
 
     match state.portfolio_manager.get_allocation_breakdown().await {
-        Ok(allocations) => {
-            Ok(Json(ApiResponse::success(allocations)))
-        }
+        Ok(allocations) => Ok(Json(ApiResponse::success(allocations))),
         Err(e) => {
             warn!("Failed to retrieve allocation breakdown: {}", e);
-            Err(ApiError::Portfolio { message: format!("Failed to retrieve allocation breakdown: {}", e) })
+            Err(ApiError::Portfolio {
+                message: format!("Failed to retrieve allocation breakdown: {}", e),
+            })
         }
     }
 }
@@ -135,12 +137,12 @@ pub async fn rebalance_portfolio(
     info!("Rebalancing portfolio with request: {:?}", request);
 
     match state.portfolio_manager.rebalance_portfolio(request).await {
-        Ok(rebalance_result) => {
-            Ok(Json(ApiResponse::success(rebalance_result)))
-        }
+        Ok(rebalance_result) => Ok(Json(ApiResponse::success(rebalance_result))),
         Err(e) => {
             warn!("Failed to rebalance portfolio: {}", e);
-            Err(ApiError::Portfolio { message: format!("Failed to rebalance portfolio: {}", e) })
+            Err(ApiError::Portfolio {
+                message: format!("Failed to rebalance portfolio: {}", e),
+            })
         }
     }
 }
@@ -153,12 +155,12 @@ pub async fn get_portfolio_history(
     info!("Retrieving portfolio history with pagination: {:?}", params);
 
     match state.portfolio_manager.get_portfolio_history(params).await {
-        Ok(history) => {
-            Ok(Json(history))
-        }
+        Ok(history) => Ok(Json(history)),
         Err(e) => {
             warn!("Failed to retrieve portfolio history: {}", e);
-            Err(ApiError::Portfolio { message: format!("Failed to retrieve portfolio history: {}", e) })
+            Err(ApiError::Portfolio {
+                message: format!("Failed to retrieve portfolio history: {}", e),
+            })
         }
     }
 }
@@ -170,12 +172,12 @@ pub async fn get_risk_metrics(
     info!("Retrieving portfolio risk metrics");
 
     match state.portfolio_manager.get_risk_metrics().await {
-        Ok(metrics) => {
-            Ok(Json(ApiResponse::success(metrics)))
-        }
+        Ok(metrics) => Ok(Json(ApiResponse::success(metrics))),
         Err(e) => {
             warn!("Failed to retrieve risk metrics: {}", e);
-            Err(ApiError::Portfolio { message: format!("Failed to retrieve risk metrics: {}", e) })
+            Err(ApiError::Portfolio {
+                message: format!("Failed to retrieve risk metrics: {}", e),
+            })
         }
     }
 }
@@ -189,7 +191,11 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_get_portfolio_success() {
-        let state = Arc::new(AppState::new(crate::config::ApiConfig::default()).await.unwrap());
+        let state = Arc::new(
+            AppState::new(crate::config::ApiConfig::default())
+                .await
+                .unwrap(),
+        );
         let result = get_portfolio(State(state)).await;
 
         assert!(result.is_ok());
@@ -198,7 +204,11 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_get_portfolio_summary_success() {
-        let state = Arc::new(AppState::new(crate::config::ApiConfig::default()).await.unwrap());
+        let state = Arc::new(
+            AppState::new(crate::config::ApiConfig::default())
+                .await
+                .unwrap(),
+        );
         let params = PortfolioSummaryRequest::default();
         let result = get_portfolio_summary(State(state), Query(params)).await;
 
@@ -208,7 +218,11 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_get_positions_success() {
-        let state = Arc::new(AppState::new(crate::config::ApiConfig::default()).await.unwrap());
+        let state = Arc::new(
+            AppState::new(crate::config::ApiConfig::default())
+                .await
+                .unwrap(),
+        );
         let params = PaginationParams::default();
         let result = get_positions(State(state), Query(params)).await;
 

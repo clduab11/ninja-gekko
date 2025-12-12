@@ -3,12 +3,12 @@
 //! This module defines all the request/response structures used by the API endpoints,
 //! along with common pagination and error response types.
 
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use ninja_gekko_core::types::{Order, OrderSide, OrderType, Portfolio};
-use std::collections::HashMap;
-use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Standardized API response wrapper
 #[derive(Debug, Serialize, Deserialize)]
@@ -214,14 +214,18 @@ impl CreateTradeRequest {
 
         // Validate order side
         match self.side.to_lowercase().as_str() {
-            "buy" | "sell" => {},
+            "buy" | "sell" => {}
             _ => return Err("Side must be 'buy' or 'sell'".to_string()),
         }
 
         // Validate order type
         match self.order_type.to_lowercase().as_str() {
-            "market" | "limit" | "stop" | "stop_limit" => {},
-            _ => return Err("Order type must be 'market', 'limit', 'stop', or 'stop_limit'".to_string()),
+            "market" | "limit" | "stop" | "stop_limit" => {}
+            _ => {
+                return Err(
+                    "Order type must be 'market', 'limit', 'stop', or 'stop_limit'".to_string(),
+                )
+            }
         }
 
         // Validate price for non-market orders
@@ -292,8 +296,12 @@ impl UpdateTradeRequest {
 
         if let Some(ref order_type) = self.order_type {
             match order_type.to_lowercase().as_str() {
-                "market" | "limit" | "stop" | "stop_limit" => {},
-                _ => return Err("Order type must be 'market', 'limit', 'stop', or 'stop_limit'".to_string()),
+                "market" | "limit" | "stop" | "stop_limit" => {}
+                _ => {
+                    return Err(
+                        "Order type must be 'market', 'limit', 'stop', or 'stop_limit'".to_string(),
+                    )
+                }
             }
         }
 
@@ -354,7 +362,7 @@ impl From<Order> for TradeResponse {
             price: order.price.and_then(|p| p.to_f64()).unwrap_or_default(),
             order_type: format!("{:?}", order.order_type),
             status: format!("{:?}", order.status),
-            filled_quantity: 0.0, // Not available in Order
+            filled_quantity: 0.0,    // Not available in Order
             average_fill_price: 0.0, // Not available in Order
             timestamp: order.timestamp,
             updated_at: order.timestamp, // Use timestamp as fallback
@@ -475,7 +483,7 @@ impl From<Portfolio> for PortfolioSummaryResponse {
         Self {
             account_id: portfolio.account_id,
             total_value: portfolio.total_value.to_f64().unwrap_or_default(),
-            available_cash: 0.0, 
+            available_cash: 0.0,
             positions_value: 0.0,
             unrealized_pnl: 0.0,
             positions_count: portfolio.positions.len(),
@@ -592,7 +600,7 @@ impl SubscriptionRequest {
     /// Validate the subscription request
     pub fn validate(&self) -> Result<(), String> {
         match self.subscription_type.as_str() {
-            "market_data" | "trades" | "portfolio" => {},
+            "market_data" | "trades" | "portfolio" => {}
             _ => return Err("Invalid subscription type".to_string()),
         }
 
@@ -831,8 +839,6 @@ pub struct PortfolioHistoryResponse {
     pub timestamp: DateTime<Utc>,
 }
 
-
-
 /// Strategy execution request
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StrategyExecutionRequest {
@@ -964,10 +970,6 @@ pub struct DetailedStrategyPerformance {
     /// Trade history
     pub recent_trades: Vec<TradeResponse>,
 }
-
-
-
-
 
 /// Risk metrics response
 #[derive(Debug, Serialize, Deserialize)]

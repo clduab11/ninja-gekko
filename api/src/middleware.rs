@@ -10,18 +10,18 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum_extra::extract::CookieJar;
+use futures::future::BoxFuture;
+use std::collections::HashMap;
 use std::net::IpAddr;
 use std::sync::Arc;
+use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use tower_http::cors::{Any, CorsLayer};
 use tower::limit::RateLimitLayer;
+use tower::{Layer, Service};
+use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::{info, warn, Span};
-use std::collections::HashMap;
-use tower::{Layer, Service};
-use std::task::{Context, Poll};
-use futures::future::BoxFuture;
 use uuid::Uuid;
 
 /// CORS middleware configuration
@@ -59,10 +59,7 @@ pub mod cors {
 
     /// Create a more restrictive CORS layer for production
     pub fn production_cors_layer(allowed_origins: Vec<&str>) -> CorsLayer {
-        let allowed_origins: Vec<_> = allowed_origins
-            .iter()
-            .map(|s| s.parse().unwrap())
-            .collect();
+        let allowed_origins: Vec<_> = allowed_origins.iter().map(|s| s.parse().unwrap()).collect();
 
         CorsLayer::new()
             .allow_methods([
@@ -86,10 +83,7 @@ pub mod cors {
 
     /// Custom CORS middleware for development (allows specified origins with credentials)
     /// Note: Cannot use wildcard "*" with allow_credentials=true per CORS spec
-    pub async fn dev_cors_middleware(
-        request: Request,
-        next: Next,
-    ) -> impl IntoResponse {
+    pub async fn dev_cors_middleware(request: Request, next: Next) -> impl IntoResponse {
         // Extract the Origin header from the request before consuming it
         let origin = request
             .headers()
@@ -97,13 +91,17 @@ pub mod cors {
             .and_then(|v| v.to_str().ok())
             .map(|s| s.to_string());
 
-        info!("Development CORS: Processing request to {} from origin {:?}", request.uri(), origin);
+        info!(
+            "Development CORS: Processing request to {} from origin {:?}",
+            request.uri(),
+            origin
+        );
 
         // Create a response with CORS headers
         let mut response = next.run(request).await;
 
         let headers = response.headers_mut();
-        
+
         // Use the actual origin instead of wildcard when credentials are enabled
         // This is required by CORS spec: wildcard not allowed with credentials
         if let Some(origin_value) = origin {
@@ -118,23 +116,22 @@ pub mod cors {
                 "http://localhost:5173".parse().unwrap(),
             );
         }
-        
+
         headers.insert(
             header::ACCESS_CONTROL_ALLOW_METHODS,
             "GET, POST, PUT, DELETE, OPTIONS, PATCH".parse().unwrap(),
         );
         headers.insert(
             header::ACCESS_CONTROL_ALLOW_HEADERS,
-            "Authorization, Content-Type, Accept, X-Requested-With".parse().unwrap(),
+            "Authorization, Content-Type, Accept, X-Requested-With"
+                .parse()
+                .unwrap(),
         );
         headers.insert(
             header::ACCESS_CONTROL_ALLOW_CREDENTIALS,
             "true".parse().unwrap(),
         );
-        headers.insert(
-            header::ACCESS_CONTROL_MAX_AGE,
-            "3600".parse().unwrap(),
-        );
+        headers.insert(header::ACCESS_CONTROL_MAX_AGE, "3600".parse().unwrap());
 
         response
     }
@@ -209,7 +206,8 @@ pub mod rate_limit {
             let window_start = now - Duration::from_secs(self.config.window_secs);
 
             if let Some(requests) = self.requests.get(&ip) {
-                requests.iter()
+                requests
+                    .iter()
                     .filter(|&&timestamp| timestamp > window_start)
                     .count()
             } else {
@@ -252,7 +250,8 @@ pub mod rate_limit {
             let client_ip = Self::extract_client_ip(&request);
 
             // Get rate limit state
-            let mut state = request.extensions()
+            let mut state = request
+                .extensions()
                 .get::<Arc<RwLock<RateLimitState>>>()
                 .expect("RateLimitMiddleware not properly configured")
                 .write()
@@ -264,7 +263,8 @@ pub mod rate_limit {
                 return (
                     StatusCode::TOO_MANY_REQUESTS,
                     "Rate limit exceeded. Please try again later.",
-                ).into_response();
+                )
+                    .into_response();
             }
 
             drop(state); // Release lock
@@ -275,7 +275,8 @@ pub mod rate_limit {
         fn extract_client_ip(request: &Request) -> IpAddr {
             // In production, use proper IP extraction from headers like X-Forwarded-For
             // For now, use a default IP for testing
-            request.headers()
+            request
+                .headers()
                 .get("X-Forwarded-For")
                 .and_then(|v| v.to_str().ok())
                 .and_then(|s| s.split(',').next())
@@ -297,12 +298,10 @@ pub mod rate_limit {
 pub mod logging {
     use super::*;
 
-    
-
     /// Create logging middleware layer
     /// Create logging middleware layer
-    pub fn logging_layer<S>() -> impl Layer<S> + Clone 
-    where 
+    pub fn logging_layer<S>() -> impl Layer<S> + Clone
+    where
         S: Service<Request, Response = Response> + Send + Sync + 'static,
         S::Future: Send + 'static,
     {
@@ -329,17 +328,19 @@ pub mod logging {
                     latency.as_millis()
                 );
             })
-            .on_failure(|error: tower_http::classify::ServerErrorsFailureClass, _latency: Duration, _span: &Span| {
-                tracing::error!("request failed: {:?}", error);
-            })
+            .on_failure(
+                |error: tower_http::classify::ServerErrorsFailureClass,
+                 _latency: Duration,
+                 _span: &Span| {
+                    tracing::error!("request failed: {:?}", error);
+                },
+            )
     }
 }
 
 /// Security middleware
 pub mod security {
     use super::*;
-
-    
 
     #[derive(Clone)]
     pub struct SecurityHeadersLayer;
@@ -375,13 +376,22 @@ pub mod security {
             Box::pin(async move {
                 let mut response = future.await?;
                 let headers = response.headers_mut();
-                
+
                 headers.insert(header::X_CONTENT_TYPE_OPTIONS, "nosniff".parse().unwrap());
                 headers.insert(header::X_FRAME_OPTIONS, "DENY".parse().unwrap());
                 headers.insert(header::X_XSS_PROTECTION, "1; mode=block".parse().unwrap());
-                headers.insert(header::STRICT_TRANSPORT_SECURITY, "max-age=31536000; includeSubDomains".parse().unwrap());
-                headers.insert(header::REFERRER_POLICY, "strict-origin-when-cross-origin".parse().unwrap());
-                headers.insert(axum::http::header::HeaderName::from_static("permissions-policy"), "geolocation=(), microphone=(), camera=()".parse().unwrap());
+                headers.insert(
+                    header::STRICT_TRANSPORT_SECURITY,
+                    "max-age=31536000; includeSubDomains".parse().unwrap(),
+                );
+                headers.insert(
+                    header::REFERRER_POLICY,
+                    "strict-origin-when-cross-origin".parse().unwrap(),
+                );
+                headers.insert(
+                    axum::http::header::HeaderName::from_static("permissions-policy"),
+                    "geolocation=(), microphone=(), camera=()".parse().unwrap(),
+                );
 
                 Ok(response)
             })
@@ -389,29 +399,29 @@ pub mod security {
     }
 
     /// Request validation middleware
-    pub async fn validate_request(
-        request: Request,
-        next: Next,
-    ) -> impl IntoResponse {
+    pub async fn validate_request(request: Request, next: Next) -> impl IntoResponse {
         // Validate request size
         if let Some(content_length) = request.headers().get(header::CONTENT_LENGTH) {
             if let Ok(length) = content_length.to_str().unwrap_or("0").parse::<u64>() {
-                if length > 10 * 1024 * 1024 { // 10MB limit
-                    return (
-                        StatusCode::PAYLOAD_TOO_LARGE,
-                        "Request payload too large",
-                    ).into_response();
+                if length > 10 * 1024 * 1024 {
+                    // 10MB limit
+                    return (StatusCode::PAYLOAD_TOO_LARGE, "Request payload too large")
+                        .into_response();
                 }
             }
         }
 
         // Validate content type for POST/PUT requests
-        if matches!(request.method(), &Method::POST | &Method::PUT | &Method::PATCH) {
+        if matches!(
+            request.method(),
+            &Method::POST | &Method::PUT | &Method::PATCH
+        ) {
             if let Some(content_type) = request.headers().get(header::CONTENT_TYPE) {
                 let content_type_str = content_type.to_str().unwrap_or("");
-                if !content_type_str.contains("application/json") &&
-                   !content_type_str.contains("application/x-www-form-urlencoded") &&
-                   !content_type_str.contains("multipart/form-data") {
+                if !content_type_str.contains("application/json")
+                    && !content_type_str.contains("application/x-www-form-urlencoded")
+                    && !content_type_str.contains("multipart/form-data")
+                {
                     warn!("Suspicious content type: {}", content_type_str);
                     // Allow but log for monitoring
                 }
@@ -436,10 +446,7 @@ pub mod security {
             }
         }
 
-        (
-            StatusCode::UNAUTHORIZED,
-            "Valid API key required",
-        ).into_response()
+        (StatusCode::UNAUTHORIZED, "Valid API key required").into_response()
     }
 
     async fn validate_api_key(api_key: &str) -> bool {
@@ -450,14 +457,14 @@ pub mod security {
                 return true;
             }
         }
-        
+
         // Check for OpenRouter-style keys if configured
         if let Ok(openrouter_key) = std::env::var("OPENROUTER_API_KEY") {
             if api_key == openrouter_key {
                 return true;
             }
         }
-        
+
         false
     }
 }
@@ -544,10 +551,9 @@ pub mod utils {
             let future = self.inner.call(request);
             Box::pin(async move {
                 let mut response = future.await?;
-                response.headers_mut().insert(
-                    "X-Request-ID",
-                    request_id.parse().unwrap(),
-                );
+                response
+                    .headers_mut()
+                    .insert("X-Request-ID", request_id.parse().unwrap());
                 Ok(response)
             })
         }
@@ -624,14 +630,14 @@ impl MiddlewareBuilder {
         if self.rate_limiting_enabled {
             // Disabled due to Clone issue
             // router = router.layer(tower::limit::RateLimitLayer::new(
-            //     100, 
+            //     100,
             //     std::time::Duration::from_secs(1)
             // ));
         }
 
         if self.logging_enabled {
             use tower_http::trace::TraceLayer;
-            
+
             router = router.layer(
                 TraceLayer::new_for_http()
                     .make_span_with(|request: &Request| {
@@ -644,24 +650,26 @@ impl MiddlewareBuilder {
                         );
                         span
                     })
-                    .on_response(|response: &Response, latency: std::time::Duration, _span: &Span| {
-                        let status = response.status();
-                        let latency_ms = latency.as_millis();
-                        
-                        if status.is_success() || status.is_redirection() {
-                            tracing::info!(
-                                status = status.as_u16(),
-                                latency_ms = latency_ms,
-                                "request completed"
-                            );
-                        } else {
-                            tracing::error!(
-                                status = status.as_u16(),
-                                latency_ms = latency_ms,
-                                "request failed"
-                            );
-                        }
-                    })
+                    .on_response(
+                        |response: &Response, latency: std::time::Duration, _span: &Span| {
+                            let status = response.status();
+                            let latency_ms = latency.as_millis();
+
+                            if status.is_success() || status.is_redirection() {
+                                tracing::info!(
+                                    status = status.as_u16(),
+                                    latency_ms = latency_ms,
+                                    "request completed"
+                                );
+                            } else {
+                                tracing::error!(
+                                    status = status.as_u16(),
+                                    latency_ms = latency_ms,
+                                    "request failed"
+                                );
+                            }
+                        },
+                    ),
             );
         }
 

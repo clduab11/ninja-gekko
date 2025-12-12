@@ -16,8 +16,8 @@ use uuid::Uuid;
 
 pub mod binance_us;
 pub mod credentials;
-pub mod oanda;
 pub mod kraken;
+pub mod oanda;
 
 /// Exchange connector error types
 #[derive(Error, Debug)]
@@ -338,7 +338,7 @@ pub mod utils {
             HmacSha256::new_from_slice(secret.as_bytes()).expect("HMAC can take key of any size");
         mac.update(message.as_bytes());
         let result = mac.finalize();
-        use base64::{Engine as _, engine::general_purpose::STANDARD};
+        use base64::{engine::general_purpose::STANDARD, Engine as _};
         STANDARD.encode(result.into_bytes())
     }
 

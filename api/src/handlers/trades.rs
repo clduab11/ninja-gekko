@@ -8,22 +8,22 @@ use axum::{
     extract::{Path, Query, State},
     response::Json,
 };
-use std::sync::Arc;
-use serde_json::json;
-use tracing::{error, info};
-use rust_decimal::Decimal;
-use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
-use sqlx::FromRow;
 use chrono::{DateTime, Utc};
+use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
+use rust_decimal::Decimal;
+use serde_json::json;
+use sqlx::FromRow;
+use std::sync::Arc;
+use tracing::{error, info};
 
-use ninja_gekko_core::types::{Order, OrderSide, OrderType, OrderStatus};
 use crate::{
     error::{ApiError, ApiResult},
     models::{
-        ApiResponse, PaginationParams, PaginatedResponse, CreateTradeRequest,
-        UpdateTradeRequest, TradeResponse, PaginationMeta,
+        ApiResponse, CreateTradeRequest, PaginatedResponse, PaginationMeta, PaginationParams,
+        TradeResponse, UpdateTradeRequest,
     },
 };
+use ninja_gekko_core::types::{Order, OrderSide, OrderStatus, OrderType};
 
 /// Database row structure for trade executions
 #[derive(Debug, FromRow)]
@@ -56,7 +56,7 @@ impl From<TradeExecutionRow> for TradeResponse {
             price: row.price.and_then(|p| p.to_f64()).unwrap_or_default(),
             order_type: row.order_type,
             status: row.status,
-            filled_quantity: 0.0, // TODO: Add filled quantity to DB
+            filled_quantity: 0.0,    // TODO: Add filled quantity to DB
             average_fill_price: 0.0, // TODO: Add avg fill price to DB
             timestamp: row.created_at,
             updated_at: row.updated_at,
@@ -75,7 +75,9 @@ pub async fn list_trades(
 
     // Validate pagination parameters
     let mut pagination = params;
-    pagination.validate().map_err(|e| ApiError::validation(e.to_string(), None))?;
+    pagination
+        .validate()
+        .map_err(|e| ApiError::validation(e.to_string(), None))?;
 
     let limit = pagination.limit.unwrap_or(50) as i64;
     let offset = pagination.offset() as i64;
@@ -102,10 +104,14 @@ pub async fn list_trades(
         .fetch_one(state.db_manager.pool())
         .await
         .unwrap_or(0);
-    
+
     let total = total as usize;
     let limit_usize = limit as usize;
-    let total_pages = if total > 0 { (total + limit_usize - 1) / limit_usize } else { 0 };
+    let total_pages = if total > 0 {
+        (total + limit_usize - 1) / limit_usize
+    } else {
+        0
+    };
 
     let trades: Vec<TradeResponse> = rows.into_iter().map(TradeResponse::from).collect();
 
@@ -134,19 +140,22 @@ pub async fn create_trade(
     info!("Creating trade: {:?}", request);
 
     // Validate the request
-    request.validate().map_err(|msg| ApiError::validation(msg, None))?;
+    request
+        .validate()
+        .map_err(|msg| ApiError::validation(msg, None))?;
 
     // Convert to core Order type
     let order_id = format!("order_{}", chrono::Utc::now().timestamp_millis());
-    let order = request.to_order(order_id)
+    let order = request
+        .to_order(order_id)
         .map_err(|msg| ApiError::trading(msg))?;
-    
+
     // TODO: Implement actual trade execution through trading engine
     // Currently just saving to DB to demonstrate integration
-    
+
     let id = uuid::Uuid::new_v4();
     let price = order.price.unwrap_or_default();
-    
+
     let query = "
         INSERT INTO trade_executions 
         (id, bot_id, exchange, symbol, side, order_type, quantity, price, status, created_at, updated_at)
@@ -188,11 +197,12 @@ pub async fn get_trade(
     let uuid = uuid::Uuid::parse_str(&trade_id)
         .map_err(|_| ApiError::validation("Invalid UUID format".to_string(), None))?;
 
-    let row = sqlx::query_as::<_, TradeExecutionRow>("SELECT * FROM trade_executions WHERE id = $1")
-        .bind(uuid)
-        .fetch_optional(state.db_manager.pool())
-        .await
-        .map_err(|e| ApiError::database(e.to_string()))?;
+    let row =
+        sqlx::query_as::<_, TradeExecutionRow>("SELECT * FROM trade_executions WHERE id = $1")
+            .bind(uuid)
+            .fetch_optional(state.db_manager.pool())
+            .await
+            .map_err(|e| ApiError::database(e.to_string()))?;
 
     match row {
         Some(row) => Ok(Json(ApiResponse::success(TradeResponse::from(row)))),
@@ -227,7 +237,9 @@ pub async fn cancel_trades(
     Json(trade_ids): Json<Vec<String>>,
 ) -> ApiResult<Json<ApiResponse<serde_json::Value>>> {
     info!("Cancelling multiple trades: {:?}", trade_ids);
-    Err(ApiError::not_implemented("Batch cancellation not supported yet".to_string()))
+    Err(ApiError::not_implemented(
+        "Batch cancellation not supported yet".to_string(),
+    ))
 }
 
 /// Get trade statistics
@@ -238,27 +250,30 @@ pub async fn get_trade_stats(
     info!("Getting trade statistics");
 
     let pool = state.db_manager.pool();
-    
+
     // Derived stats
     let total_trades: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM trade_executions")
         .fetch_one(pool)
         .await
         .unwrap_or(0);
 
-    let filled_trades: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM trade_executions WHERE status = 'Filled'")
-        .fetch_one(pool)
-        .await
-        .unwrap_or(0);
-        
+    let filled_trades: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM trade_executions WHERE status = 'Filled'")
+            .fetch_one(pool)
+            .await
+            .unwrap_or(0);
+
     let open_trades: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM trade_executions WHERE status IN ('Open', 'Pending', 'PartiallyFilled')")
         .fetch_one(pool)
         .await
         .unwrap_or(0);
 
-    let total_volume: Option<Decimal> = sqlx::query_scalar("SELECT SUM(quantity * price) FROM trade_executions WHERE status = 'Filled'")
-        .fetch_one(pool)
-        .await
-        .unwrap_or(None);
+    let total_volume: Option<Decimal> = sqlx::query_scalar(
+        "SELECT SUM(quantity * price) FROM trade_executions WHERE status = 'Filled'",
+    )
+    .fetch_one(pool)
+    .await
+    .unwrap_or(None);
 
     let stats = json!({
         "total_trades": total_trades,
@@ -281,8 +296,6 @@ pub async fn get_trade_stats(
     let response = ApiResponse::success(stats);
     Ok(Json(response))
 }
-
-
 
 #[cfg(test)]
 mod tests {

@@ -13,11 +13,7 @@ use axum::{
 };
 use futures::{sink::SinkExt, stream::StreamExt};
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashMap,
-    sync::Arc,
-    time::Duration,
-};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::{
     sync::{broadcast, RwLock},
     time::interval,
@@ -27,7 +23,7 @@ use uuid::Uuid;
 
 use crate::{
     error::ApiResult,
-    models::{TradeResponse, PortfolioResponse, StrategyExecutionResponse, MarketDataResponse},
+    models::{MarketDataResponse, PortfolioResponse, StrategyExecutionResponse, TradeResponse},
     AppState,
 };
 
@@ -292,7 +288,11 @@ impl WebSocketManager {
     }
 
     /// Broadcast trade update to all subscribed clients
-    pub async fn broadcast_trade_update(&self, trade: TradeResponse, action: &str) -> ApiResult<()> {
+    pub async fn broadcast_trade_update(
+        &self,
+        trade: TradeResponse,
+        action: &str,
+    ) -> ApiResult<()> {
         let message = TradeUpdateMessage {
             trade,
             action: action.to_string(),
@@ -306,7 +306,11 @@ impl WebSocketManager {
     }
 
     /// Broadcast portfolio update to all subscribed clients
-    pub async fn broadcast_portfolio_update(&self, portfolio: PortfolioResponse, account_id: &str) -> ApiResult<()> {
+    pub async fn broadcast_portfolio_update(
+        &self,
+        portfolio: PortfolioResponse,
+        account_id: &str,
+    ) -> ApiResult<()> {
         let message = PortfolioUpdateMessage {
             portfolio,
             account_id: account_id.to_string(),
@@ -320,7 +324,11 @@ impl WebSocketManager {
     }
 
     /// Broadcast strategy update to all subscribed clients
-    pub async fn broadcast_strategy_update(&self, execution: StrategyExecutionResponse, status: &str) -> ApiResult<()> {
+    pub async fn broadcast_strategy_update(
+        &self,
+        execution: StrategyExecutionResponse,
+        status: &str,
+    ) -> ApiResult<()> {
         let message = StrategyUpdateMessage {
             execution,
             status: status.to_string(),
@@ -334,10 +342,11 @@ impl WebSocketManager {
     }
 
     /// Broadcast intel stream update to all subscribed clients
-    pub async fn broadcast_intel_update(&self, item: crate::handlers::intel::IntelItem) -> ApiResult<()> {
-        let message = IntelUpdateMessage {
-            item,
-        };
+    pub async fn broadcast_intel_update(
+        &self,
+        item: crate::handlers::intel::IntelItem,
+    ) -> ApiResult<()> {
+        let message = IntelUpdateMessage { item };
 
         if let Err(e) = self.intel_updates_tx.send(message) {
             warn!("Failed to broadcast intel update: {}", e);
@@ -408,7 +417,11 @@ impl WebSocketManager {
                 // Mock implementation until method is available
                 let mut symbols = symbols_clone.write().await;
                 if symbols.is_empty() {
-                    *symbols = vec!["XBT/USD".to_string(), "ETH/USD".to_string(), "SOL/USD".to_string()];
+                    *symbols = vec![
+                        "XBT/USD".to_string(),
+                        "ETH/USD".to_string(),
+                        "SOL/USD".to_string(),
+                    ];
                 }
             }
         });
@@ -421,7 +434,7 @@ impl WebSocketManager {
         tokio::spawn(async move {
             // Wait a bit before starting
             tokio::time::sleep(Duration::from_secs(5)).await;
-            
+
             let mut interval = interval(Duration::from_secs(15));
 
             loop {
@@ -429,10 +442,18 @@ impl WebSocketManager {
 
                 // Generate a simulated intel item
                 // In production, this would come from an event bus or external service
-                let sources = vec!["BLOOMBERG", "COINDESK", "WHALE ALERT", "KRAKEN INTEL", "SOCIAL", "ON-CHAIN"];
-                let rand_idx = (chrono::Utc::now().timestamp_subsec_millis() as usize) % sources.len();
+                let sources = vec![
+                    "BLOOMBERG",
+                    "COINDESK",
+                    "WHALE ALERT",
+                    "KRAKEN INTEL",
+                    "SOCIAL",
+                    "ON-CHAIN",
+                ];
+                let rand_idx =
+                    (chrono::Utc::now().timestamp_subsec_millis() as usize) % sources.len();
                 let source = sources[rand_idx];
-                
+
                 let (title, sentiment) = match source {
                     "BLOOMBERG" => ("Fed Chair Powell hints at rate cuts later this year", 0.7),
                     "COINDESK" => ("Major protocol upgrade scheduled for Ethereum network", 0.8),
@@ -492,7 +513,10 @@ impl WebSocketManager {
                     connections.remove(&connection_id);
                 }
 
-                info!("Connection cleanup completed. Active connections: {}", connections.len());
+                info!(
+                    "Connection cleanup completed. Active connections: {}",
+                    connections.len()
+                );
             }
         });
     }
@@ -552,7 +576,11 @@ async fn process_socket(
         subscriptions: subscriptions.clone(),
     };
 
-    ws_manager.connections.write().await.insert(connection_id.clone(), connection_info);
+    ws_manager
+        .connections
+        .write()
+        .await
+        .insert(connection_id.clone(), connection_info);
 
     // Send welcome message
     let welcome_message = WebSocketMessage::Ping {
@@ -732,7 +760,9 @@ async fn handle_client_message(
     ws_manager: &WebSocketManager,
 ) -> ApiResult<()> {
     match serde_json::from_str::<ClientMessage>(text) {
-        Ok(ClientMessage::Subscribe { subscriptions: new_subscriptions }) => {
+        Ok(ClientMessage::Subscribe {
+            subscriptions: new_subscriptions,
+        }) => {
             // Add new subscriptions
             for sub in new_subscriptions {
                 if !subscriptions.contains(&sub) {
@@ -750,7 +780,9 @@ async fn handle_client_message(
             }
         }
 
-        Ok(ClientMessage::Unsubscribe { subscriptions: subscriptions_to_remove }) => {
+        Ok(ClientMessage::Unsubscribe {
+            subscriptions: subscriptions_to_remove,
+        }) => {
             // Remove subscriptions
             subscriptions.retain(|sub| !subscriptions_to_remove.contains(sub));
         }
@@ -808,15 +840,23 @@ async fn handle_client_message(
 }
 
 /// Check if message should be sent to client based on subscriptions
-fn should_send_to_client(subscription_type: &SubscriptionType, client_subscriptions: &[SubscriptionType]) -> bool {
+fn should_send_to_client(
+    subscription_type: &SubscriptionType,
+    client_subscriptions: &[SubscriptionType],
+) -> bool {
     for client_sub in client_subscriptions {
         match (client_sub, subscription_type) {
             (SubscriptionType::AllMarketData, SubscriptionType::MarketData(_)) => return true,
             (SubscriptionType::AllTrades, SubscriptionType::TradeUpdates(_)) => return true,
-            (SubscriptionType::AllPortfolios, SubscriptionType::PortfolioUpdates(_)) => return true,
+            (SubscriptionType::AllPortfolios, SubscriptionType::PortfolioUpdates(_)) => {
+                return true
+            }
             (SubscriptionType::AllStrategies, SubscriptionType::StrategyUpdates(_)) => return true,
             (SubscriptionType::IntelStream, SubscriptionType::IntelStream) => return true,
-            (SubscriptionType::MarketData(client_symbols), SubscriptionType::MarketData(msg_symbols)) => {
+            (
+                SubscriptionType::MarketData(client_symbols),
+                SubscriptionType::MarketData(msg_symbols),
+            ) => {
                 // Check if there's any symbol overlap
                 for msg_symbol in msg_symbols {
                     if client_symbols.contains(&msg_symbol) {

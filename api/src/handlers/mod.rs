@@ -8,34 +8,40 @@
 //! - Strategy management (trading strategies, execution, backtesting)
 //! - Utility endpoints (health check, API info)
 
+use crate::models::ApiResponse;
 use axum::response::Json;
 use serde_json::json;
-use crate::models::ApiResponse;
 
-pub mod auth_utils;
-pub mod trades;
-pub mod portfolio;
-pub mod market_data;
-pub mod strategies;
+pub mod accounts;
 pub mod arbitrage;
+pub mod auth_utils;
 pub mod chat;
 pub mod intel;
 pub mod intel_rss;
-pub mod accounts;
+pub mod market_data;
 pub mod orchestrator;
+pub mod portfolio;
+pub mod strategies;
+pub mod trades;
 
 // Re-export all handler functions
-pub use chat::{get_chat_history, send_message, get_persona, update_persona, pause_trading, get_news_headlines, research_sonar, summon_swarm, get_models};
-pub use trades::{list_trades, create_trade, get_trade, update_trade, delete_trade};
-pub use portfolio::{get_portfolio, get_positions, get_position, get_performance_metrics};
-pub use market_data::{get_market_data, get_batch_market_data, get_historical_data};
-pub use strategies::{list_strategies, create_strategy, get_strategy, update_strategy, delete_strategy, execute_strategy};
 pub use arbitrage::{
-    start_arbitrage_strategy, stop_arbitrage_strategy, get_arbitrage_opportunities,
-    get_volatility_scores, get_arbitrage_performance, get_balance_distribution,
-    emergency_capital_reallocation, emergency_shutdown, get_risk_status,
-    trigger_circuit_breaker, reset_circuit_breaker
+    emergency_capital_reallocation, emergency_shutdown, get_arbitrage_opportunities,
+    get_arbitrage_performance, get_balance_distribution, get_risk_status, get_volatility_scores,
+    reset_circuit_breaker, start_arbitrage_strategy, stop_arbitrage_strategy,
+    trigger_circuit_breaker,
 };
+pub use chat::{
+    get_chat_history, get_models, get_news_headlines, get_persona, pause_trading, research_sonar,
+    send_message, summon_swarm, update_persona,
+};
+pub use market_data::{get_batch_market_data, get_historical_data, get_market_data};
+pub use portfolio::{get_performance_metrics, get_portfolio, get_position, get_positions};
+pub use strategies::{
+    create_strategy, delete_strategy, execute_strategy, get_strategy, list_strategies,
+    update_strategy,
+};
+pub use trades::{create_trade, delete_trade, get_trade, list_trades, update_trade};
 
 /// Health check endpoint
 ///

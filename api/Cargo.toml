@@ -10,7 +10,7 @@ categories = ["api-bindings", "web-programming", "finance"]
 # Core dependencies
 ninja-gekko-core = { path = "../core" }
 ninja-gekko-database = { path = "../database" }
-arbitrage-engine = { path = "../crates/arbitrage-engine" }
+arbitrage-engine = { path = "../crates/arbitrage-engine", default-features = false }
 exchange-connectors = { path = "../crates/exchange-connectors" }
 strategy-engine = { path = "../crates/strategy-engine" }
 event-bus = { path = "../crates/event-bus" }
@@ -97,6 +97,9 @@ default = ["websocket"]
 websocket = []
 testing = ["mock"]
 mock = []
+candle = ["arbitrage-engine/candle"]
+cuda = ["arbitrage-engine/cuda"]
+metal = ["arbitrage-engine/metal"]
 
 [profile.release]
 opt-level = 3

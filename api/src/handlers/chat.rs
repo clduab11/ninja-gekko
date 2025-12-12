@@ -3,16 +3,13 @@
 //! This module provides handlers for the chat UI and other frontend-specific features
 //! that don't fit into the core REST API structure yet.
 
-use axum::{
-    extract::{State},
-    response::Json,
-};
-use std::sync::Arc;
+use axum::{extract::State, response::Json};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::FromRow;
-use chrono::{DateTime, Utc};
-use tracing::{info, error};
+use std::sync::Arc;
+use tracing::{error, info};
 
 use crate::{
     error::{ApiError, ApiResult},
@@ -144,7 +141,7 @@ pub async fn get_chat_history(
     State(state): State<Arc<AppState>>,
 ) -> ApiResult<Json<Vec<ChatMessage>>> {
     let rows = sqlx::query_as::<_, ChatHistoryRow>(
-        "SELECT * FROM chat_history ORDER BY timestamp ASC LIMIT 100"
+        "SELECT * FROM chat_history ORDER BY timestamp ASC LIMIT 100",
     )
     .fetch_all(state.db_manager.pool())
     .await
@@ -166,7 +163,7 @@ pub async fn send_message(
     // 1. Save User Message
     let user_msg_id = uuid::Uuid::new_v4();
     sqlx::query(
-        "INSERT INTO chat_history (id, role, content, timestamp) VALUES ($1, $2, $3, NOW())"
+        "INSERT INTO chat_history (id, role, content, timestamp) VALUES ($1, $2, $3, NOW())",
     )
     .bind(user_msg_id)
     .bind("user")
@@ -178,13 +175,16 @@ pub async fn send_message(
     // 2. Generate AI Response (Mock for now, or could integrate actual LLM here if ready)
     // The previous implementation implied it was a mock or simple response.
     // Ideally this should call an LLM service.
-    
+
     // For now, we will stick to the previous simple logic but persist it.
-    let reply_content = format!("I received your message: '{}'. Market analysis is running.", request.prompt);
+    let reply_content = format!(
+        "I received your message: '{}'. Market analysis is running.",
+        request.prompt
+    );
     let reply_id = uuid::Uuid::new_v4();
-    
+
     sqlx::query(
-        "INSERT INTO chat_history (id, role, content, timestamp) VALUES ($1, $2, $3, NOW())"
+        "INSERT INTO chat_history (id, role, content, timestamp) VALUES ($1, $2, $3, NOW())",
     )
     .bind(reply_id)
     .bind("assistant")
@@ -192,7 +192,7 @@ pub async fn send_message(
     .execute(state.db_manager.pool())
     .await
     .map_err(|e| ApiError::database(e.to_string()))?;
-    
+
     // Fetch the inserted reply to get the timestamp correct or just use NOW
     let reply_msg = ChatMessage {
         id: reply_id.to_string(),
@@ -260,16 +260,13 @@ pub async fn research_sonar(
     }))
 }
 
-
 use crate::llm::models::{LlmModel, MODEL_REGISTRY};
 
 pub async fn get_models() -> ApiResult<Json<Vec<LlmModel>>> {
     Ok(Json(MODEL_REGISTRY.to_vec()))
 }
 
-pub async fn summon_swarm(
-    Json(request): Json<SwarmRequest>,
-) -> ApiResult<Json<SwarmResponse>> {
+pub async fn summon_swarm(Json(request): Json<SwarmRequest>) -> ApiResult<Json<SwarmResponse>> {
     Ok(Json(SwarmResponse {
         swarm_id: uuid::Uuid::new_v4().to_string(),
         task: request.task,

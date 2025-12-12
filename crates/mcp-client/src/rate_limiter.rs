@@ -174,7 +174,10 @@ mod tests {
     #[test]
     fn test_default_limits() {
         let limiter = SonarRateLimiter::new();
-        assert_eq!(limiter.get_default_limit_for_model("sonar-deep-research"), 5);
+        assert_eq!(
+            limiter.get_default_limit_for_model("sonar-deep-research"),
+            5
+        );
         assert_eq!(limiter.get_default_limit_for_model("sonar-pro"), 50);
         assert_eq!(limiter.get_default_limit_for_model("sonar"), 50);
     }
@@ -183,7 +186,7 @@ mod tests {
     fn test_remaining_requests() {
         let limiter = SonarRateLimiter::new();
         limiter.set_model_limit("test", 10);
-        
+
         assert!(limiter.try_acquire("test"));
         assert!(limiter.try_acquire("test"));
         assert_eq!(limiter.remaining("test"), 8);

@@ -2,9 +2,13 @@ version: "3.8"
 
 services:
   trading-engine:
+    profiles: ["full"]  # Only start with --profile full, not in core mode
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        BUILD_TARGET: ${BUILD_TARGET:-cpu}
+        FEATURES: ${DOCKER_FEATURES:-}
     ports:
       - "8080:8080"
       - "8787:8787" # Chat orchestration API
@@ -17,6 +21,7 @@ services:
       - GG_API_BIND_ADDRESS=0.0.0.0:8080
       - GG_API_JWT_SECRET=dev-secret-do-not-use-in-prod-ninja-gekko
       - GG_API_DATABASE_URL=postgresql://postgres:postgres@postgres:5432/ninja_gekko
+      - NEURAL_DEVICE_TYPE=${NEURAL_DEVICE_TYPE:-auto}
     depends_on:
       postgres:
         condition: service_healthy
@@ -36,6 +41,10 @@ services:
         reservations:
           cpus: "0.50"
           memory: 512M
+          devices:
+            - driver: nvidia
+              count: ${NVIDIA_GPU_COUNT:-all}
+              capabilities: [gpu]
     logging:
       driver: "json-file"
       options:
@@ -63,6 +72,7 @@ services:
       - frontend
 
   postgres:
+    profiles: ["core", "full"]  # Available in both core and full modes
     image: postgres:15-alpine
     environment:
       - POSTGRES_USER=postgres
@@ -87,6 +97,7 @@ services:
       - backend
 
   redis:
+    profiles: ["core", "full"]  # Available in both core and full modes
     image: redis:7-alpine
     ports:
       - "6379:6379"
@@ -105,6 +116,7 @@ services:
       - backend
 
   prometheus:
+    profiles: ["core", "full"]  # Available in both core and full modes
     image: prom/prometheus:latest
     ports:
       - "9090:9090"
@@ -122,6 +134,7 @@ services:
       - backend
 
   grafana:
+    profiles: ["core", "full"]  # Available in both core and full modes
     image: grafana/grafana:latest
     ports:
       - "3000:3000"

@@ -10,6 +10,12 @@ use thiserror::Error;
 use tokio::sync::RwLock;
 use tracing::{debug, info};
 
+#[cfg(feature = "candle")]
+use candle_core::{DType, Device};
+
+#[cfg(feature = "candle")]
+use std::env;
+
 /// Neural engine error types
 #[derive(Error, Debug)]
 pub enum NeuralError {
@@ -30,6 +36,91 @@ pub enum NeuralError {
 }
 
 pub type NeuralResult<T> = Result<T, NeuralError>;
+
+/// Device configuration for neural computation
+#[derive(Debug, Clone)]
+pub struct DeviceConfig {
+    pub device_type: DeviceType,
+}
+
+/// Device type enumeration
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum DeviceType {
+    Cpu,
+    Cuda(usize), // GPU index
+    Metal,
+}
+
+/// Detect and initialize the appropriate device based on environment
+#[cfg(feature = "candle")]
+pub fn detect_device() -> NeuralResult<Device> {
+    let device_type = env::var("NEURAL_DEVICE_TYPE")
+        .unwrap_or_else(|_| "auto".to_string())
+        .to_lowercase();
+
+    match device_type.as_str() {
+        "auto" => {
+            #[cfg(feature = "cuda")]
+            {
+                if let Ok(device) = Device::new_cuda(0) {
+                    info!("🚀 Using device: CUDA GPU 0");
+                    return Ok(device);
+                }
+            }
+
+            #[cfg(feature = "metal")]
+            {
+                if let Ok(device) = Device::new_metal(0) {
+                    info!("🚀 Using device: Metal GPU");
+                    return Ok(device);
+                }
+            }
+
+            info!("💻 Using device: CPU (no GPU detected)");
+            Ok(Device::Cpu)
+        }
+        "cuda" => {
+            #[cfg(feature = "cuda")]
+            {
+                Device::new_cuda(0).map_err(|e| {
+                    NeuralError::ModelLoadingFailed(format!("CUDA init failed: {}", e))
+                })
+            }
+            #[cfg(not(feature = "cuda"))]
+            {
+                Err(NeuralError::ModelLoadingFailed(
+                    "CUDA not compiled".to_string(),
+                ))
+            }
+        }
+        "metal" => {
+            #[cfg(feature = "metal")]
+            {
+                Device::new_metal(0).map_err(|e| {
+                    NeuralError::ModelLoadingFailed(format!("Metal init failed: {}", e))
+                })
+            }
+            #[cfg(not(feature = "metal"))]
+            {
+                Err(NeuralError::ModelLoadingFailed(
+                    "Metal not compiled".to_string(),
+                ))
+            }
+        }
+        "cpu" => Ok(Device::Cpu),
+        _ => {
+            info!("Unknown device type '{}', defaulting to CPU", device_type);
+            Ok(Device::Cpu)
+        }
+    }
+}
+
+/// CPU fallback when candle feature is not enabled
+#[cfg(not(feature = "candle"))]
+pub fn detect_device() -> NeuralResult<()> {
+    info!("💻 Using device: CPU (candle feature not enabled)");
+    Ok(())
+}
 
 /// Neural network backends available
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -111,6 +202,8 @@ pub struct NeuralEngine {
     models: RwLock<HashMap<String, NeuralModel>>,
     volatility_models: RwLock<HashMap<String, VolatilityModel>>,
     arbitrage_models: RwLock<HashMap<String, ArbitrageModel>>,
+    #[cfg(feature = "candle")]
+    device: Device,
 }
 
 /// Individual neural network model
@@ -151,18 +244,40 @@ pub struct ArbitrageModel {
 
 impl NeuralEngine {
     /// Create a new enhanced neural engine
-    pub fn new(backend: NeuralBackend) -> Self {
+    #[cfg(feature = "candle")]
+    pub fn new(backend: NeuralBackend) -> NeuralResult<Self> {
         info!(
             "🧠 Initializing Enhanced Neural Engine for Gordon Gekko arbitrage ({})",
             format!("{:?}", backend)
         );
 
-        Self {
+        let device = detect_device()?;
+
+        Ok(Self {
             backend,
             models: RwLock::new(HashMap::new()),
             volatility_models: RwLock::new(HashMap::new()),
             arbitrage_models: RwLock::new(HashMap::new()),
-        }
+            device,
+        })
+    }
+
+    /// Create a new enhanced neural engine (CPU-only fallback)
+    #[cfg(not(feature = "candle"))]
+    pub fn new(backend: NeuralBackend) -> NeuralResult<Self> {
+        info!(
+            "🧠 Initializing Enhanced Neural Engine for Gordon Gekko arbitrage ({})",
+            format!("{:?}", backend)
+        );
+
+        detect_device()?;
+
+        Ok(Self {
+            backend,
+            models: RwLock::new(HashMap::new()),
+            volatility_models: RwLock::new(HashMap::new()),
+            arbitrage_models: RwLock::new(HashMap::new()),
+        })
     }
 
     /// Load all models for arbitrage trading
@@ -457,13 +572,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_neural_engine_creation() {
-        let engine = NeuralEngine::new(NeuralBackend::RuvFann);
+        let engine = NeuralEngine::new(NeuralBackend::RuvFann).expect("Failed to create engine");
         assert!(engine.load_arbitrage_models().await.is_ok());
     }
 
     #[tokio::test]
     async fn test_volatility_prediction() {
-        let engine = NeuralEngine::new(NeuralBackend::RuvFann);
+        let engine = NeuralEngine::new(NeuralBackend::RuvFann).expect("Failed to create engine");
         engine.load_arbitrage_models().await.unwrap();
 
         let market_data = MarketDataInput {
@@ -489,7 +604,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_cross_exchange_prediction() {
-        let engine = NeuralEngine::new(NeuralBackend::RuvFann);
+        let engine = NeuralEngine::new(NeuralBackend::RuvFann).expect("Failed to create engine");
         engine.load_arbitrage_models().await.unwrap();
 
         let primary_data = MarketDataInput {

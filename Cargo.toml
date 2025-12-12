@@ -149,12 +149,12 @@ dotenv = { workspace = true }
 
 # Exchange connectors and arbitrage engine
 exchange-connectors = { path = "crates/exchange-connectors" }
-arbitrage-engine = { path = "crates/arbitrage-engine" }
+arbitrage-engine = { path = "crates/arbitrage-engine", default-features = false }
 event-bus = { path = "crates/event-bus" }
 strategy-engine = { path = "crates/strategy-engine" }
 mcp-client = { path = "crates/mcp-client" }
 ninja-gekko-core = { path = "core" }
-ninja-gekko-api = { path = "api" }
+ninja-gekko-api = { path = "api", default-features = false }
 
 # HTTP API surface for the chat UI
 axum = { version = "0.7", features = ["macros"] }
@@ -163,3 +163,9 @@ tower-http = { version = "0.5", features = ["cors", "trace"] }
 # Observability
 metrics = { workspace = true }
 metrics-exporter-prometheus = { workspace = true }
+
+[features]
+default = []
+candle = ["arbitrage-engine/candle", "ninja-gekko-api/candle"]
+cuda = ["arbitrage-engine/cuda", "ninja-gekko-api/cuda"]
+metal = ["arbitrage-engine/metal", "ninja-gekko-api/metal"]

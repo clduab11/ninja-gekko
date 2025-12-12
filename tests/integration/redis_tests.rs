@@ -6,8 +6,7 @@ use testcontainers::{clients::Cli, GenericImage};
 #[ignore = "requires docker"]
 async fn test_redis_connection() {
     let docker = Cli::default();
-    let redis_image = GenericImage::new("redis", "7")
-        .with_exposed_port(6379);
+    let redis_image = GenericImage::new("redis", "7").with_exposed_port(6379);
     let node = docker.run(redis_image);
 
     let host_port = node.get_host_port_ipv4(6379);
@@ -41,8 +40,7 @@ async fn test_redis_connection() {
 #[ignore = "requires docker"]
 async fn test_redis_hash_operations() {
     let docker = Cli::default();
-    let redis_image = GenericImage::new("redis", "7")
-        .with_exposed_port(6379);
+    let redis_image = GenericImage::new("redis", "7").with_exposed_port(6379);
     let node = docker.run(redis_image);
 
     let host_port = node.get_host_port_ipv4(6379);

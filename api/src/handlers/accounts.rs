@@ -1,14 +1,10 @@
+use crate::{error::ApiResult, models::ApiResponse, AppState};
 use axum::{
-    extract::{State, Query},
+    extract::{Query, State},
     response::Json,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use crate::{
-    AppState,
-    error::ApiResult,
-    models::ApiResponse,
-};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Position {
@@ -44,7 +40,7 @@ pub struct AggregateAccount {
 }
 
 /// Get account snapshot for a specific exchange or all
-/// 
+///
 /// Fetches real account data from connected exchange APIs.
 /// Requires valid exchange credentials to be configured.
 pub async fn get_account_snapshot(
@@ -55,14 +51,17 @@ pub async fn get_account_snapshot(
     // Currently, the exchange connector is encapsulated in MarketDataService
     // Future: Add BalanceService or AccountService to AppState
     // For now, return empty until account service is implemented
-    
-    tracing::info!("Account snapshot requested for exchange: {:?}", params.exchange);
-    
+
+    tracing::info!(
+        "Account snapshot requested for exchange: {:?}",
+        params.exchange
+    );
+
     Ok(Json(ApiResponse::success(vec![])))
 }
 
 /// Get aggregate account viewing
-/// 
+///
 /// Aggregates account data across all connected exchanges.
 /// Returns real data when exchange connectors are properly configured.
 pub async fn get_aggregate_account(
@@ -70,7 +69,7 @@ pub async fn get_aggregate_account(
 ) -> ApiResult<Json<ApiResponse<AggregateAccount>>> {
     // Aggregate account data requires balance queries from all exchanges
     // Future: Implement AccountService that queries all connected exchanges
-    
+
     tracing::info!("Aggregate account data requested");
 
     Ok(Json(ApiResponse::success(AggregateAccount {

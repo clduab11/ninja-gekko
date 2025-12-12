@@ -1,12 +1,12 @@
-use std::sync::Arc;
-use ninja_gekko_database::DatabaseManager;
 use crate::error::{ApiError, ApiResult};
 use crate::models::*;
 use chrono::Utc;
+use ninja_gekko_database::DatabaseManager;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 /// Manager for portfolio operations
-/// 
+///
 /// Integrates with database and exchange connectors to provide
 /// real portfolio data. Returns empty results when no data available.
 pub struct PortfolioManager {
@@ -41,12 +41,18 @@ impl PortfolioManager {
         })
     }
 
-    pub async fn get_portfolio_summary(&self, _params: PortfolioSummaryRequest) -> ApiResult<PortfolioResponse> {
+    pub async fn get_portfolio_summary(
+        &self,
+        _params: PortfolioSummaryRequest,
+    ) -> ApiResult<PortfolioResponse> {
         self.get_portfolio().await
     }
 
     /// Get positions from database
-    pub async fn get_positions(&self, _params: PaginationParams) -> ApiResult<PaginatedResponse<PositionResponse>> {
+    pub async fn get_positions(
+        &self,
+        _params: PaginationParams,
+    ) -> ApiResult<PaginatedResponse<PositionResponse>> {
         // TODO: Query positions from database
         Ok(PaginatedResponse {
             response: ApiResponse::success(vec![]),
@@ -57,7 +63,7 @@ impl PortfolioManager {
                 total_pages: 0,
                 has_next: false,
                 has_prev: false,
-            }
+            },
         })
     }
 
@@ -86,13 +92,19 @@ impl PortfolioManager {
         Ok(vec![])
     }
 
-    pub async fn rebalance_portfolio(&self, _request: RebalanceRequest) -> ApiResult<RebalanceResponse> {
+    pub async fn rebalance_portfolio(
+        &self,
+        _request: RebalanceRequest,
+    ) -> ApiResult<RebalanceResponse> {
         Err(ApiError::NotImplemented {
             message: "Portfolio rebalancing not yet implemented".to_string(),
         })
     }
 
-    pub async fn get_portfolio_history(&self, _params: PaginationParams) -> ApiResult<PaginatedResponse<PortfolioHistoryResponse>> {
+    pub async fn get_portfolio_history(
+        &self,
+        _params: PaginationParams,
+    ) -> ApiResult<PaginatedResponse<PortfolioHistoryResponse>> {
         // TODO: Query history from database
         Ok(PaginatedResponse {
             response: ApiResponse::success(vec![]),
@@ -103,7 +115,7 @@ impl PortfolioManager {
                 total_pages: 0,
                 has_next: false,
                 has_prev: false,
-            }
+            },
         })
     }
 
@@ -120,9 +132,8 @@ impl PortfolioManager {
     }
 }
 
-
 /// Service for market data operations
-/// 
+///
 /// Fetches real market data from exchange connectors.
 /// Falls back to empty results when no connector available.
 pub struct MarketDataService {
@@ -131,7 +142,10 @@ pub struct MarketDataService {
 }
 
 impl MarketDataService {
-    pub fn new(db: Arc<DatabaseManager>, connector: Option<Arc<Box<dyn exchange_connectors::ExchangeConnector>>>) -> Self {
+    pub fn new(
+        db: Arc<DatabaseManager>,
+        connector: Option<Arc<Box<dyn exchange_connectors::ExchangeConnector>>>,
+    ) -> Self {
         Self { _db: db, connector }
     }
 
@@ -174,26 +188,36 @@ impl MarketDataService {
         Ok(responses)
     }
 
-    pub async fn get_historical_data(&self, symbol: &str, _params: PaginationParams) -> ApiResult<PaginatedResponse<MarketDataPoint>> {
+    pub async fn get_historical_data(
+        &self,
+        symbol: &str,
+        _params: PaginationParams,
+    ) -> ApiResult<PaginatedResponse<MarketDataPoint>> {
         if let Some(conn) = &self.connector {
             let end = Utc::now();
             let start = end - chrono::Duration::days(1);
             let timeframe = exchange_connectors::Timeframe::FifteenMinutes;
 
-            match conn.get_candles(symbol, timeframe, Some(start), Some(end)).await {
+            match conn
+                .get_candles(symbol, timeframe, Some(start), Some(end))
+                .await
+            {
                 Ok(candles) => {
-                    let points: Vec<MarketDataPoint> = candles.into_iter().map(|c| MarketDataPoint {
-                        timestamp: c.start_time,
-                        price: c.close.to_string().parse().unwrap_or(0.0),
-                        open: Some(c.open.to_string().parse().unwrap_or(0.0)),
-                        high: Some(c.high.to_string().parse().unwrap_or(0.0)),
-                        low: Some(c.low.to_string().parse().unwrap_or(0.0)),
-                        close: Some(c.close.to_string().parse().unwrap_or(0.0)),
-                        volume: c.volume.to_string().parse().unwrap_or(0.0),
-                    }).collect();
+                    let points: Vec<MarketDataPoint> = candles
+                        .into_iter()
+                        .map(|c| MarketDataPoint {
+                            timestamp: c.start_time,
+                            price: c.close.to_string().parse().unwrap_or(0.0),
+                            open: Some(c.open.to_string().parse().unwrap_or(0.0)),
+                            high: Some(c.high.to_string().parse().unwrap_or(0.0)),
+                            low: Some(c.low.to_string().parse().unwrap_or(0.0)),
+                            close: Some(c.close.to_string().parse().unwrap_or(0.0)),
+                            volume: c.volume.to_string().parse().unwrap_or(0.0),
+                        })
+                        .collect();
 
                     return Ok(PaginatedResponse {
-                        response: ApiResponse::success(points.clone()), 
+                        response: ApiResponse::success(points.clone()),
                         pagination: PaginationMeta {
                             page: 1,
                             limit: points.len(),
@@ -201,7 +225,7 @@ impl MarketDataService {
                             total_pages: 1,
                             has_next: false,
                             has_prev: false,
-                        }
+                        },
                     });
                 }
                 Err(e) => {
@@ -219,11 +243,15 @@ impl MarketDataService {
                 total_pages: 0,
                 has_next: false,
                 has_prev: false,
-            }
+            },
         })
     }
 
-    pub async fn get_data_with_indicators(&self, symbol: &str, _params: PaginationParams) -> ApiResult<MarketDataWithIndicators> {
+    pub async fn get_data_with_indicators(
+        &self,
+        symbol: &str,
+        _params: PaginationParams,
+    ) -> ApiResult<MarketDataWithIndicators> {
         let data = self.get_latest_data(symbol).await?;
         Ok(MarketDataWithIndicators {
             symbol: symbol.to_string(),
@@ -234,12 +262,17 @@ impl MarketDataService {
         })
     }
 
-    pub async fn search_symbols(&self, query: &str, _limit: Option<usize>) -> ApiResult<Vec<SymbolInfo>> {
+    pub async fn search_symbols(
+        &self,
+        query: &str,
+        _limit: Option<usize>,
+    ) -> ApiResult<Vec<SymbolInfo>> {
         // TODO: Query from exchange trading pairs
         if let Some(conn) = &self.connector {
             match conn.get_trading_pairs().await {
                 Ok(pairs) => {
-                    let matches: Vec<SymbolInfo> = pairs.into_iter()
+                    let matches: Vec<SymbolInfo> = pairs
+                        .into_iter()
                         .filter(|p| p.symbol.to_lowercase().contains(&query.to_lowercase()))
                         .map(|p| SymbolInfo {
                             symbol: p.symbol.clone(),
@@ -270,7 +303,10 @@ impl MarketDataService {
         })
     }
 
-    pub async fn subscribe_to_price_stream(&self, symbol: &str) -> ApiResult<StreamSubscriptionResponse> {
+    pub async fn subscribe_to_price_stream(
+        &self,
+        symbol: &str,
+    ) -> ApiResult<StreamSubscriptionResponse> {
         Ok(StreamSubscriptionResponse {
             subscription_id: uuid::Uuid::new_v4().to_string(),
             status: "active".to_string(),
@@ -316,7 +352,7 @@ impl MarketDataService {
 }
 
 /// Manager for strategy operations
-/// 
+///
 /// Manages trading strategies stored in the database.
 pub struct StrategyManager {
     db: Arc<DatabaseManager>,
@@ -327,7 +363,10 @@ impl StrategyManager {
         Self { db }
     }
 
-    pub async fn list_strategies(&self, _params: PaginationParams) -> ApiResult<PaginatedResponse<StrategyResponse>> {
+    pub async fn list_strategies(
+        &self,
+        _params: PaginationParams,
+    ) -> ApiResult<PaginatedResponse<StrategyResponse>> {
         // TODO: Query from database
         Ok(PaginatedResponse {
             response: ApiResponse::success(vec![]),
@@ -338,7 +377,7 @@ impl StrategyManager {
                 total_pages: 0,
                 has_next: false,
                 has_prev: false,
-            }
+            },
         })
     }
 
@@ -347,7 +386,10 @@ impl StrategyManager {
         Ok(None)
     }
 
-    pub async fn create_strategy(&self, request: CreateStrategyRequest) -> ApiResult<StrategyResponse> {
+    pub async fn create_strategy(
+        &self,
+        request: CreateStrategyRequest,
+    ) -> ApiResult<StrategyResponse> {
         let id = uuid::Uuid::new_v4().to_string();
         Ok(StrategyResponse {
             id,
@@ -368,7 +410,11 @@ impl StrategyManager {
         })
     }
 
-    pub async fn update_strategy(&self, id: &str, request: UpdateStrategyRequest) -> ApiResult<StrategyResponse> {
+    pub async fn update_strategy(
+        &self,
+        id: &str,
+        request: UpdateStrategyRequest,
+    ) -> ApiResult<StrategyResponse> {
         // TODO: Update in database
         Err(ApiError::NotFound {
             resource: format!("Strategy {}", id),
@@ -382,13 +428,21 @@ impl StrategyManager {
         })
     }
 
-    pub async fn execute_strategy(&self, id: &str, _request: StrategyExecutionRequest) -> ApiResult<StrategyExecutionResponse> {
+    pub async fn execute_strategy(
+        &self,
+        id: &str,
+        _request: StrategyExecutionRequest,
+    ) -> ApiResult<StrategyExecutionResponse> {
         Err(ApiError::NotImplemented {
             message: format!("Strategy execution not yet implemented for {}", id),
         })
     }
 
-    pub async fn get_execution_history(&self, _id: &str, _params: PaginationParams) -> ApiResult<PaginatedResponse<StrategyExecutionResponse>> {
+    pub async fn get_execution_history(
+        &self,
+        _id: &str,
+        _params: PaginationParams,
+    ) -> ApiResult<PaginatedResponse<StrategyExecutionResponse>> {
         Ok(PaginatedResponse {
             response: ApiResponse::success(vec![]),
             pagination: PaginationMeta {
@@ -398,23 +452,34 @@ impl StrategyManager {
                 total_pages: 0,
                 has_next: false,
                 has_prev: false,
-            }
+            },
         })
     }
 
-    pub async fn backtest_strategy(&self, id: &str, _request: BacktestRequest) -> ApiResult<BacktestResponse> {
+    pub async fn backtest_strategy(
+        &self,
+        id: &str,
+        _request: BacktestRequest,
+    ) -> ApiResult<BacktestResponse> {
         Err(ApiError::NotImplemented {
             message: format!("Backtesting not yet implemented for strategy {}", id),
         })
     }
 
-    pub async fn optimize_strategy(&self, id: &str, _request: StrategyOptimizationRequest) -> ApiResult<StrategyOptimizationResponse> {
+    pub async fn optimize_strategy(
+        &self,
+        id: &str,
+        _request: StrategyOptimizationRequest,
+    ) -> ApiResult<StrategyOptimizationResponse> {
         Err(ApiError::NotImplemented {
             message: format!("Strategy optimization not yet implemented for {}", id),
         })
     }
 
-    pub async fn get_detailed_performance(&self, id: &str) -> ApiResult<DetailedStrategyPerformance> {
+    pub async fn get_detailed_performance(
+        &self,
+        id: &str,
+    ) -> ApiResult<DetailedStrategyPerformance> {
         // TODO: Calculate from trade history
         Ok(DetailedStrategyPerformance {
             basic_metrics: StrategyPerformance {

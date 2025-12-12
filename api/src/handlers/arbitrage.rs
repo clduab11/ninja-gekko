@@ -7,22 +7,18 @@ use axum::{
     extract::{Path, Query, State},
     response::Json,
 };
-use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use std::sync::Arc;
 use tracing::{info, warn};
 use uuid::Uuid;
 
-use crate::{
-    error::ApiResult,
-    models::ApiResponse,
-    AppState,
-};
+use crate::{error::ApiResult, models::ApiResponse, AppState};
 
 // Re-export types from arbitrage engine
 pub use arbitrage_engine::{
-    ArbitrageOpportunity, VolatilityScore, ArbitrageConfig, 
-    AllocationRequest, AllocationPriority, PerformanceMetrics
+    AllocationPriority, AllocationRequest, ArbitrageConfig, ArbitrageOpportunity,
+    PerformanceMetrics, VolatilityScore,
 };
 pub use exchange_connectors::{ExchangeId, TransferUrgency};
 
@@ -80,9 +76,11 @@ pub async fn start_arbitrage_strategy(
     Json(request): Json<StartArbitrageRequest>,
 ) -> ApiResult<Json<ApiResponse<ArbitrageStrategyStatus>>> {
     info!("🚀 Starting arbitrage strategy: {}", request.strategy_name);
-    info!("Gekko Mode: {}, Aggression: {:.0}%", 
-          request.config.gekko_mode, 
-          request.config.allocation_aggressiveness * 100.0);
+    info!(
+        "Gekko Mode: {}, Aggression: {:.0}%",
+        request.config.gekko_mode,
+        request.config.allocation_aggressiveness * 100.0
+    );
 
     // In a real implementation, this would:
     // 1. Validate the configuration
@@ -110,8 +108,10 @@ pub async fn stop_arbitrage_strategy(
     State(state): State<Arc<AppState>>,
     Json(request): Json<StopArbitrageRequest>,
 ) -> ApiResult<Json<ApiResponse<String>>> {
-    info!("🛑 Stopping arbitrage strategy: {} ({})", 
-          request.strategy_name, request.reason);
+    info!(
+        "🛑 Stopping arbitrage strategy: {} ({})",
+        request.strategy_name, request.reason
+    );
 
     // In a real implementation, this would:
     // 1. Find the active strategy
@@ -121,7 +121,7 @@ pub async fn stop_arbitrage_strategy(
 
     let message = format!("Strategy '{}' stopped successfully", request.strategy_name);
     info!("✅ {}", message);
-    
+
     Ok(Json(ApiResponse::success(message)))
 }
 
@@ -160,7 +160,10 @@ pub async fn get_arbitrage_performance(
     State(state): State<Arc<AppState>>,
     Path(strategy_name): Path<String>,
 ) -> ApiResult<Json<ApiResponse<PerformanceMetrics>>> {
-    info!("📊 Fetching performance metrics for strategy: {}", strategy_name);
+    info!(
+        "📊 Fetching performance metrics for strategy: {}",
+        strategy_name
+    );
 
     // TODO: Implement real performance metrics from database
     // Return zeroed metrics until strategy tracking is implemented
@@ -206,8 +209,12 @@ pub async fn emergency_capital_reallocation(
     Json(request): Json<EmergencyReallocationRequest>,
 ) -> ApiResult<Json<ApiResponse<EmergencyReallocationResponse>>> {
     warn!("🚨 EMERGENCY CAPITAL REALLOCATION TRIGGERED 🚨");
-    warn!("Target: {:?}, Currency: {}, Percentage: {}%", 
-          request.target_exchange, request.currency, request.percentage * 100.0);
+    warn!(
+        "Target: {:?}, Currency: {}, Percentage: {}%",
+        request.target_exchange,
+        request.currency,
+        request.percentage * 100.0
+    );
 
     // In a real implementation, this would:
     // 1. Validate the reallocation request
@@ -224,7 +231,10 @@ pub async fn emergency_capital_reallocation(
         status: "processing".to_string(),
     };
 
-    warn!("💀 Emergency reallocation initiated: {}", response.reallocation_id);
+    warn!(
+        "💀 Emergency reallocation initiated: {}",
+        response.reallocation_id
+    );
     Ok(Json(ApiResponse::success(response)))
 }
 
@@ -290,7 +300,10 @@ pub async fn emergency_shutdown(
 ) -> ApiResult<Json<ApiResponse<EmergencyShutdownResponse>>> {
     warn!("🚨🚨🚨 EMERGENCY SHUTDOWN INITIATED 🚨🚨🚨");
     warn!("Reason: {}", request.reason);
-    warn!("Cancel Orders: {}, Save State: {}", request.cancel_orders, request.save_state);
+    warn!(
+        "Cancel Orders: {}, Save State: {}",
+        request.cancel_orders, request.save_state
+    );
 
     // In a real implementation, this would:
     // 1. Trigger circuit breaker across all exchanges
@@ -305,14 +318,16 @@ pub async fn emergency_shutdown(
         shutdown_id: Uuid::new_v4(),
         initiated_at: chrono::Utc::now(),
         orders_cancelled: 0, // Real count from trading engine
-        positions_closed: 0,  // Real count from trading engine
+        positions_closed: 0, // Real count from trading engine
         state_saved: request.save_state,
         status: "shutdown_complete".to_string(),
     };
 
     warn!("🛡️ Emergency shutdown complete: {}", response.shutdown_id);
-    warn!("Orders cancelled: {}, Positions closed: {}", 
-          response.orders_cancelled, response.positions_closed);
+    warn!(
+        "Orders cancelled: {}, Positions closed: {}",
+        response.orders_cancelled, response.positions_closed
+    );
 
     Ok(Json(ApiResponse::success(response)))
 }
@@ -364,9 +379,9 @@ pub async fn trigger_circuit_breaker(
 ) -> ApiResult<Json<ApiResponse<CircuitBreakerResponse>>> {
     warn!("⚡ Circuit breaker manually triggered: {}", request.reason);
 
-    let resume_at = request.duration_minutes.map(|mins| {
-        chrono::Utc::now() + chrono::Duration::minutes(mins as i64)
-    });
+    let resume_at = request
+        .duration_minutes
+        .map(|mins| chrono::Utc::now() + chrono::Duration::minutes(mins as i64));
 
     let response = CircuitBreakerResponse {
         triggered_at: chrono::Utc::now(),
@@ -385,8 +400,10 @@ pub async fn reset_circuit_breaker(
     info!("✅ Circuit breaker reset requested");
 
     // In a real implementation, verify conditions are safe before resetting
-    
-    Ok(Json(ApiResponse::success("Circuit breaker reset. Trading resumed.".to_string())))
+
+    Ok(Json(ApiResponse::success(
+        "Circuit breaker reset. Trading resumed.".to_string(),
+    )))
 }
 
 // Mock helper functions removed - all handlers now return empty/initialized data

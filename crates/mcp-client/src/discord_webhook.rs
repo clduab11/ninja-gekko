@@ -54,8 +54,10 @@ impl DiscordNotificationService {
         self.record_message(content).await;
 
         let url = self.config.webhook_url.expose_secret();
-        
-        let response = self.client.post(url)
+
+        let response = self
+            .client
+            .post(url)
             .json(&payload)
             .send()
             .await
