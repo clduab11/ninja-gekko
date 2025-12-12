@@ -1,13 +1,10 @@
-use axum::{
-    extract::State,
-    response::Json,
-};
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
-use std::sync::Arc;
-use crate::AppState;
 use crate::models::ApiResponse;
-use tracing::{info, warn, error};
+use crate::AppState;
+use axum::{extract::State, response::Json};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use tracing::{error, info, warn};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "command", rename_all = "snake_case")]
@@ -44,28 +41,26 @@ impl Default for OrchestratorState {
 }
 
 /// Engage the trading system
-pub async fn engage(
-    State(state): State<Arc<AppState>>,
-) -> Json<ApiResponse<OrchestratorState>> {
+pub async fn engage(State(state): State<Arc<AppState>>) -> Json<ApiResponse<OrchestratorState>> {
     info!("Orchestrator: ENGAGE command received");
-    
+
     let mut orchestrator = state.orchestrator_state.write().await;
-    
+
     // Clear emergency halt state on engage (allows recovery)
     if orchestrator.emergency_halt_active {
         info!("Orchestrator: Clearing emergency halt state on ENGAGE");
         orchestrator.emergency_halt_active = false;
         orchestrator.emergency_halt_reason = None;
     }
-    
+
     orchestrator.is_live = true;
     orchestrator.is_winding_down = false;
     orchestrator.wind_down_started_at = None;
     orchestrator.risk_throttle = 1.0; // Reset throttle to 100%
     orchestrator.last_updated = Utc::now();
-    
+
     info!("Orchestrator: System ENGAGED - Trading is now LIVE");
-    
+
     Json(ApiResponse::success(orchestrator.clone()))
 }
 
@@ -78,17 +73,17 @@ pub async fn wind_down(
         OrchestratorCommand::WindDown { duration_seconds } => duration_seconds,
         _ => 3600, // Default 1 hour
     };
-    
+
     warn!("Orchestrator: WIND DOWN command received ({}s)", duration);
-    
+
     let mut orchestrator = state.orchestrator_state.write().await;
-    
+
     orchestrator.is_winding_down = true;
     orchestrator.wind_down_started_at = Some(Utc::now());
     orchestrator.last_updated = Utc::now();
-    
+
     info!("Orchestrator: Winding down over {} seconds", duration);
-    
+
     Json(ApiResponse::success(orchestrator.clone()))
 }
 
@@ -101,11 +96,11 @@ pub async fn emergency_halt(
         OrchestratorCommand::EmergencyHalt { reason } => reason,
         _ => "Unknown".to_string(),
     };
-    
+
     error!("Orchestrator: EMERGENCY HALT triggered: {}", reason);
-    
+
     let mut orchestrator = state.orchestrator_state.write().await;
-    
+
     // Full system halt
     orchestrator.is_live = false;
     orchestrator.is_winding_down = false;
@@ -114,12 +109,12 @@ pub async fn emergency_halt(
     orchestrator.emergency_halt_reason = Some(reason.clone());
     orchestrator.risk_throttle = 0.0;
     orchestrator.last_updated = Utc::now();
-    
+
     // TODO: Disconnect all exchange connections via websocket_manager
     // state.websocket_manager.disconnect_all_exchanges().await;
-    
+
     error!("Orchestrator: EMERGENCY HALT ACTIVE - All trading STOPPED");
-    
+
     Json(ApiResponse::success(orchestrator.clone()))
 }
 
@@ -132,21 +127,18 @@ pub async fn risk_throttle(
         OrchestratorCommand::SetRiskThrottle { value } => value.clamp(0.0, 1.0),
         _ => 1.0,
     };
-    
+
     info!("Orchestrator: Risk throttle set to {:.1}%", value * 100.0);
-    
+
     let mut orchestrator = state.orchestrator_state.write().await;
     orchestrator.risk_throttle = value;
     orchestrator.last_updated = Utc::now();
-    
+
     Json(ApiResponse::success(orchestrator.clone()))
 }
 
 /// Get current orchestrator state
-pub async fn get_state(
-    State(state): State<Arc<AppState>>,
-) -> Json<ApiResponse<OrchestratorState>> {
+pub async fn get_state(State(state): State<Arc<AppState>>) -> Json<ApiResponse<OrchestratorState>> {
     let orchestrator = state.orchestrator_state.read().await;
     Json(ApiResponse::success(orchestrator.clone()))
 }
-

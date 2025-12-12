@@ -1,4 +1,4 @@
-﻿//! Error handling and custom error types for the API
+//! Error handling and custom error types for the API
 //!
 //! This module provides comprehensive error handling with custom error types,
 //! structured error responses, and proper HTTP status code mapping.
@@ -8,10 +8,10 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use thiserror::Error;
 use tracing::{error, warn};
-use std::collections::HashMap;
 
 /// Main API error type that encompasses all possible errors
 #[derive(Debug, Error)]
@@ -34,7 +34,10 @@ pub enum ApiError {
 
     /// Validation errors
     #[error("Validation error: {message}")]
-    Validation { message: String, field: Option<String> },
+    Validation {
+        message: String,
+        field: Option<String>,
+    },
 
     /// Trading engine errors
     #[error("Trading error: {message}")]
@@ -178,7 +181,9 @@ impl ApiError {
     /// Get the appropriate HTTP status code for the error
     pub fn status_code(&self) -> StatusCode {
         match self {
-            ApiError::Config { .. } | ApiError::Internal { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::Config { .. } | ApiError::Internal { .. } => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
             ApiError::Database { .. } => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::Auth { .. } => StatusCode::UNAUTHORIZED,
             ApiError::Authorization { .. } => StatusCode::FORBIDDEN,
@@ -330,7 +335,10 @@ where
 {
     fn to_api_response(self, request_id: Option<String>) -> ApiResponse<T> {
         match self {
-            Ok(data) => Ok(super::models::ApiResponse::success_with_request_id(data, request_id.unwrap_or_default())),
+            Ok(data) => Ok(super::models::ApiResponse::success_with_request_id(
+                data,
+                request_id.unwrap_or_default(),
+            )),
             Err(err) => {
                 let api_error = err.into();
                 let error_response = api_error.to_error_response(request_id.clone());
@@ -398,7 +406,11 @@ pub enum ValidationError {
 
     /// Field value is out of range
     #[error("Field '{field}' value {value} is out of range: {reason}")]
-    OutOfRange { field: String, value: String, reason: String },
+    OutOfRange {
+        field: String,
+        value: String,
+        reason: String,
+    },
 
     /// Field value is too long
     #[error("Field '{field}' is too long (max {max_length} characters)")]
@@ -410,7 +422,11 @@ pub enum ValidationError {
 
     /// Invalid enumeration value
     #[error("Field '{field}' has invalid value '{value}'. Allowed values: {allowed}")]
-    InvalidEnum { field: String, value: String, allowed: String },
+    InvalidEnum {
+        field: String,
+        value: String,
+        allowed: String,
+    },
 }
 
 impl ValidationError {
@@ -430,7 +446,11 @@ impl ValidationError {
     }
 
     /// Create an out of range error
-    pub fn out_of_range(field: impl Into<String>, value: impl Into<String>, reason: impl Into<String>) -> Self {
+    pub fn out_of_range(
+        field: impl Into<String>,
+        value: impl Into<String>,
+        reason: impl Into<String>,
+    ) -> Self {
         Self::OutOfRange {
             field: field.into(),
             value: value.into(),
@@ -455,7 +475,11 @@ impl ValidationError {
     }
 
     /// Create an invalid enum error
-    pub fn invalid_enum(field: impl Into<String>, value: impl Into<String>, allowed: impl Into<String>) -> Self {
+    pub fn invalid_enum(
+        field: impl Into<String>,
+        value: impl Into<String>,
+        allowed: impl Into<String>,
+    ) -> Self {
         Self::InvalidEnum {
             field: field.into(),
             value: value.into(),
@@ -466,42 +490,50 @@ impl ValidationError {
     /// Convert to ApiError
     pub fn to_api_error(self) -> ApiError {
         match self {
-            ValidationError::Required { field } => {
-                ApiError::Validation {
-                    message: format!("Required field '{}' is missing", field),
-                    field: Some(field),
-                }
-            }
-            ValidationError::InvalidFormat { field, reason } => {
-                ApiError::Validation {
-                    message: format!("Field '{}' has invalid format: {}", field, reason),
-                    field: Some(field),
-                }
-            }
-            ValidationError::OutOfRange { field, value, reason } => {
-                ApiError::Validation {
-                    message: format!("Field '{}' value {} is out of range: {}", field, value, reason),
-                    field: Some(field),
-                }
-            }
-            ValidationError::TooLong { field, max_length } => {
-                ApiError::Validation {
-                    message: format!("Field '{}' is too long (max {} characters)", field, max_length),
-                    field: Some(field),
-                }
-            }
-            ValidationError::TooShort { field, min_length } => {
-                ApiError::Validation {
-                    message: format!("Field '{}' is too short (min {} characters)", field, min_length),
-                    field: Some(field),
-                }
-            }
-            ValidationError::InvalidEnum { field, value, allowed } => {
-                ApiError::Validation {
-                    message: format!("Field '{}' has invalid value '{}'. Allowed values: {}", field, value, allowed),
-                    field: Some(field),
-                }
-            }
+            ValidationError::Required { field } => ApiError::Validation {
+                message: format!("Required field '{}' is missing", field),
+                field: Some(field),
+            },
+            ValidationError::InvalidFormat { field, reason } => ApiError::Validation {
+                message: format!("Field '{}' has invalid format: {}", field, reason),
+                field: Some(field),
+            },
+            ValidationError::OutOfRange {
+                field,
+                value,
+                reason,
+            } => ApiError::Validation {
+                message: format!(
+                    "Field '{}' value {} is out of range: {}",
+                    field, value, reason
+                ),
+                field: Some(field),
+            },
+            ValidationError::TooLong { field, max_length } => ApiError::Validation {
+                message: format!(
+                    "Field '{}' is too long (max {} characters)",
+                    field, max_length
+                ),
+                field: Some(field),
+            },
+            ValidationError::TooShort { field, min_length } => ApiError::Validation {
+                message: format!(
+                    "Field '{}' is too short (min {} characters)",
+                    field, min_length
+                ),
+                field: Some(field),
+            },
+            ValidationError::InvalidEnum {
+                field,
+                value,
+                allowed,
+            } => ApiError::Validation {
+                message: format!(
+                    "Field '{}' has invalid value '{}'. Allowed values: {}",
+                    field, value, allowed
+                ),
+                field: Some(field),
+            },
         }
     }
 }
@@ -531,43 +563,43 @@ pub enum TradingError {
 
     /// Risk limit exceeded
     #[error("Risk limit exceeded: {limit_type} limit {limit_value}")]
-    RiskLimitExceeded { limit_type: String, limit_value: f64 },
+    RiskLimitExceeded {
+        limit_type: String,
+        limit_value: f64,
+    },
 }
 
 impl TradingError {
     /// Convert to ApiError
     pub fn to_api_error(self) -> ApiError {
         match self {
-            TradingError::InsufficientFunds { available, required } => {
-                ApiError::Trading {
-                    message: format!("Insufficient funds: available {}, required {}", available, required),
-                }
-            }
-            TradingError::InvalidOrder { reason } => {
-                ApiError::Trading {
-                    message: format!("Invalid order parameters: {}", reason),
-                }
-            }
-            TradingError::MarketClosed { symbol } => {
-                ApiError::Trading {
-                    message: format!("Market is closed for symbol {}", symbol),
-                }
-            }
-            TradingError::PositionNotFound { position_id } => {
-                ApiError::NotFound {
-                    resource: format!("Position {}", position_id),
-                }
-            }
-            TradingError::OrderNotFound { order_id } => {
-                ApiError::NotFound {
-                    resource: format!("Order {}", order_id),
-                }
-            }
-            TradingError::RiskLimitExceeded { limit_type, limit_value } => {
-                ApiError::Trading {
-                    message: format!("Risk limit exceeded: {} limit {}", limit_type, limit_value),
-                }
-            }
+            TradingError::InsufficientFunds {
+                available,
+                required,
+            } => ApiError::Trading {
+                message: format!(
+                    "Insufficient funds: available {}, required {}",
+                    available, required
+                ),
+            },
+            TradingError::InvalidOrder { reason } => ApiError::Trading {
+                message: format!("Invalid order parameters: {}", reason),
+            },
+            TradingError::MarketClosed { symbol } => ApiError::Trading {
+                message: format!("Market is closed for symbol {}", symbol),
+            },
+            TradingError::PositionNotFound { position_id } => ApiError::NotFound {
+                resource: format!("Position {}", position_id),
+            },
+            TradingError::OrderNotFound { order_id } => ApiError::NotFound {
+                resource: format!("Order {}", order_id),
+            },
+            TradingError::RiskLimitExceeded {
+                limit_type,
+                limit_value,
+            } => ApiError::Trading {
+                message: format!("Risk limit exceeded: {} limit {}", limit_type, limit_value),
+            },
         }
     }
 }
@@ -596,27 +628,19 @@ impl MarketDataError {
     /// Convert to ApiError
     pub fn to_api_error(self) -> ApiError {
         match self {
-            MarketDataError::SymbolNotFound { symbol } => {
-                ApiError::NotFound {
-                    resource: format!("Market data for symbol {}", symbol),
-                }
-            }
-            MarketDataError::NoDataAvailable { symbol } => {
-                ApiError::MarketData {
-                    message: format!("No market data available for symbol {}", symbol),
-                }
-            }
-            MarketDataError::InvalidTimeRange { reason } => {
-                ApiError::MarketData {
-                    message: format!("Invalid time range: {}", reason),
-                }
-            }
-            MarketDataError::DataSourceUnavailable { details } => {
-                ApiError::ExternalService {
-                    service: details,
-                    message: "Market data source unavailable".to_string(),
-                }
-            }
+            MarketDataError::SymbolNotFound { symbol } => ApiError::NotFound {
+                resource: format!("Market data for symbol {}", symbol),
+            },
+            MarketDataError::NoDataAvailable { symbol } => ApiError::MarketData {
+                message: format!("No market data available for symbol {}", symbol),
+            },
+            MarketDataError::InvalidTimeRange { reason } => ApiError::MarketData {
+                message: format!("Invalid time range: {}", reason),
+            },
+            MarketDataError::DataSourceUnavailable { details } => ApiError::ExternalService {
+                service: details,
+                message: "Market data source unavailable".to_string(),
+            },
         }
     }
 }

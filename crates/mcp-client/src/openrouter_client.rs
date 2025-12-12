@@ -63,9 +63,10 @@ impl OpenRouterClient {
     pub fn from_env() -> anyhow::Result<Self> {
         let api_key = env::var("OPENROUTER_API_KEY")
             .map_err(|_| anyhow::anyhow!("OPENROUTER_API_KEY not set"))?;
-        
+
         // Optional model override
-        let model = env::var("OPENROUTER_MODEL").unwrap_or_else(|_| "anthropic/claude-3.5-sonnet".to_string());
+        let model = env::var("OPENROUTER_MODEL")
+            .unwrap_or_else(|_| "anthropic/claude-3.5-sonnet".to_string());
 
         let config = OpenRouterConfig {
             api_key,
@@ -76,9 +77,13 @@ impl OpenRouterClient {
         Ok(Self::new(config))
     }
 
-    pub async fn chat_completion(&self, messages: Vec<ChatMessage>, model_override: Option<String>) -> anyhow::Result<ChatCompletionResponse> {
+    pub async fn chat_completion(
+        &self,
+        messages: Vec<ChatMessage>,
+        model_override: Option<String>,
+    ) -> anyhow::Result<ChatCompletionResponse> {
         let model = model_override.as_deref().unwrap_or(&self.config.model);
-        
+
         let payload = json!({
             "model": model,
             "messages": messages,
@@ -88,7 +93,8 @@ impl OpenRouterClient {
 
         debug!("Sending OpenRouter request (model: {})", model);
 
-        let response = self.client
+        let response = self
+            .client
             .post(OPENROUTER_API_URL)
             .header("Authorization", format!("Bearer {}", self.config.api_key))
             .header("HTTP-Referer", "https://ninja-gekko.ai") // Requested by OpenRouter
@@ -101,7 +107,11 @@ impl OpenRouterClient {
         if !status.is_success() {
             let error_text = response.text().await.unwrap_or_default();
             error!("OpenRouter API error ({}): {}", status, error_text);
-            return Err(anyhow::anyhow!("OpenRouter API error: {} - {}", status, error_text));
+            return Err(anyhow::anyhow!(
+                "OpenRouter API error: {} - {}",
+                status,
+                error_text
+            ));
         }
 
         let chat_response: ChatCompletionResponse = response.json().await?;

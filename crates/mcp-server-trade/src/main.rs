@@ -1,11 +1,11 @@
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 use clap::Parser;
+use exchange_connectors::{ExchangeId, OrderSide, OrderType};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::io::{self, BufRead};
 use std::str::FromStr;
-use tracing::{error, info, debug};
-use exchange_connectors::{ExchangeId, OrderSide, OrderType};
+use tracing::{debug, error, info};
 
 mod safety;
 use safety::SafetyValidator;
@@ -46,14 +46,14 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_writer(std::io::stderr)
         .init();
-    
+
     let args = Args::parse();
     info!("Starting MCP Trade Server (dry_run={})", args.dry_run);
 
     let safety = SafetyValidator::new(
         rust_decimal::Decimal::from(1000), // Default $1000 max size
         rust_decimal::Decimal::from(500),  // Default $500 daily loss
-        args.dry_run
+        args.dry_run,
     );
 
     let stdin = io::stdin();
@@ -64,7 +64,7 @@ async fn main() -> Result<()> {
         }
 
         debug!("Received: {}", line);
-        
+
         // Handle basic JSON-RPC
         match serde_json::from_str::<JsonRpcRequest>(&line) {
             Ok(req) => {
@@ -136,15 +136,19 @@ async fn handle_request(req: &JsonRpcRequest, safety: &SafetyValidator) -> JsonR
                 data: None,
             }),
             id: req.id.clone(),
-        }
+        },
     }
 }
 
 async fn handle_place_order(params: Option<&Value>, safety: &SafetyValidator) -> Result<Value> {
     let params = params.ok_or_else(|| anyhow::anyhow!("Missing params"))?;
-    
-    let exchange_str = params["exchange"].as_str().ok_or_else(|| anyhow::anyhow!("Missing exchange"))?;
-    let symbol = params["symbol"].as_str().ok_or_else(|| anyhow::anyhow!("Missing symbol"))?;
+
+    let exchange_str = params["exchange"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("Missing exchange"))?;
+    let symbol = params["symbol"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("Missing symbol"))?;
     let qty_str = params["quantity"].to_string(); // Simple handling for now
     let qty = rust_decimal::Decimal::from_str_exact(&qty_str).unwrap_or_default();
 
@@ -152,7 +156,10 @@ async fn handle_place_order(params: Option<&Value>, safety: &SafetyValidator) ->
     safety.check_trade(symbol, qty, qty * rust_decimal::Decimal::from(100))?;
 
     if safety.is_dry_run() {
-        info!("Would place order: {} {} {} on {}", params["side"], qty, symbol, exchange_str);
+        info!(
+            "Would place order: {} {} {} on {}",
+            params["side"], qty, symbol, exchange_str
+        );
         return Ok(json!({
             "status": "DryRun",
             "order_id": "dry_run_id_123",

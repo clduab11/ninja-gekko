@@ -13,7 +13,9 @@ use std::time::{Duration, Instant, SystemTime};
 use tokio::sync::{Mutex, RwLock};
 use tracing::{debug, info, instrument, warn};
 
-use crate::config::{ConnectionEndpoint, ConnectionPool, ConnectionPoolConfig, LoadBalancingStrategy};
+use crate::config::{
+    ConnectionEndpoint, ConnectionPool, ConnectionPoolConfig, LoadBalancingStrategy,
+};
 
 /// Connection pool statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]

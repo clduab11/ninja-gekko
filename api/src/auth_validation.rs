@@ -3,11 +3,13 @@
 //! This module provides comprehensive JWT validation, authorization checks,
 //! and secure authentication middleware for the Ninja Gekko API.
 
+use crate::validation::{SanitizationLevel, SecurityValidator};
+use chrono::{DateTime, Duration, Utc};
+use jsonwebtoken::{
+    decode, encode, Algorithm, DecodingKey, EncodingKey, Header, TokenData, Validation,
+};
 use serde::{Deserialize, Serialize};
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Algorithm, Validation, TokenData};
-use chrono::{DateTime, Utc, Duration};
 use std::fmt;
-use crate::validation::{SecurityValidator, SanitizationLevel};
 
 /// JWT Claims structure for authentication
 #[derive(Debug, Serialize, Deserialize)]
@@ -51,10 +53,12 @@ impl Default for JwtConfig {
     fn default() -> Self {
         Self {
             secret: std::env::var("JWT_SECRET").unwrap_or_else(|_| {
-                eprintln!("WARNING: Using default JWT secret - set JWT_SECRET environment variable!");
+                eprintln!(
+                    "WARNING: Using default JWT secret - set JWT_SECRET environment variable!"
+                );
                 "default-secret-change-in-production".to_string()
             }),
-            expiration: 3600, // 1 hour
+            expiration: 3600,              // 1 hour
             refresh_expiration: 86400 * 7, // 7 days
             issuer: "ninja-gekko-api".to_string(),
             audience: "ninja-gekko-client".to_string(),
@@ -79,7 +83,9 @@ impl fmt::Display for AuthError {
         match self {
             AuthError::InvalidToken(msg) => write!(f, "Invalid token: {}", msg),
             AuthError::ExpiredToken(msg) => write!(f, "Expired token: {}", msg),
-            AuthError::InsufficientPermissions(msg) => write!(f, "Insufficient permissions: {}", msg),
+            AuthError::InsufficientPermissions(msg) => {
+                write!(f, "Insufficient permissions: {}", msg)
+            }
             AuthError::InvalidCredentials(msg) => write!(f, "Invalid credentials: {}", msg),
             AuthError::AccountAccessDenied(msg) => write!(f, "Account access denied: {}", msg),
             AuthError::MalformedToken(msg) => write!(f, "Malformed token: {}", msg),
@@ -117,7 +123,8 @@ impl AuthContext {
 
     /// Check if user has access to an account
     pub fn has_account_access(&self, account_id: &str) -> bool {
-        self.account_ids.contains(&account_id.to_string()) || self.account_ids.contains(&"*".to_string())
+        self.account_ids.contains(&account_id.to_string())
+            || self.account_ids.contains(&"*".to_string())
     }
 
     /// Check if user is admin
@@ -132,11 +139,17 @@ impl AuthContext {
 
     /// Get user's highest role level
     pub fn get_role_level(&self) -> i32 {
-        if self.is_admin() { 100 }
-        else if self.has_role("trader") { 50 }
-        else if self.has_role("viewer") { 25 }
-        else if self.has_role("user") { 10 }
-        else { 0 }
+        if self.is_admin() {
+            100
+        } else if self.has_role("trader") {
+            50
+        } else if self.has_role("viewer") {
+            25
+        } else if self.has_role("user") {
+            10
+        } else {
+            0
+        }
     }
 }
 
@@ -169,12 +182,11 @@ impl AuthorizationLevel {
         if context.get_role_level() >= self.required_role_level() {
             Ok(())
         } else {
-            Err(AuthError::InsufficientPermissions(
-                format!("Required level: {}, User level: {}",
-                    self.required_role_level(),
-                    context.get_role_level()
-                )
-            ))
+            Err(AuthError::InsufficientPermissions(format!(
+                "Required level: {}, User level: {}",
+                self.required_role_level(),
+                context.get_role_level()
+            )))
         }
     }
 }
@@ -202,9 +214,12 @@ impl AuthValidator {
     /// Validate JWT token and extract claims
     pub fn validate_token(&self, token: &str) -> Result<TokenData<Claims>, AuthError> {
         // Sanitize token input
-        let clean_token = self.security_validator
+        let clean_token = self
+            .security_validator
             .validate_string(token, "token", SanitizationLevel::Strict)
-            .map_err(|_| AuthError::MalformedToken("Token contains invalid characters".to_string()))?;
+            .map_err(|_| {
+                AuthError::MalformedToken("Token contains invalid characters".to_string())
+            })?;
 
         let mut validation = Validation::new(Algorithm::HS256);
         validation.set_issuer(&[&self.config.issuer]);
@@ -214,7 +229,8 @@ impl AuthValidator {
             &clean_token,
             &DecodingKey::from_secret(self.config.secret.as_ref()),
             &validation,
-        ).map_err(|e| match e.kind() {
+        )
+        .map_err(|e| match e.kind() {
             jsonwebtoken::errors::ErrorKind::ExpiredSignature => {
                 AuthError::ExpiredToken("Token has expired".to_string())
             }
@@ -245,7 +261,13 @@ impl AuthValidator {
     }
 
     /// Generate access token for user
-    pub fn generate_access_token(&self, username: &str, roles: Vec<String>, permissions: Vec<String>, account_ids: Vec<String>) -> Result<String, AuthError> {
+    pub fn generate_access_token(
+        &self,
+        username: &str,
+        roles: Vec<String>,
+        permissions: Vec<String>,
+        account_ids: Vec<String>,
+    ) -> Result<String, AuthError> {
         let now = Utc::now();
         let expire = now + Duration::seconds(self.config.expiration);
 
@@ -265,11 +287,18 @@ impl AuthValidator {
             &Header::new(Algorithm::HS256),
             &claims,
             &EncodingKey::from_secret(self.config.secret.as_ref()),
-        ).map_err(|e| AuthError::InvalidCredentials(format!("Failed to generate token: {}", e)))
+        )
+        .map_err(|e| AuthError::InvalidCredentials(format!("Failed to generate token: {}", e)))
     }
 
     /// Generate refresh token for user
-    pub fn generate_refresh_token(&self, username: &str, roles: Vec<String>, permissions: Vec<String>, account_ids: Vec<String>) -> Result<String, AuthError> {
+    pub fn generate_refresh_token(
+        &self,
+        username: &str,
+        roles: Vec<String>,
+        permissions: Vec<String>,
+        account_ids: Vec<String>,
+    ) -> Result<String, AuthError> {
         let now = Utc::now();
         let expire = now + Duration::seconds(self.config.refresh_expiration);
 
@@ -289,7 +318,10 @@ impl AuthValidator {
             &Header::new(Algorithm::HS256),
             &claims,
             &EncodingKey::from_secret(self.config.secret.as_ref()),
-        ).map_err(|e| AuthError::InvalidCredentials(format!("Failed to generate refresh token: {}", e)))
+        )
+        .map_err(|e| {
+            AuthError::InvalidCredentials(format!("Failed to generate refresh token: {}", e))
+        })
     }
 
     /// Refresh access token using refresh token
@@ -297,7 +329,9 @@ impl AuthValidator {
         let token_data = self.validate_token(refresh_token)?;
 
         if token_data.claims.token_type != "refresh" {
-            return Err(AuthError::InvalidToken("Invalid token type for refresh".to_string()));
+            return Err(AuthError::InvalidToken(
+                "Invalid token type for refresh".to_string(),
+            ));
         }
 
         self.generate_access_token(
@@ -309,29 +343,44 @@ impl AuthValidator {
     }
 
     /// Check if user has access to a specific account
-    pub fn check_account_access(&self, context: &AuthContext, account_id: &str) -> Result<(), AuthError> {
+    pub fn check_account_access(
+        &self,
+        context: &AuthContext,
+        account_id: &str,
+    ) -> Result<(), AuthError> {
         if context.has_account_access(account_id) {
             Ok(())
         } else {
-            Err(AuthError::AccountAccessDenied(
-                format!("User {} does not have access to account {}", context.username, account_id)
-            ))
+            Err(AuthError::AccountAccessDenied(format!(
+                "User {} does not have access to account {}",
+                context.username, account_id
+            )))
         }
     }
 
     /// Check if user has required authorization level
-    pub fn check_authorization(&self, context: &AuthContext, required_level: AuthorizationLevel) -> Result<(), AuthError> {
+    pub fn check_authorization(
+        &self,
+        context: &AuthContext,
+        required_level: AuthorizationLevel,
+    ) -> Result<(), AuthError> {
         required_level.check_access(context)
     }
 
     /// Validate user credentials (placeholder for actual credential validation)
-    pub fn validate_credentials(&self, username: &str, password: &str) -> Result<(Vec<String>, Vec<String>, Vec<String>), AuthError> {
+    pub fn validate_credentials(
+        &self,
+        username: &str,
+        password: &str,
+    ) -> Result<(Vec<String>, Vec<String>, Vec<String>), AuthError> {
         // Sanitize inputs
-        let clean_username = self.security_validator
+        let clean_username = self
+            .security_validator
             .validate_string(username, "username", SanitizationLevel::Strict)
             .map_err(|_| AuthError::InvalidCredentials("Invalid username format".to_string()))?;
 
-        let clean_password = self.security_validator
+        let clean_password = self
+            .security_validator
             .validate_string(password, "password", SanitizationLevel::Strict)
             .map_err(|_| AuthError::InvalidCredentials("Invalid password format".to_string()))?;
 
@@ -394,12 +443,14 @@ impl AuthMiddleware {
         let context = self.auth_validator.token_to_context(token_data);
 
         // Check authorization level
-        self.auth_validator.check_authorization(&context, self.required_level)?;
+        self.auth_validator
+            .check_authorization(&context, self.required_level)?;
 
         // Check account access if required
         if self.require_account_access {
             if let Some(ref account_id) = self.account_id {
-                self.auth_validator.check_account_access(&context, account_id)?;
+                self.auth_validator
+                    .check_account_access(&context, account_id)?;
             }
         }
 
@@ -469,9 +520,15 @@ mod tests {
             expires_at: Utc::now(),
         };
 
-        assert!(AuthorizationLevel::Admin.check_access(&admin_context).is_ok());
-        assert!(AuthorizationLevel::User.check_access(&admin_context).is_ok());
-        assert!(AuthorizationLevel::Admin.check_access(&user_context).is_err());
+        assert!(AuthorizationLevel::Admin
+            .check_access(&admin_context)
+            .is_ok());
+        assert!(AuthorizationLevel::User
+            .check_access(&admin_context)
+            .is_ok());
+        assert!(AuthorizationLevel::Admin
+            .check_access(&user_context)
+            .is_err());
         assert!(AuthorizationLevel::User.check_access(&user_context).is_ok());
     }
 

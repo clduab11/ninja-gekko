@@ -173,7 +173,7 @@ impl SonarClient {
             .expect("Failed to create HTTP client");
 
         let rate_limiter = SonarRateLimiter::new();
-        
+
         Self {
             config,
             client,
@@ -192,7 +192,11 @@ impl SonarClient {
 
         // Check rate limit
         if !self.rate_limiter.try_acquire(model_str) {
-            warn!("Rate limited on model '{}', remaining: {}", model_str, self.rate_limiter.remaining(model_str));
+            warn!(
+                "Rate limited on model '{}', remaining: {}",
+                model_str,
+                self.rate_limiter.remaining(model_str)
+            );
             return Err(SonarError::RateLimited {
                 model: model_str.to_string(),
             });
@@ -228,12 +232,16 @@ impl SonarClient {
             .await?;
 
         let status = response.status();
-        
+
         if status.is_success() {
             let sonar_response: SonarResponse = response.json().await?;
             info!(
                 "✅ Sonar response received: {} tokens used, {} citations",
-                sonar_response.usage.as_ref().map(|u| u.total_tokens).unwrap_or(0),
+                sonar_response
+                    .usage
+                    .as_ref()
+                    .map(|u| u.total_tokens)
+                    .unwrap_or(0),
                 sonar_response.citations.len()
             );
             Ok(sonar_response)
@@ -257,7 +265,8 @@ impl SonarClient {
 
     /// Deep research for complex financial analysis
     pub async fn deep_research(&self, query: &str) -> Result<SonarResponse, SonarError> {
-        self.research(query, Some(SonarModel::SonarDeepResearch)).await
+        self.research(query, Some(SonarModel::SonarDeepResearch))
+            .await
     }
 
     /// Quick lookup for simple queries (prices, basic info)
@@ -282,28 +291,50 @@ pub fn classify_query(query: &str) -> SonarModel {
 
     // Deep research triggers
     let deep_research_keywords = [
-        "analyze", "deep dive", "research", "investigate",
-        "compare", "historical", "trend analysis", "catalyst",
-        "earnings", "sec filing", "management commentary",
-        "sector rotation", "macro outlook", "risk assessment",
-        "comprehensive", "detailed", "in-depth",
+        "analyze",
+        "deep dive",
+        "research",
+        "investigate",
+        "compare",
+        "historical",
+        "trend analysis",
+        "catalyst",
+        "earnings",
+        "sec filing",
+        "management commentary",
+        "sector rotation",
+        "macro outlook",
+        "risk assessment",
+        "comprehensive",
+        "detailed",
+        "in-depth",
     ];
 
     // Quick lookup triggers
     let quick_lookup_keywords = [
-        "price", "current", "quote", "what is", "how much",
-        "today", "now", "latest",
+        "price", "current", "quote", "what is", "how much", "today", "now", "latest",
     ];
 
     // Reasoning triggers
     let reasoning_keywords = [
-        "why", "explain", "reasoning", "implications",
-        "predict", "forecast", "likely",
+        "why",
+        "explain",
+        "reasoning",
+        "implications",
+        "predict",
+        "forecast",
+        "likely",
     ];
 
-    if deep_research_keywords.iter().any(|kw| query_lower.contains(kw)) {
+    if deep_research_keywords
+        .iter()
+        .any(|kw| query_lower.contains(kw))
+    {
         SonarModel::SonarDeepResearch
-    } else if quick_lookup_keywords.iter().any(|kw| query_lower.contains(kw)) {
+    } else if quick_lookup_keywords
+        .iter()
+        .any(|kw| query_lower.contains(kw))
+    {
         SonarModel::Sonar
     } else if reasoning_keywords.iter().any(|kw| query_lower.contains(kw)) {
         SonarModel::SonarReasoning
@@ -319,7 +350,10 @@ mod tests {
     #[test]
     fn test_model_as_str() {
         assert_eq!(SonarModel::Sonar.as_str(), "sonar");
-        assert_eq!(SonarModel::SonarDeepResearch.as_str(), "sonar-deep-research");
+        assert_eq!(
+            SonarModel::SonarDeepResearch.as_str(),
+            "sonar-deep-research"
+        );
     }
 
     #[test]
@@ -330,9 +364,18 @@ mod tests {
 
     #[test]
     fn test_query_classification() {
-        assert_eq!(classify_query("What is the current BTC price?"), SonarModel::Sonar);
-        assert_eq!(classify_query("Analyze NVDA Q3 earnings"), SonarModel::SonarDeepResearch);
-        assert_eq!(classify_query("Why did the market drop?"), SonarModel::SonarReasoning);
+        assert_eq!(
+            classify_query("What is the current BTC price?"),
+            SonarModel::Sonar
+        );
+        assert_eq!(
+            classify_query("Analyze NVDA Q3 earnings"),
+            SonarModel::SonarDeepResearch
+        );
+        assert_eq!(
+            classify_query("Why did the market drop?"),
+            SonarModel::SonarReasoning
+        );
         assert_eq!(classify_query("Tell me about Apple"), SonarModel::SonarPro);
     }
 }

@@ -19,9 +19,9 @@ impl McpExecutionClient {
     pub async fn start(&mut self) -> Result<()> {
         let mut cmd = Command::new("cargo");
         cmd.args(&["run", "-p", "mcp-server-trade", "--", "--dry-run=true"])
-           .stdin(Stdio::piped())
-           .stdout(Stdio::piped())
-           .stderr(Stdio::inherit()); 
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::inherit());
 
         let child = cmd.spawn()?;
         self.process = Some(child);
@@ -29,7 +29,12 @@ impl McpExecutionClient {
         Ok(())
     }
 
-    pub async fn place_order(&mut self, symbol: &str, side: &str, quantity: Decimal) -> Result<String> {
+    pub async fn place_order(
+        &mut self,
+        symbol: &str,
+        side: &str,
+        quantity: Decimal,
+    ) -> Result<String> {
         let req = json!({
             "jsonrpc": "2.0",
             "method": "place_order",
@@ -58,7 +63,7 @@ impl McpExecutionClient {
             let mut reader = BufReader::new(stdout);
             let mut line = String::new();
             reader.read_line(&mut line).await?;
-            
+
             Ok(line)
         } else {
             Err(anyhow::anyhow!("Server not started"))

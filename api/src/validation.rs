@@ -3,13 +3,13 @@
 //! This module provides centralized input validation, sanitization,
 //! and security checks for the Ninja Gekko API server.
 
-use serde::{Deserialize, Serialize};
-use validator::{ValidationError, ValidationErrors};
-use std::collections::HashMap;
-use regex::Regex;
-use lazy_static::lazy_static;
 use chrono::{DateTime, Utc};
+use lazy_static::lazy_static;
+use regex::Regex;
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::collections::HashMap;
+use validator::{ValidationError, ValidationErrors};
 
 /// Security configuration for validation rules
 #[derive(Debug, Clone)]
@@ -38,9 +38,14 @@ impl Default for SecurityConfig {
             max_numeric_value: 1_000_000_000.0,
             min_numeric_value: -1_000_000_000.0,
             allowed_file_extensions: vec![
-                "jpg".to_string(), "jpeg".to_string(), "png".to_string(),
-                "gif".to_string(), "pdf".to_string(), "txt".to_string(),
-                "csv".to_string(), "json".to_string()
+                "jpg".to_string(),
+                "jpeg".to_string(),
+                "png".to_string(),
+                "gif".to_string(),
+                "pdf".to_string(),
+                "txt".to_string(),
+                "csv".to_string(),
+                "json".to_string(),
             ],
             blocked_ip_patterns: vec![
                 r"192\.168\..*".to_string(),
@@ -52,7 +57,10 @@ impl Default for SecurityConfig {
                 ("trades".to_string(), 100),
                 ("portfolio".to_string(), 50),
                 ("market_data".to_string(), 1000),
-            ].iter().cloned().collect(),
+            ]
+            .iter()
+            .cloned()
+            .collect(),
         }
     }
 }
@@ -70,7 +78,6 @@ lazy_static! {
         Regex::new(r"/\*.*\*/").unwrap(),
         Regex::new(r";.*--").unwrap(),
     ];
-
     static ref XSS_PATTERNS: Vec<Regex> = vec![
         Regex::new(r"<script[^>]*>.*?</script>").unwrap(),
         Regex::new(r"javascript:").unwrap(),
@@ -129,7 +136,12 @@ impl SecurityValidator {
     }
 
     /// Validate and sanitize a string input
-    pub fn validate_string(&self, input: &str, field_name: &'static str, level: SanitizationLevel) -> ValidationResult<String> {
+    pub fn validate_string(
+        &self,
+        input: &str,
+        field_name: &'static str,
+        level: SanitizationLevel,
+    ) -> ValidationResult<String> {
         let sanitized = match level {
             SanitizationLevel::Basic => self.sanitize_basic(input),
             SanitizationLevel::Strict => self.sanitize_strict(input),
@@ -137,7 +149,11 @@ impl SecurityValidator {
         };
 
         if sanitized.len() > self.config.max_string_length {
-            return Err(self.create_length_error(field_name, sanitized.len(), self.config.max_string_length));
+            return Err(self.create_length_error(
+                field_name,
+                sanitized.len(),
+                self.config.max_string_length,
+            ));
         }
 
         if self.contains_sql_injection(&sanitized) {
@@ -178,12 +194,16 @@ impl SecurityValidator {
     }
 
     /// Validate collection size
-    pub fn validate_collection<T>(&self, collection: &[T], field_name: &'static str) -> ValidationResult<()> {
+    pub fn validate_collection<T>(
+        &self,
+        collection: &[T],
+        field_name: &'static str,
+    ) -> ValidationResult<()> {
         if collection.len() > self.config.max_collection_size {
             return Err(self.create_collection_size_error(
                 field_name,
                 collection.len(),
-                self.config.max_collection_size
+                self.config.max_collection_size,
             ));
         }
         Ok(())
@@ -191,11 +211,7 @@ impl SecurityValidator {
 
     /// Validate file extension
     pub fn validate_file_extension(&self, filename: &str) -> ValidationResult<String> {
-        let extension = filename
-            .split('.')
-            .last()
-            .unwrap_or("")
-            .to_lowercase();
+        let extension = filename.split('.').last().unwrap_or("").to_lowercase();
 
         if !self.config.allowed_file_extensions.contains(&extension) {
             return Err(self.create_file_extension_error(&extension));
@@ -226,19 +242,29 @@ impl SecurityValidator {
 
     fn sanitize_strict(&self, input: &str) -> String {
         let mut result = input.to_string();
-        result = Regex::new(r"<[^>]*>").unwrap().replace_all(&result, "").to_string();
+        result = Regex::new(r"<[^>]*>")
+            .unwrap()
+            .replace_all(&result, "")
+            .to_string();
         result
     }
 
     pub fn contains_sql_injection(&self, input: &str) -> bool {
-        SQL_INJECTION_PATTERNS.iter().any(|pattern| pattern.is_match(input))
+        SQL_INJECTION_PATTERNS
+            .iter()
+            .any(|pattern| pattern.is_match(input))
     }
 
     fn contains_xss(&self, input: &str) -> bool {
         XSS_PATTERNS.iter().any(|pattern| pattern.is_match(input))
     }
 
-    fn create_length_error(&self, field: &'static str, actual: usize, _max: usize) -> ValidationErrors {
+    fn create_length_error(
+        &self,
+        field: &'static str,
+        actual: usize,
+        _max: usize,
+    ) -> ValidationErrors {
         let mut errors = ValidationErrors::new();
         let mut error = ValidationError::new("length");
         error.message = Some(Cow::from("Maximum length exceeded"));
@@ -247,7 +273,13 @@ impl SecurityValidator {
         errors
     }
 
-    fn create_range_error(&self, field: &'static str, value: f64, min: f64, max: f64) -> ValidationErrors {
+    fn create_range_error(
+        &self,
+        field: &'static str,
+        value: f64,
+        min: f64,
+        max: f64,
+    ) -> ValidationErrors {
         let mut errors = ValidationErrors::new();
         let mut error = ValidationError::new("range");
         error.message = Some(Cow::from(format!("Value {} out of range", value)));
@@ -255,10 +287,18 @@ impl SecurityValidator {
         errors
     }
 
-    fn create_collection_size_error(&self, field: &'static str, actual: usize, max: usize) -> ValidationErrors {
+    fn create_collection_size_error(
+        &self,
+        field: &'static str,
+        actual: usize,
+        max: usize,
+    ) -> ValidationErrors {
         let mut errors = ValidationErrors::new();
         let mut error = ValidationError::new("collection_size");
-        error.message = Some(Cow::from(format!("Collection size {} exceeds maximum {}", actual, max)));
+        error.message = Some(Cow::from(format!(
+            "Collection size {} exceeds maximum {}",
+            actual, max
+        )));
         errors.add(field, error);
         errors
     }
@@ -266,7 +306,10 @@ impl SecurityValidator {
     fn create_file_extension_error(&self, extension: &str) -> ValidationErrors {
         let mut errors = ValidationErrors::new();
         let mut error = ValidationError::new("file_extension");
-        error.message = Some(Cow::from(format!("File extension {} not allowed", extension)));
+        error.message = Some(Cow::from(format!(
+            "File extension {} not allowed",
+            extension
+        )));
         errors.add("file_extension", error);
         errors
     }
@@ -308,11 +351,11 @@ impl RateLimitValidator {
 
     pub fn check_rate_limit(&self, context: &RateLimitContext) -> ValidationResult<()> {
         if context.endpoint.is_empty() {
-             let mut errors = ValidationErrors::new();
-             let mut error = ValidationError::new("rate_limit");
-             error.message = Some(Cow::from("Endpoint cannot be empty"));
-             errors.add("rate_limit", error);
-             return Err(errors);
+            let mut errors = ValidationErrors::new();
+            let mut error = ValidationError::new("rate_limit");
+            error.message = Some(Cow::from("Endpoint cannot be empty"));
+            errors.add("rate_limit", error);
+            return Err(errors);
         }
         Ok(())
     }
@@ -333,7 +376,8 @@ mod tests {
     #[test]
     fn test_string_validation() {
         let validator = SecurityValidator::new();
-        let result = validator.validate_string("hello world", "test_field", SanitizationLevel::Basic);
+        let result =
+            validator.validate_string("hello world", "test_field", SanitizationLevel::Basic);
         assert!(result.is_ok());
     }
 

@@ -1,10 +1,10 @@
 //! Service Health Verification Tests
 //! Acceptance tests for Ninja Gekko Trading Platform health and accessibility
 
+use reqwest::Client;
 use std::process::Command;
 use std::time::Duration;
 use tokio::time::timeout;
-use reqwest::Client;
 
 #[cfg(test)]
 mod service_health_tests {
@@ -27,7 +27,10 @@ mod service_health_tests {
 
         // Verify expected services are running
         assert!(stdout.contains("Up"), "Services should be running");
-        assert!(stdout.contains("trading-engine"), "Trading engine service missing");
+        assert!(
+            stdout.contains("trading-engine"),
+            "Trading engine service missing"
+        );
         assert!(stdout.contains("database"), "Database service missing");
         assert!(stdout.contains("redis"), "Redis service missing");
         assert!(stdout.contains("nginx"), "Nginx service missing");
@@ -43,14 +46,17 @@ mod service_health_tests {
 
         // Test health endpoint with timeout
         let result = timeout(Duration::from_secs(10), async {
-            client.get("http://localhost:8080/health")
-                .send()
-                .await
-        }).await;
+            client.get("http://localhost:8080/health").send().await
+        })
+        .await;
 
         match result {
             Ok(Ok(response)) => {
-                assert_eq!(response.status(), 200, "API health endpoint should return 200");
+                assert_eq!(
+                    response.status(),
+                    200,
+                    "API health endpoint should return 200"
+                );
                 println!("Main API health check: PASSED");
             }
             Ok(Err(e)) => panic!("Request failed: {}", e),
@@ -67,10 +73,9 @@ mod service_health_tests {
         let client = Client::new();
 
         let result = timeout(Duration::from_secs(10), async {
-            client.get("http://localhost:8787/health")
-                .send()
-                .await
-        }).await;
+            client.get("http://localhost:8787/health").send().await
+        })
+        .await;
 
         match result {
             Ok(Ok(response)) => {
@@ -158,11 +163,13 @@ mod service_health_tests {
         let client = Client::new();
 
         let result = timeout(Duration::from_secs(10), async {
-            client.get("http://localhost:8080/health")
+            client
+                .get("http://localhost:8080/health")
                 .header("Origin", "http://localhost:3000")
                 .send()
                 .await
-        }).await;
+        })
+        .await;
 
         match result {
             Ok(Ok(response)) => {
@@ -185,15 +192,21 @@ mod service_health_tests {
 
         // Test without token (should fail gracefully)
         let result = timeout(Duration::from_secs(10), async {
-            client.get("http://localhost:8080/api/protected")
+            client
+                .get("http://localhost:8080/api/protected")
                 .send()
                 .await
-        }).await;
+        })
+        .await;
 
         match result {
             Ok(Ok(response)) => {
                 // Should return 401 Unauthorized for protected endpoint
-                assert_eq!(response.status(), 401, "Protected endpoint should return 401 without token");
+                assert_eq!(
+                    response.status(),
+                    401,
+                    "Protected endpoint should return 401 without token"
+                );
                 println!("JWT configuration validation: PASSED");
             }
             Ok(Err(e)) => panic!("JWT test failed: {}", e),
@@ -210,16 +223,20 @@ mod service_health_tests {
         let client = Client::new();
 
         let result = timeout(Duration::from_secs(10), async {
-            client.get("http://localhost:8080/api/market-data")
+            client
+                .get("http://localhost:8080/api/market-data")
                 .send()
                 .await
-        }).await;
+        })
+        .await;
 
         match result {
             Ok(Ok(response)) => {
                 // Should return success or expected auth error
-                assert!(response.status().is_success() || response.status() == 401,
-                       "Market data endpoint should return success or 401 (expected without API keys)");
+                assert!(
+                    response.status().is_success() || response.status() == 401,
+                    "Market data endpoint should return success or 401 (expected without API keys)"
+                );
                 println!("Market data flow: PASSED");
             }
             Ok(Err(e)) => panic!("Market data test failed: {}", e),
@@ -241,10 +258,12 @@ mod service_health_tests {
             let client_clone = client.clone();
             let handle = tokio::spawn(async move {
                 timeout(Duration::from_secs(5), async {
-                    client_clone.get("http://localhost:8080/health")
+                    client_clone
+                        .get("http://localhost:8080/health")
                         .send()
                         .await
-                }).await
+                })
+                .await
             });
             handles.push(handle);
         }

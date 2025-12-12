@@ -219,7 +219,6 @@ impl StrategyExecutor<8> for MomentumStrategy {
 mod tests {
     use super::*;
     use chrono::Utc;
-    
 
     fn create_snapshots(prices: &[Decimal]) -> [MarketSnapshot; 8] {
         let mut arr: [MarketSnapshot; 8] = std::array::from_fn(|_| MarketSnapshot {

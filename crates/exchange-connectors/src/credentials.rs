@@ -67,11 +67,7 @@ impl ExchangeCredentials {
         debug!("Loading credentials for {:?} from environment", exchange_id);
 
         let (api_key, api_secret, account_id) = match exchange_id {
-            ExchangeId::Mock => (
-                "mock_key".to_string(),
-                "mock_secret".to_string(),
-                None,
-            ),
+            ExchangeId::Mock => ("mock_key".to_string(), "mock_secret".to_string(), None),
             ExchangeId::BinanceUs => (
                 env::var("BINANCE_US_API_KEY")
                     .map_err(|_| Self::missing_env("BINANCE_US_API_KEY"))?,
@@ -89,7 +85,8 @@ impl ExchangeCredentials {
             ),
             ExchangeId::Kraken => (
                 env::var("KRAKEN_API_KEY").map_err(|_| Self::missing_env("KRAKEN_API_KEY"))?,
-                env::var("KRAKEN_API_SECRET").map_err(|_| Self::missing_env("KRAKEN_API_SECRET"))?,
+                env::var("KRAKEN_API_SECRET")
+                    .map_err(|_| Self::missing_env("KRAKEN_API_SECRET"))?,
                 None,
             ),
         };
@@ -99,13 +96,7 @@ impl ExchangeCredentials {
             .map(|v| v.to_lowercase() == "true" || v == "1")
             .unwrap_or(false);
 
-        let credentials = Self::new(
-            exchange_id,
-            api_key,
-            api_secret,
-            account_id,
-            sandbox,
-        );
+        let credentials = Self::new(exchange_id, api_key, api_secret, account_id, sandbox);
 
         credentials.validate()?;
 

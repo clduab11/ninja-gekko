@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use rust_decimal::Decimal;
 use tracing::info;
 
@@ -17,9 +17,17 @@ impl SafetyValidator {
         }
     }
 
-    pub fn check_trade(&self, symbol: &str, quantity: Decimal, estimated_value: Decimal) -> Result<()> {
+    pub fn check_trade(
+        &self,
+        symbol: &str,
+        quantity: Decimal,
+        estimated_value: Decimal,
+    ) -> Result<()> {
         if self.dry_run {
-            info!("Dry run mode active: skipping strict safety checks for {}", symbol);
+            info!(
+                "Dry run mode active: skipping strict safety checks for {}",
+                symbol
+            );
             return Ok(());
         }
 

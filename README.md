@@ -341,9 +341,46 @@ npm run preview
 - **Memory**: 8GB RAM minimum, 16GB recommended
 - **Storage**: 50GB free space
 
-### **Docker Compose Deployment (Recommended)**
+**Optional - GPU Acceleration:**
+- **NVIDIA GPU**: CUDA 12.2+ (Linux/Windows)
+- **Apple Silicon**: M1/M2/M3 (macOS) with Metal support
+- **NVIDIA Container Toolkit**: For Docker GPU passthrough (Linux)
 
-The simplest way to run the entire Ninja Gekko stack:
+### **One-Click Start (Recommended)**
+
+The fastest way to get started with automatic GPU detection:
+
+```bash
+# Clone the repository
+git clone https://github.com/clduab11/ninja-gekko.git
+cd ninja-gekko
+
+# Copy and configure environment
+cp .env.template .env
+# Edit .env with your API keys
+
+# One-click start - automatically detects GPU and configures environment
+./scripts/dev.sh start
+
+# Verify GPU detection
+./scripts/verify_gpu.sh
+```
+
+**What happens:**
+- **macOS (Apple Silicon)**: Core services run in Docker, backend runs natively with Metal GPU
+- **Linux/Windows with NVIDIA**: Full stack runs in Docker with CUDA GPU passthrough
+- **No GPU**: Falls back to CPU-only mode automatically
+
+**Startup logs confirm device:**
+- `🚀 Using device: Metal GPU` (macOS)
+- `🚀 Using device: CUDA GPU 0` (Linux/Windows)
+- `💻 Using device: CPU` (fallback)
+
+See [`docs/GPU_SETUP.md`](docs/GPU_SETUP.md) for detailed GPU configuration.
+
+### **Docker Compose Deployment (Manual)**
+
+For manual control over the stack:
 
 1. **Clone the Repository**
 

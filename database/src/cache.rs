@@ -4,8 +4,8 @@
 //! automatic serialization/deserialization, and cache management features.
 
 use anyhow::Result;
-use redis::{AsyncCommands, Client};
 use redis::aio::ConnectionManager;
+use redis::{AsyncCommands, Client};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -30,7 +30,7 @@ impl CacheManager {
         info!("Initializing Redis cache manager");
 
         let client = Client::open(config.redis_url.clone())?;
-        
+
         // Create connection manager
         let connection_manager = ConnectionManager::new(client.clone()).await?;
 

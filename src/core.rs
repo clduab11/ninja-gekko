@@ -2,8 +2,8 @@
 
 use crate::neural::NeuralBackend;
 use event_bus::EventBus;
-use mcp_client::{McpClient, McpConfig};
 use exchange_connectors::ExchangeConnector;
+use mcp_client::{McpClient, McpConfig};
 use std::fmt;
 
 /// Main Ninja Gekko bot struct
@@ -90,22 +90,22 @@ impl NinjaGekko {
 
     async fn start_precision_mode(&self) -> Result<(), Box<dyn std::error::Error>> {
         tracing::info!("⚡ Initializing precision operations...");
-        
+
         // Initialize Kraken Connector
         let api_key = std::env::var("KRAKEN_API_KEY").unwrap_or_default();
         let api_secret = std::env::var("KRAKEN_API_SECRET").unwrap_or_default();
-        
+
         if !api_key.is_empty() && !api_secret.is_empty() {
             tracing::info!("Found Kraken credentials, attempting connection...");
-             
+
             let creds = exchange_connectors::credentials::ExchangeCredentials::new(
                 exchange_connectors::ExchangeId::Kraken,
                 api_key,
                 api_secret,
-                None, // account_id 
+                None,  // account_id
                 false, // sandbox
             );
-            
+
             let mut connector = exchange_connectors::kraken::KrakenConnector::new(creds);
             match connector.connect().await {
                 Ok(_) => tracing::info!("Successfully connected to Kraken"),
@@ -165,20 +165,20 @@ impl NinjaGekkoBuilder {
     /// Build the NinjaGekko instance
     pub async fn build(self) -> anyhow::Result<NinjaGekko> {
         // Configure Discord if available
-        let discord_config = std::env::var("DISCORD_WEBHOOK_URL")
-            .ok()
-            .map(|url| mcp_client::discord_webhook::DiscordConfig {
+        let discord_config = std::env::var("DISCORD_WEBHOOK_URL").ok().map(|url| {
+            mcp_client::discord_webhook::DiscordConfig {
                 webhook_url: secrecy::Secret::new(url),
                 authorized_server_id: std::env::var("DISCORD_SERVER_ID").ok(),
                 bot_name: "Gordon".to_string(),
-            });
+            }
+        });
 
         let mcp_config = McpConfig {
             servers: self.mcp_servers,
         };
-        
+
         let mut mcp_client = McpClient::new(mcp_config);
-        
+
         // Pass Discord config
         mcp_client = mcp_client.with_discord_config(discord_config);
 

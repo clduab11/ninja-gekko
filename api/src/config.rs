@@ -3,10 +3,10 @@
 //! Handles configuration loading and management for the Ninja Gekko API server.
 //! Supports environment variables, configuration files, and runtime configuration.
 
+use config::{Config, ConfigError, Environment, File};
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use config::{Config, ConfigError, Environment, File};
 use tracing::{info, warn};
 
 /// Server configuration for the API
@@ -84,12 +84,15 @@ impl ApiConfig {
             .add_source(
                 Environment::with_prefix("GG_API")
                     .separator("_")
-                    .try_parsing(true)
+                    .try_parsing(true),
             )
             .set_override_option("database_url", std::env::var("GG_API_DATABASE_URL").ok())?
             .set_default("bind_address", "0.0.0.0:8080")?
             .set_default("database_url", "postgresql://localhost/gordon_gekko")?
-            .set_default("jwt_secret", "your-super-secret-jwt-key-change-this-in-production")?
+            .set_default(
+                "jwt_secret",
+                "your-super-secret-jwt-key-change-this-in-production",
+            )?
             .set_default("environment", "development")?
             .set_default("cors_origins", vec!["http://localhost:3000"])?
             .set_default("request_timeout_secs", 30)?
@@ -124,7 +127,10 @@ impl ApiConfig {
         // Do not log database connection secrets or sensitive info
         info!("  Database: [REDACTED]");
         info!("  CORS Origins: {:?}", api_config.cors_origins);
-        info!("  Rate Limiting: {} req/minute", api_config.rate_limiting.requests_per_minute);
+        info!(
+            "  Rate Limiting: {} req/minute",
+            api_config.rate_limiting.requests_per_minute
+        );
         info!("  WebSocket Enabled: {}", api_config.enable_websocket);
         info!("  Request Timeout: {}s", api_config.request_timeout_secs);
 
@@ -138,19 +144,27 @@ impl ApiConfig {
     /// Validates the configuration values
     pub fn validate(&self) -> Result<(), ConfigError> {
         if self.request_timeout_secs == 0 {
-            return Err(ConfigError::Message("Request timeout must be greater than 0".to_string()));
+            return Err(ConfigError::Message(
+                "Request timeout must be greater than 0".to_string(),
+            ));
         }
 
         if self.max_payload_size == 0 {
-            return Err(ConfigError::Message("Max payload size must be greater than 0".to_string()));
+            return Err(ConfigError::Message(
+                "Max payload size must be greater than 0".to_string(),
+            ));
         }
 
         if self.jwt_secret.is_empty() {
-            return Err(ConfigError::Message("JWT secret cannot be empty".to_string()));
+            return Err(ConfigError::Message(
+                "JWT secret cannot be empty".to_string(),
+            ));
         }
 
         if self.database_url.is_empty() {
-            return Err(ConfigError::Message("Database URL cannot be empty".to_string()));
+            return Err(ConfigError::Message(
+                "Database URL cannot be empty".to_string(),
+            ));
         }
 
         if self.cors_origins.is_empty() {

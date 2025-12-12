@@ -356,7 +356,6 @@ fn emit_oanda_price(
 
 #[cfg(test)]
 mod tests {
-    
 
     #[test]
     fn instrument_formatting() {

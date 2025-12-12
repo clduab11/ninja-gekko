@@ -57,7 +57,10 @@ pub struct MigrationManager {
 impl MigrationManager {
     /// Create a new migration manager
     #[instrument(skip(config))]
-    pub fn new(config: MigrationConfig, migration_dir: impl AsRef<Path> + std::fmt::Debug) -> Result<Self> {
+    pub fn new(
+        config: MigrationConfig,
+        migration_dir: impl AsRef<Path> + std::fmt::Debug,
+    ) -> Result<Self> {
         info!("Initializing migration manager");
 
         let migration_dir = migration_dir.as_ref().to_path_buf();
@@ -85,7 +88,7 @@ impl MigrationManager {
             SELECT version, name, description, checksum, applied_at, status, execution_time_ms
             FROM schema_migrations
             ORDER BY version ASC
-            "#
+            "#,
         )
         .fetch_all(pool)
         .await?;
@@ -266,7 +269,7 @@ impl MigrationManager {
                 locked_by VARCHAR(255) NOT NULL,
                 expires_at BIGINT NOT NULL
             )
-            "#
+            "#,
         )
         .execute(pool)
         .await
@@ -281,7 +284,7 @@ impl MigrationManager {
             ON CONFLICT (lock_id) DO UPDATE SET
                 locked_by = EXCLUDED.locked_by,
                 expires_at = EXCLUDED.expires_at
-            "#
+            "#,
         )
         .bind(lock_id)
         .bind("migration_manager")
@@ -311,13 +314,11 @@ impl MigrationManager {
     async fn release_lock(&self, pool: &sqlx::PgPool, lock_id: &str) -> Result<()> {
         debug!("Releasing migration lock: {}", lock_id);
 
-        let rows_affected = sqlx::query(
-            "DELETE FROM schema_migration_locks WHERE lock_id = $1"
-        )
-        .bind(lock_id)
-        .execute(pool)
-        .await?
-        .rows_affected();
+        let rows_affected = sqlx::query("DELETE FROM schema_migration_locks WHERE lock_id = $1")
+            .bind(lock_id)
+            .execute(pool)
+            .await?
+            .rows_affected();
 
         if rows_affected > 0 {
             info!("Released migration lock: {}", lock_id);
@@ -364,7 +365,7 @@ impl MigrationManager {
                 status VARCHAR(20) NOT NULL,
                 execution_time_ms BIGINT
             );
-            "#
+            "#,
         )
         .execute(pool)
         .await
@@ -453,7 +454,7 @@ impl MigrationManager {
                 status VARCHAR(50) NOT NULL DEFAULT 'pending',
                 execution_time_ms BIGINT
             )
-            "#
+            "#,
         )
         .execute(pool)
         .await
@@ -509,7 +510,10 @@ impl MigrationManager {
             Err(e) => {
                 // Rollback the failed transaction
                 if let Err(rollback_err) = tx.rollback().await {
-                   error!("Failed to rollback transaction after migration failure: {}", rollback_err);
+                    error!(
+                        "Failed to rollback transaction after migration failure: {}",
+                        rollback_err
+                    );
                 }
 
                 // Record failed migration using a new connection from the pool
@@ -566,20 +570,20 @@ impl MigrationManager {
                     // Toggle string state, handling escaped quotes '' loosely by just toggling back and forth
                     // which works for the purpose of hiding semicolons.
                     in_string = !in_string;
-                },
+                }
                 '$' if !in_string => {
                     if let Some(&'$') = chars.peek() {
                         in_dollar_quote = !in_dollar_quote;
                         current_stmt.push(chars.next().unwrap()); // consume second $
                     }
-                },
+                }
                 ';' if !in_string && !in_dollar_quote => {
                     // Found a statement separator outside of any string or block
                     if !current_stmt.trim().is_empty() {
                         statements.push(current_stmt.trim().to_string());
                     }
                     current_stmt = String::new();
-                },
+                }
                 _ => {}
             }
         }
@@ -591,10 +595,10 @@ impl MigrationManager {
             if !statement.is_empty() {
                 info!("Executing statement: {}", statement);
                 match sqlx::query(&statement).execute(&mut **tx).await {
-                    Ok(_) => {},
+                    Ok(_) => {}
                     Err(e) => {
-                         error!("Failed to execute statement: '{}'. Error: {}", statement, e);
-                         return Err(anyhow::anyhow!("Statement failure: {}", e));
+                        error!("Failed to execute statement: '{}'. Error: {}", statement, e);
+                        return Err(anyhow::anyhow!("Statement failure: {}", e));
                     }
                 }
             }
@@ -696,7 +700,6 @@ impl MigrationManager {
 
         while let Some(entry) = entries.next_entry().await? {
             let _path = entry.path();
-
         }
 
         Err(anyhow!("Migration file not found for version: {}", version))

@@ -116,11 +116,11 @@ impl SupabaseManager {
         region: &str,
     ) -> Result<SupabaseProject> {
         debug!("Creating project via MCP: {}", name);
-        
+
         // Simulation
         let project = self.mock_project(name, organization_id, region, ProjectStatus::Creating);
         tokio::time::sleep(Duration::from_secs(1)).await;
-        
+
         let mut project = project;
         project.status = ProjectStatus::Active;
         self.project = Some(project.clone());
@@ -139,7 +139,13 @@ impl SupabaseManager {
         Ok(project)
     }
 
-    fn mock_project(&self, name: &str, org: &str, region: &str, status: ProjectStatus) -> SupabaseProject {
+    fn mock_project(
+        &self,
+        name: &str,
+        org: &str,
+        region: &str,
+        status: ProjectStatus,
+    ) -> SupabaseProject {
         SupabaseProject {
             id: format!("proj_{}", uuid::Uuid::new_v4().simple()),
             name: name.to_string(),
@@ -147,7 +153,10 @@ impl SupabaseManager {
             region: region.to_string(),
             status,
             created_at: chrono::Utc::now().to_rfc3339(),
-            database_url: format!("postgresql://postgres:pass@{}.supabase.co:5432/postgres", name),
+            database_url: format!(
+                "postgresql://postgres:pass@{}.supabase.co:5432/postgres",
+                name
+            ),
             api_url: format!("https://{}.supabase.co", name),
             anon_key: "anon_key".to_string(),
             service_role_key: "service_key".to_string(),
@@ -157,7 +166,11 @@ impl SupabaseManager {
     /// Get project cost
     pub async fn get_project_cost(&self) -> Result<ProjectCost> {
         let cost = ProjectCost {
-            project_id: self.project.as_ref().map(|p| p.id.clone()).unwrap_or_default(),
+            project_id: self
+                .project
+                .as_ref()
+                .map(|p| p.id.clone())
+                .unwrap_or_default(),
             monthly_cost: 25.0,
             hourly_cost: 0.03,
             currency: "USD".to_string(),
@@ -175,7 +188,7 @@ impl SupabaseManager {
     /// Pause project
     pub async fn pause_project(&mut self) -> Result<()> {
         info!("Pausing Supabase project");
-        
+
         let project_id = self.project.clone();
         if let Some(ref project) = project_id {
             if self.mcp_available {
@@ -183,7 +196,7 @@ impl SupabaseManager {
             } else {
                 self.pause_via_api(project).await?;
             }
-            
+
             if let Some(p) = self.project.as_mut() {
                 p.status = ProjectStatus::Paused;
             }
@@ -208,7 +221,7 @@ impl SupabaseManager {
     /// Resume project
     pub async fn resume_project(&mut self) -> Result<()> {
         info!("Resuming Supabase project");
-        
+
         let project_id = self.project.clone();
         if let Some(ref project) = project_id {
             if self.mcp_available {
@@ -216,7 +229,7 @@ impl SupabaseManager {
             } else {
                 self.resume_via_api(project).await?;
             }
-            
+
             if let Some(p) = self.project.as_mut() {
                 p.status = ProjectStatus::Active;
             }
@@ -241,7 +254,7 @@ impl SupabaseManager {
     /// Delete project
     pub async fn delete_project(&mut self) -> Result<()> {
         info!("Deleting Supabase project");
-        
+
         if let Some(project) = self.project.take() {
             if self.mcp_available {
                 // Delete logic
@@ -258,7 +271,7 @@ impl SupabaseManager {
     pub fn get_project(&self) -> Option<&SupabaseProject> {
         self.project.as_ref()
     }
-    
+
     pub fn mcp_available(&self) -> bool {
         self.mcp_available
     }
@@ -281,7 +294,10 @@ impl SupabaseManager {
     }
 
     /// Update settings
-    pub async fn update_project_settings(&mut self, settings: HashMap<String, String>) -> Result<()> {
+    pub async fn update_project_settings(
+        &mut self,
+        settings: HashMap<String, String>,
+    ) -> Result<()> {
         let project_id = self.project.clone();
         if let Some(ref project) = project_id {
             if self.mcp_available {
@@ -295,11 +311,19 @@ impl SupabaseManager {
         }
     }
 
-    async fn update_settings_via_mcp(&self, _project: &SupabaseProject, _settings: &HashMap<String, String>) -> Result<()> {
+    async fn update_settings_via_mcp(
+        &self,
+        _project: &SupabaseProject,
+        _settings: &HashMap<String, String>,
+    ) -> Result<()> {
         Ok(())
     }
 
-    async fn update_settings_via_api(&self, _project: &SupabaseProject, _settings: &HashMap<String, String>) -> Result<()> {
+    async fn update_settings_via_api(
+        &self,
+        _project: &SupabaseProject,
+        _settings: &HashMap<String, String>,
+    ) -> Result<()> {
         Ok(())
     }
 }
@@ -338,7 +362,6 @@ pub enum SupabaseError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
 
     #[tokio::test]
     async fn test_supabase_manager_creation() {

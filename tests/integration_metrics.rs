@@ -15,7 +15,10 @@ async fn test_system_startup_and_metrics() {
     // 2. Verify MCP Client Integration
     let mcp = bot.mcp_client();
     // Check if Discord service is configurable (it wont be active without env var, but we check structure)
-    assert!(mcp.discord_service.is_none(), "Discord service should be none without env var");
+    assert!(
+        mcp.discord_service.is_none(),
+        "Discord service should be none without env var"
+    );
 
     // 3. Simulate Event Bus Traffic (if exposed)
     if let Some(bus) = &bot.event_bus {
@@ -26,7 +29,7 @@ async fn test_system_startup_and_metrics() {
 
     // 4. Check Metrics Recorder
     // Ensure Prometheus recorder is registered (this is global, so hard to test in unit test isolation without inspection)
-    
+
     // 5. Verify Health Check Endpoint Logic (Unit level)
     // let health = bot.health_check().await;
     // assert!(health.is_ok());

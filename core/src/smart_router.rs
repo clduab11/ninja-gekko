@@ -4,10 +4,7 @@ use std::collections::HashMap;
 use tokio::sync::RwLock;
 
 use crate::error::{TradingError, TradingResult};
-use crate::types::{
-    Execution, MarketData, Order, Symbol,
-    TradingPlatform,
-};
+use crate::types::{Execution, MarketData, Order, Symbol, TradingPlatform};
 
 /// Smart Order Router for optimal venue selection and execution.
 ///

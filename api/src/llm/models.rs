@@ -31,7 +31,6 @@ pub const MODEL_REGISTRY: &[LlmModel] = &[
         context_window: 8192,
         specialization: "General reasoning with vision, free tier default",
     },
-
     // ═══════════════════════════════════════════════════════════════════
     // PREMIUM REASONING: Best-in-class for complex financial analysis
     // ═══════════════════════════════════════════════════════════════════
@@ -63,7 +62,6 @@ pub const MODEL_REGISTRY: &[LlmModel] = &[
         context_window: 200_000,
         specialization: "Complex planning, coding, safety-aligned reasoning",
     },
-
     // ═══════════════════════════════════════════════════════════════════
     // MATHEMATICAL SPECIALISTS: Quantitative finance, statistics, proofs
     // ═══════════════════════════════════════════════════════════════════
@@ -95,7 +93,6 @@ pub const MODEL_REGISTRY: &[LlmModel] = &[
         context_window: 256_000,
         specialization: "Math, logic, science, RAG-optimized, 100+ languages",
     },
-
     // ═══════════════════════════════════════════════════════════════════
     // COST-EFFICIENT: High performance at lower token costs
     // ═══════════════════════════════════════════════════════════════════
@@ -113,7 +110,6 @@ pub const MODEL_REGISTRY: &[LlmModel] = &[
         context_window: 128_000,
         specialization: "Free tier, ties 235B on AIME 2024, compact reasoning",
     },
-
     // ═══════════════════════════════════════════════════════════════════
     // CODE GENERATION: For strategy implementation, system automation
     // ═══════════════════════════════════════════════════════════════════
@@ -139,9 +135,9 @@ pub fn get_model(id: &str) -> Option<&'static LlmModel> {
 /// Returns models optimized for mathematical/quantitative tasks
 pub fn quantitative_models() -> impl Iterator<Item = &'static LlmModel> {
     MODEL_REGISTRY.iter().filter(|m| {
-        m.specialization.contains("math") ||
-        m.specialization.contains("quantitative") ||
-        m.specialization.contains("reasoning")
+        m.specialization.contains("math")
+            || m.specialization.contains("quantitative")
+            || m.specialization.contains("reasoning")
     })
 }
 
@@ -157,13 +153,20 @@ mod tests {
     #[test]
     fn test_default_model_is_free() {
         let model = default_model();
-        assert!(model.id.ends_with(":free"), "Default model should be free tier");
+        assert!(
+            model.id.ends_with(":free"),
+            "Default model should be free tier"
+        );
     }
 
     #[test]
     fn test_all_models_have_valid_context() {
         for model in MODEL_REGISTRY {
-            assert!(model.context_window >= 8192, "Context window too small: {}", model.id);
+            assert!(
+                model.context_window >= 8192,
+                "Context window too small: {}",
+                model.id
+            );
         }
     }
 

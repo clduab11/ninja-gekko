@@ -3,10 +3,10 @@
 //! This module provides secure environment variable validation, configuration
 //! management, and runtime security checks for the Ninja Gekko API.
 
+use crate::validation::{SanitizationLevel, SecurityValidator, ValidationResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
-use crate::validation::{SecurityValidator, SanitizationLevel, ValidationResult};
 
 /// Environment configuration with security validation
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -66,10 +66,8 @@ impl Default for DatabaseConfig {
                 .unwrap_or_else(|_| "30".to_string())
                 .parse()
                 .unwrap_or(30),
-            ssl_mode: std::env::var("DB_SSL_MODE")
-                .unwrap_or_else(|_| "require".to_string()),
-            database_name: std::env::var("DB_NAME")
-                .unwrap_or_else(|_| "gordon_gekko".to_string()),
+            ssl_mode: std::env::var("DB_SSL_MODE").unwrap_or_else(|_| "require".to_string()),
+            database_name: std::env::var("DB_NAME").unwrap_or_else(|_| "gordon_gekko".to_string()),
         }
     }
 }
@@ -85,7 +83,7 @@ impl DatabaseConfig {
 
         // Validate SSL mode
         match self.ssl_mode.as_str() {
-            "require" | "prefer" | "allow" | "disable" | "verify-ca" | "verify-full" => {},
+            "require" | "prefer" | "allow" | "disable" | "verify-ca" | "verify-full" => {}
             _ => return Err(self.create_ssl_mode_error(&self.ssl_mode)),
         }
 
@@ -100,7 +98,10 @@ impl DatabaseConfig {
     fn create_ssl_mode_error(&self, mode: &str) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
         let mut error = validator::ValidationError::new("invalid_ssl_mode");
-        error.message = Some(std::borrow::Cow::from(format!("Invalid SSL mode: {}", mode)));
+        error.message = Some(std::borrow::Cow::from(format!(
+            "Invalid SSL mode: {}",
+            mode
+        )));
         errors.add("ssl_mode", error);
         errors
     }
@@ -108,7 +109,10 @@ impl DatabaseConfig {
     fn create_pool_size_error(&self, size: u32) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
         let mut error = validator::ValidationError::new("invalid_pool_size");
-        error.message = Some(std::borrow::Cow::from(format!("Invalid pool size: {} (must be 1-100)", size)));
+        error.message = Some(std::borrow::Cow::from(format!(
+            "Invalid pool size: {} (must be 1-100)",
+            size
+        )));
         errors.add("pool_size", error);
         errors
     }
@@ -145,8 +149,7 @@ impl Default for JwtSecureConfig {
                 .unwrap_or_else(|_| "604800".to_string()) // 7 days
                 .parse()
                 .unwrap_or(604800),
-            algorithm: std::env::var("JWT_ALGORITHM")
-                .unwrap_or_else(|_| "HS256".to_string()),
+            algorithm: std::env::var("JWT_ALGORITHM").unwrap_or_else(|_| "HS256".to_string()),
         }
     }
 }
@@ -178,12 +181,15 @@ impl JwtSecureConfig {
         }
 
         if self.refresh_expiration_seconds < self.expiration_seconds {
-            return Err(self.create_invalid_refresh_error(self.refresh_expiration_seconds, self.expiration_seconds));
+            return Err(self.create_invalid_refresh_error(
+                self.refresh_expiration_seconds,
+                self.expiration_seconds,
+            ));
         }
 
         // Validate algorithm
         match self.algorithm.as_str() {
-            "HS256" | "HS384" | "HS512" | "RS256" | "RS384" | "RS512" => {},
+            "HS256" | "HS384" | "HS512" | "RS256" | "RS384" | "RS512" => {}
             _ => return Err(self.create_invalid_algorithm_error(&self.algorithm)),
         }
 
@@ -193,14 +199,18 @@ impl JwtSecureConfig {
     fn create_weak_secret_error(&self, length: usize) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
         let mut error = validator::ValidationError::new("jwt_secret_too_short");
-        error.message = Some(std::borrow::Cow::from(format!("JWT secret too short: {} characters (minimum 32)", length)));
+        error.message = Some(std::borrow::Cow::from(format!(
+            "JWT secret too short: {} characters (minimum 32)",
+            length
+        )));
         errors.add("secret_length", error);
         errors
     }
 
     fn create_default_secret_error(&self) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
-        let error = validator::ValidationError::new("JWT secret appears to be a default or weak value");
+        let error =
+            validator::ValidationError::new("JWT secret appears to be a default or weak value");
         errors.add("secret_strength", error);
         errors
     }
@@ -208,15 +218,25 @@ impl JwtSecureConfig {
     fn create_invalid_expiration_error(&self, expiration: i64) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
         let mut error = validator::ValidationError::new("invalid_jwt_expiration");
-        error.message = Some(std::borrow::Cow::from(format!("Invalid JWT expiration: {} seconds (must be 300-86400)", expiration)));
+        error.message = Some(std::borrow::Cow::from(format!(
+            "Invalid JWT expiration: {} seconds (must be 300-86400)",
+            expiration
+        )));
         errors.add("expiration", error);
         errors
     }
 
-    fn create_invalid_refresh_error(&self, refresh: i64, access: i64) -> validator::ValidationErrors {
+    fn create_invalid_refresh_error(
+        &self,
+        refresh: i64,
+        access: i64,
+    ) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
         let mut error = validator::ValidationError::new("invalid_refresh_expiration");
-        error.message = Some(std::borrow::Cow::from(format!("Refresh token ({}) must expire after access token ({})", refresh, access)));
+        error.message = Some(std::borrow::Cow::from(format!(
+            "Refresh token ({}) must expire after access token ({})",
+            refresh, access
+        )));
         errors.add("refresh_expiration", error);
         errors
     }
@@ -224,7 +244,10 @@ impl JwtSecureConfig {
     fn create_invalid_algorithm_error(&self, algorithm: &str) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
         let mut error = validator::ValidationError::new("unsupported_jwt_algorithm");
-        error.message = Some(std::borrow::Cow::from(format!("Unsupported JWT algorithm: {}", algorithm)));
+        error.message = Some(std::borrow::Cow::from(format!(
+            "Unsupported JWT algorithm: {}",
+            algorithm
+        )));
         errors.add("algorithm", error);
         errors
     }
@@ -269,7 +292,9 @@ impl ApiSecureConfig {
     /// Validate API configuration security
     pub fn validate(&self) -> ValidationResult<()> {
         // Check for binding to all interfaces in production
-        if self.bind_address == "0.0.0.0" && std::env::var("ENVIRONMENT").unwrap_or_default() == "production" {
+        if self.bind_address == "0.0.0.0"
+            && std::env::var("ENVIRONMENT").unwrap_or_default() == "production"
+        {
             eprintln!("WARNING: API binding to all interfaces (0.0.0.0) in production environment");
         }
 
@@ -295,7 +320,10 @@ impl ApiSecureConfig {
     fn create_invalid_port_error(&self, port: u16) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
         let mut error = validator::ValidationError::new("invalid_port");
-        error.message = Some(std::borrow::Cow::from(format!("Invalid port number: {} (must be 1-65535)", port)));
+        error.message = Some(std::borrow::Cow::from(format!(
+            "Invalid port number: {} (must be 1-65535)",
+            port
+        )));
         errors.add("port", error);
         errors
     }
@@ -303,7 +331,10 @@ impl ApiSecureConfig {
     fn create_invalid_cors_error(&self, origin: &str) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
         let mut error = validator::ValidationError::new("invalid_cors_origin");
-        error.message = Some(std::borrow::Cow::from(format!("Invalid CORS origin format: {}", origin)));
+        error.message = Some(std::borrow::Cow::from(format!(
+            "Invalid CORS origin format: {}",
+            origin
+        )));
         errors.add("cors_origins", error);
         errors
     }
@@ -361,14 +392,15 @@ pub struct SecurityHeadersConfig {
 impl Default for SecurityHeadersConfig {
     fn default() -> Self {
         Self {
-            csp: std::env::var("CSP_HEADER")
-                .unwrap_or_else(|_| "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'".to_string()),
+            csp: std::env::var("CSP_HEADER").unwrap_or_else(|_| {
+                "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+                    .to_string()
+            }),
             hsts_max_age: std::env::var("HSTS_MAX_AGE")
                 .unwrap_or_else(|_| "31536000".to_string()) // 1 year
                 .parse()
                 .unwrap_or(31536000),
-            frame_options: std::env::var("FRAME_OPTIONS")
-                .unwrap_or_else(|_| "DENY".to_string()),
+            frame_options: std::env::var("FRAME_OPTIONS").unwrap_or_else(|_| "DENY".to_string()),
             content_type_options: std::env::var("CONTENT_TYPE_OPTIONS")
                 .unwrap_or_else(|_| "nosniff".to_string()),
         }
@@ -595,11 +627,10 @@ pub struct EncryptionConfig {
 impl Default for EncryptionConfig {
     fn default() -> Self {
         Self {
-            data_key: std::env::var("DATA_ENCRYPTION_KEY")
-                .unwrap_or_else(|_| {
-                    eprintln!("WARNING: Using default encryption key - set DATA_ENCRYPTION_KEY!");
-                    "default-encryption-key-32-chars-min".to_string()
-                }),
+            data_key: std::env::var("DATA_ENCRYPTION_KEY").unwrap_or_else(|_| {
+                eprintln!("WARNING: Using default encryption key - set DATA_ENCRYPTION_KEY!");
+                "default-encryption-key-32-chars-min".to_string()
+            }),
             key_rotation_days: std::env::var("KEY_ROTATION_DAYS")
                 .unwrap_or_else(|_| "90".to_string())
                 .parse()
@@ -643,10 +674,7 @@ impl EnvironmentValidator {
 
     /// Validate required environment variables
     fn validate_required_env_vars(&self) -> ValidationResult<()> {
-        let required_vars = vec![
-            "DATABASE_URL",
-            "JWT_SECRET",
-        ];
+        let required_vars = vec!["DATABASE_URL", "JWT_SECRET"];
 
         let mut missing_vars = Vec::new();
 
@@ -681,7 +709,9 @@ impl EnvironmentValidator {
         }
 
         // Check for debug mode in production
-        if std::env::var("ENVIRONMENT").unwrap_or_default() == "production" && config.features.debug_mode {
+        if std::env::var("ENVIRONMENT").unwrap_or_default() == "production"
+            && config.features.debug_mode
+        {
             eprintln!("SECURITY WARNING: Debug mode enabled in production");
         }
     }
@@ -689,7 +719,10 @@ impl EnvironmentValidator {
     fn create_missing_env_vars_error(&self, missing: &[String]) -> validator::ValidationErrors {
         let mut errors = validator::ValidationErrors::new();
         let mut error = validator::ValidationError::new("missing_required_env_vars");
-        error.message = Some(std::borrow::Cow::from(format!("Missing required environment variables: {:?}", missing)));
+        error.message = Some(std::borrow::Cow::from(format!(
+            "Missing required environment variables: {:?}",
+            missing
+        )));
         errors.add("environment", error);
         errors
     }
@@ -715,8 +748,10 @@ mod tests {
         // Should validate with default values
         if let Err(errors) = result {
             // If validation fails, it should be for specific security reasons
-            assert!(errors.field_errors().contains_key("secret_length") ||
-                   errors.field_errors().contains_key("secret_strength"));
+            assert!(
+                errors.field_errors().contains_key("secret_length")
+                    || errors.field_errors().contains_key("secret_strength")
+            );
         }
     }
 

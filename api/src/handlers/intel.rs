@@ -1,26 +1,22 @@
+use crate::{error::ApiResult, models::ApiResponse, AppState};
 use axum::{
-    extract::{State, Query},
+    extract::{Query, State},
     response::Json,
 };
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use crate::{
-    AppState,
-    error::ApiResult,
-    models::ApiResponse,
-};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IntelItem {
     pub id: String,
-    pub source: String,        // "PERPLEXITY FINANCE", "SONAR DEEP RESEARCH", etc.
+    pub source: String, // "PERPLEXITY FINANCE", "SONAR DEEP RESEARCH", etc.
     pub title: String,
     pub summary: Option<String>,
     pub url: Option<String>,
     pub sentiment: Option<f32>, // -1.0 to 1.0
     pub published_at: DateTime<Utc>,
-    pub relevance_score: f32,   // For Gordon's prioritization
+    pub relevance_score: f32, // For Gordon's prioritization
 }
 
 #[derive(Deserialize)]
@@ -30,7 +26,7 @@ pub struct IntelStreamParams {
 }
 
 /// Get intel stream
-/// 
+///
 /// Returns real-time market intelligence from connected data sources:
 /// - Live market data from Kraken
 /// - Research from Perplexity Finance (when configured)
@@ -47,35 +43,45 @@ pub async fn get_intel_stream(
     // Live Market Data from Kraken (High Priority)
     // ---------------------------------------------------------
     let symbols = vec!["XBT/USD", "ETH/USD", "SOL/USD"];
-    
+
     for symbol in symbols {
         if let Ok(data) = state.market_data_service.get_latest_data(symbol).await {
-             // Derive sentiment from price movement
-             let sentiment = if data.change_24h > 2.0 { 
-                 0.9 
-             } else if data.change_24h > 0.0 { 
-                 0.6 
-             } else if data.change_24h > -2.0 { 
-                 0.4 
-             } else { 
-                 0.2 
-             };
-             
-             let direction = if data.change_24h >= 0.0 { "📈" } else { "📉" };
-             let relevance = 0.95; // Live market data is always highly relevant
+            // Derive sentiment from price movement
+            let sentiment = if data.change_24h > 2.0 {
+                0.9
+            } else if data.change_24h > 0.0 {
+                0.6
+            } else if data.change_24h > -2.0 {
+                0.4
+            } else {
+                0.2
+            };
 
-             if relevance >= min_relevance {
-                 items.push(IntelItem {
+            let direction = if data.change_24h >= 0.0 {
+                "📈"
+            } else {
+                "📉"
+            };
+            let relevance = 0.95; // Live market data is always highly relevant
+
+            if relevance >= min_relevance {
+                items.push(IntelItem {
                     id: uuid::Uuid::new_v4().to_string(),
                     source: "KRAKEN MARKET FEED".to_string(),
-                    title: format!("{} {} ${:.2} ({:+.2}%)", direction, symbol, data.price, data.change_24h),
-                    summary: Some(format!("24h Volume: ${:.2}M", data.volume_24h / 1_000_000.0)),
+                    title: format!(
+                        "{} {} ${:.2} ({:+.2}%)",
+                        direction, symbol, data.price, data.change_24h
+                    ),
+                    summary: Some(format!(
+                        "24h Volume: ${:.2}M",
+                        data.volume_24h / 1_000_000.0
+                    )),
                     url: None,
                     sentiment: Some(sentiment),
                     published_at: data.timestamp,
                     relevance_score: relevance,
                 });
-             }
+            }
         }
     }
 
@@ -100,19 +106,29 @@ pub async fn get_intel_stream(
 }
 
 /// Broadcast live intel update to WebSocket subscribers
-/// 
+///
 /// Called by market data stream handlers when new data arrives.
 /// Broadcasts real market intelligence to connected clients.
 pub async fn broadcast_live_intel(state: Arc<AppState>, symbol: &str) {
     if let Ok(data) = state.market_data_service.get_latest_data(symbol).await {
         let sentiment = if data.change_24h > 0.0 { 0.6 } else { 0.4 };
-        let direction = if data.change_24h >= 0.0 { "📈" } else { "📉" };
-        
+        let direction = if data.change_24h >= 0.0 {
+            "📈"
+        } else {
+            "📉"
+        };
+
         let item = IntelItem {
             id: uuid::Uuid::new_v4().to_string(),
             source: "KRAKEN LIVE".to_string(),
-            title: format!("{} {} ${:.2} ({:+.2}%)", direction, symbol, data.price, data.change_24h),
-            summary: Some(format!("Live tick @ {}", data.timestamp.format("%H:%M:%S UTC"))),
+            title: format!(
+                "{} {} ${:.2} ({:+.2}%)",
+                direction, symbol, data.price, data.change_24h
+            ),
+            summary: Some(format!(
+                "Live tick @ {}",
+                data.timestamp.format("%H:%M:%S UTC")
+            )),
             url: None,
             sentiment: Some(sentiment),
             published_at: Utc::now(),

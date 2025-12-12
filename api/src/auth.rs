@@ -3,17 +3,12 @@
 //! This module provides JWT token validation, generation, and middleware integration
 //! for securing API endpoints with stateless authentication and authorization.
 
-use axum::{
-    extract::Request,
-    http::header,
-    middleware::Next,
-    response::IntoResponse,
-};
+use axum::{extract::Request, http::header, middleware::Next, response::IntoResponse};
 use axum_extra::extract::CookieJar;
+use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use tracing::{info, warn};
-use chrono::{Duration, Utc};
 
 use crate::error::{ApiError, ApiResult};
 
@@ -81,16 +76,18 @@ impl AuthMiddleware {
                     Err(e) => {
                         warn!("Token validation failed: {}", e);
                         ApiError::Auth {
-                            message: format!("Invalid token: {}", e)
-                        }.into_response()
+                            message: format!("Invalid token: {}", e),
+                        }
+                        .into_response()
                     }
                 }
             }
             None => {
                 warn!("No authentication token provided");
                 ApiError::Auth {
-                    message: "Authentication required".to_string()
-                }.into_response()
+                    message: "Authentication required".to_string(),
+                }
+                .into_response()
             }
         }
     }
@@ -126,17 +123,15 @@ impl AuthMiddleware {
                 let now = Utc::now().timestamp() as usize;
                 if token_data.claims.exp < now {
                     return Err(ApiError::Auth {
-                        message: "Token expired".to_string()
+                        message: "Token expired".to_string(),
                     });
                 }
 
                 Ok(token_data.claims)
             }
-            Err(e) => {
-                Err(ApiError::Auth {
-                    message: format!("Token validation failed: {}", e)
-                })
-            }
+            Err(e) => Err(ApiError::Auth {
+                message: format!("Token validation failed: {}", e),
+            }),
         }
     }
 
@@ -144,7 +139,7 @@ impl AuthMiddleware {
     pub async fn generate_access_token(
         user_id: &str,
         roles: Vec<String>,
-        account_ids: Vec<String>
+        account_ids: Vec<String>,
     ) -> ApiResult<String> {
         let claims = Claims {
             sub: user_id.to_string(),
@@ -167,7 +162,7 @@ impl AuthMiddleware {
     pub async fn generate_refresh_token(
         user_id: &str,
         roles: Vec<String>,
-        account_ids: Vec<String>
+        account_ids: Vec<String>,
     ) -> ApiResult<String> {
         let claims = Claims {
             sub: user_id.to_string(),
@@ -196,14 +191,16 @@ impl AuthMiddleware {
             &refresh_claims.sub,
             refresh_claims.roles.clone(),
             refresh_claims.account_ids.clone(),
-        ).await?;
+        )
+        .await?;
 
         // Generate new refresh token
         let new_refresh_token = Self::generate_refresh_token(
             &refresh_claims.sub,
             refresh_claims.roles,
             refresh_claims.account_ids,
-        ).await?;
+        )
+        .await?;
 
         Ok((access_token, new_refresh_token))
     }
@@ -219,24 +216,22 @@ impl AuthMiddleware {
                 let now = Utc::now().timestamp() as usize;
                 if token_data.claims.exp < now {
                     return Err(ApiError::Auth {
-                        message: "Refresh token expired".to_string()
+                        message: "Refresh token expired".to_string(),
                     });
                 }
 
                 // Verify it's a refresh token
                 if token_data.claims.token_type != TokenType::Refresh {
                     return Err(ApiError::Auth {
-                        message: "Invalid token type".to_string()
+                        message: "Invalid token type".to_string(),
                     });
                 }
 
                 Ok(token_data.claims)
             }
-            Err(e) => {
-                Err(ApiError::Auth {
-                    message: format!("Refresh token validation failed: {}", e)
-                })
-            }
+            Err(e) => Err(ApiError::Auth {
+                message: format!("Refresh token validation failed: {}", e),
+            }),
         }
     }
 
@@ -290,12 +285,16 @@ impl AuthMiddleware {
 
     /// Check if user has any of the required permissions
     pub fn has_any_permission(claims: &Claims, required_permissions: &[&str]) -> bool {
-        required_permissions.iter().any(|perm| claims.roles.contains(&perm.to_string()))
+        required_permissions
+            .iter()
+            .any(|perm| claims.roles.contains(&perm.to_string()))
     }
 
     /// Check if user has all required permissions
     pub fn has_all_permissions(claims: &Claims, required_permissions: &[&str]) -> bool {
-        required_permissions.iter().all(|perm| claims.roles.contains(&perm.to_string()))
+        required_permissions
+            .iter()
+            .all(|perm| claims.roles.contains(&perm.to_string()))
     }
 }
 
@@ -311,10 +310,14 @@ impl AuthorizationMiddleware {
         required_role: &str,
     ) -> impl IntoResponse {
         if !AuthMiddleware::has_role(&claims, required_role) {
-            warn!("Access denied for user {} - missing role: {}", claims.sub, required_role);
+            warn!(
+                "Access denied for user {} - missing role: {}",
+                claims.sub, required_role
+            );
             return ApiError::Auth {
-                message: format!("Required role: {}", required_role)
-            }.into_response();
+                message: format!("Required role: {}", required_role),
+            }
+            .into_response();
         }
 
         let mut request = request;
@@ -330,10 +333,14 @@ impl AuthorizationMiddleware {
         account_id: &str,
     ) -> impl IntoResponse {
         if !AuthMiddleware::has_account_access(&claims, account_id) {
-            warn!("Access denied for user {} - no access to account: {}", claims.sub, account_id);
+            warn!(
+                "Access denied for user {} - no access to account: {}",
+                claims.sub, account_id
+            );
             return ApiError::Auth {
-                message: format!("Access denied to account: {}", account_id)
-            }.into_response();
+                message: format!("Access denied to account: {}", account_id),
+            }
+            .into_response();
         }
 
         let mut request = request;
@@ -349,10 +356,14 @@ impl AuthorizationMiddleware {
         required_permissions: &[&str],
     ) -> impl IntoResponse {
         if !AuthMiddleware::has_all_permissions(&claims, required_permissions) {
-            warn!("Access denied for user {} - missing permissions: {:?}", claims.sub, required_permissions);
+            warn!(
+                "Access denied for user {} - missing permissions: {:?}",
+                claims.sub, required_permissions
+            );
             return ApiError::Auth {
-                message: format!("Required permissions: {:?}", required_permissions)
-            }.into_response();
+                message: format!("Required permissions: {:?}", required_permissions),
+            }
+            .into_response();
         }
 
         let mut request = request;
@@ -394,7 +405,9 @@ pub mod auth_utils {
     }
 
     /// Mock authentication function (replace with real implementation)
-    pub async fn authenticate_user(request: &LoginRequest) -> ApiResult<(String, Vec<String>, Vec<String>)> {
+    pub async fn authenticate_user(
+        request: &LoginRequest,
+    ) -> ApiResult<(String, Vec<String>, Vec<String>)> {
         // This is a mock implementation - replace with real authentication logic
         if request.username == "admin" && request.password == "password" {
             Ok((
@@ -410,7 +423,7 @@ pub mod auth_utils {
             ))
         } else {
             Err(ApiError::Auth {
-                message: "Invalid credentials".to_string()
+                message: "Invalid credentials".to_string(),
             })
         }
     }
@@ -423,8 +436,12 @@ pub mod auth_utils {
         let (user_id, roles, account_ids) = authenticate_user(&request).await?;
 
         // Generate tokens
-        let access_token = AuthMiddleware::generate_access_token(&user_id, roles.clone(), account_ids.clone()).await?;
-        let refresh_token = AuthMiddleware::generate_refresh_token(&user_id, roles.clone(), account_ids.clone()).await?;
+        let access_token =
+            AuthMiddleware::generate_access_token(&user_id, roles.clone(), account_ids.clone())
+                .await?;
+        let refresh_token =
+            AuthMiddleware::generate_refresh_token(&user_id, roles.clone(), account_ids.clone())
+                .await?;
 
         let response = LoginResponse {
             access_token,
@@ -444,7 +461,8 @@ pub mod auth_utils {
     pub async fn refresh_handler(
         Json(request): Json<RefreshRequest>,
     ) -> ApiResult<Json<LoginResponse>> {
-        let (access_token, refresh_token) = AuthMiddleware::refresh_access_token(&request.refresh_token).await?;
+        let (access_token, refresh_token) =
+            AuthMiddleware::refresh_access_token(&request.refresh_token).await?;
 
         // Decode refresh token to get user info (simplified)
         let refresh_claims = AuthMiddleware::validate_refresh_token(&request.refresh_token).await?;
@@ -464,9 +482,7 @@ pub mod auth_utils {
     }
 
     /// Handle logout endpoint
-    pub async fn logout_handler(
-        claims: Claims,
-    ) -> ApiResult<Json<serde_json::Value>> {
+    pub async fn logout_handler(claims: Claims) -> ApiResult<Json<serde_json::Value>> {
         // Revoke user's tokens
         AuthMiddleware::revoke_user_tokens(&claims.sub).await?;
 
@@ -490,7 +506,9 @@ mod tests {
             "test-user",
             vec!["trader".to_string()],
             vec!["account-123".to_string()],
-        ).await.unwrap();
+        )
+        .await
+        .unwrap();
 
         assert!(!token.is_empty());
     }
@@ -501,7 +519,9 @@ mod tests {
             "test-user",
             vec!["trader".to_string()],
             vec!["account-123".to_string()],
-        ).await.unwrap();
+        )
+        .await
+        .unwrap();
 
         let claims = AuthMiddleware::validate_token(&token).await.unwrap();
 

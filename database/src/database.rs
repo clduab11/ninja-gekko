@@ -49,7 +49,11 @@ impl DatabaseManager {
     #[instrument(skip(self, params), fields(query = %query))]
     pub async fn execute_query<T>(&self, query: &str, params: &[Json<T>]) -> Result<Vec<T>>
     where
-        T: for<'r> sqlx::FromRow<'r, sqlx::postgres::PgRow> + serde::Serialize + for<'de> serde::Deserialize<'de> + Send + Unpin,
+        T: for<'r> sqlx::FromRow<'r, sqlx::postgres::PgRow>
+            + serde::Serialize
+            + for<'de> serde::Deserialize<'de>
+            + Send
+            + Unpin,
     {
         debug!("Executing query: {}", query);
 
@@ -80,7 +84,11 @@ impl DatabaseManager {
     #[instrument(skip(self, params), fields(query = %query))]
     pub async fn execute_query_one<T>(&self, query: &str, params: &[Json<T>]) -> Result<Option<T>>
     where
-        T: for<'r> sqlx::FromRow<'r, sqlx::postgres::PgRow> + serde::Serialize + for<'de> serde::Deserialize<'de> + Send + Unpin,
+        T: for<'r> sqlx::FromRow<'r, sqlx::postgres::PgRow>
+            + serde::Serialize
+            + for<'de> serde::Deserialize<'de>
+            + Send
+            + Unpin,
     {
         debug!("Executing query for single result: {}", query);
 
@@ -237,8 +245,6 @@ impl std::fmt::Display for DatabaseStats {
         )
     }
 }
-
-
 
 #[cfg(test)]
 mod tests {
