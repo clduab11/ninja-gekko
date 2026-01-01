@@ -21,6 +21,7 @@ rust_decimal_macros = { workspace = true }
 uuid = { workspace = true }
 async-trait = { workspace = true }
 tokio = { workspace = true, features = ["sync"] }
+yata = { version = "0.7", features = ["serde"] }
 
 
 [dev-dependencies]
@@ -30,5 +31,5 @@ criterion = { version = "0.5", features = ["async_tokio"] }
 wat = "1.0"
 
 [[bench]]
-name = "strategy_eval"
+name = "indicators"
 harness = false

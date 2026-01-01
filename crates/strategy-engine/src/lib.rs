@@ -1,6 +1,7 @@
 //! Strategy engine crate providing WASM sandboxed execution for user-defined strategies.
 
 pub mod event_bridge;
+pub mod indicators;
 pub mod runner;
 pub mod sandbox;
 pub mod strategies;
