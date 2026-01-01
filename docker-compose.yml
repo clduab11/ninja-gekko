@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   trading-engine:
-    profiles: ["full"]  # Only start with --profile full, not in core mode
+    profiles: ["full"] # Only start with --profile full, not in core mode
     build:
       context: .
       dockerfile: Dockerfile
@@ -41,10 +41,10 @@ services:
         reservations:
           cpus: "0.50"
           memory: 512M
-          devices:
-            - driver: nvidia
-              count: ${NVIDIA_GPU_COUNT:-all}
-              capabilities: [gpu]
+          # devices:
+          #   - driver: nvidia
+          #     count: ${NVIDIA_GPU_COUNT:-all}
+          #     capabilities: [gpu]
     logging:
       driver: "json-file"
       options:
@@ -63,8 +63,8 @@ services:
         VITE_OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
     ports:
       - "5173:80" # Map host 5173 to container 80 (nginx)
-    depends_on:
-      - trading-engine
+    # depends_on:
+    #   - trading-engine
     logging:
       driver: "json-file"
     restart: unless-stopped
@@ -72,7 +72,7 @@ services:
       - frontend
 
   postgres:
-    profiles: ["core", "full"]  # Available in both core and full modes
+    profiles: ["core", "full"] # Available in both core and full modes
     image: postgres:15-alpine
     environment:
       - POSTGRES_USER=postgres
@@ -97,7 +97,7 @@ services:
       - backend
 
   redis:
-    profiles: ["core", "full"]  # Available in both core and full modes
+    profiles: ["core", "full"] # Available in both core and full modes
     image: redis:7-alpine
     ports:
       - "6379:6379"
@@ -116,7 +116,7 @@ services:
       - backend
 
   prometheus:
-    profiles: ["core", "full"]  # Available in both core and full modes
+    profiles: ["core", "full"] # Available in both core and full modes
     image: prom/prometheus:latest
     ports:
       - "9090:9090"
@@ -127,14 +127,14 @@ services:
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
-    depends_on:
-      - trading-engine
+    # depends_on:
+    #   - trading-engine
     restart: unless-stopped
     networks:
       - backend
 
   grafana:
-    profiles: ["core", "full"]  # Available in both core and full modes
+    profiles: ["core", "full"] # Available in both core and full modes
     image: grafana/grafana:latest
     ports:
       - "3000:3000"

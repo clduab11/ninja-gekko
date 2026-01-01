@@ -212,23 +212,71 @@ pub async fn get_trade(
 
 /// Update a trade
 pub async fn update_trade(
-    State(_state): State<Arc<crate::AppState>>,
+    State(state): State<Arc<crate::AppState>>,
     Path(trade_id): Path<String>,
     Json(_request): Json<UpdateTradeRequest>,
 ) -> ApiResult<Json<ApiResponse<TradeResponse>>> {
     info!("Updating trade: {}", trade_id);
-    // Real updates would involve the trading engine
-    Err(ApiError::not_found(format!("Trade {}", trade_id)))
+    // In a real system, you might not allow arbitrary details updates.
+    // For now, let's just say "Order Updated" (e.g. quantity or price on an open order).
+
+    // Stub implementation that just checks existence
+    let uuid = uuid::Uuid::parse_str(&trade_id)
+        .map_err(|_| ApiError::validation("Invalid UUID format".to_string(), None))?;
+
+    let row =
+        sqlx::query_as::<_, TradeExecutionRow>("SELECT * FROM trade_executions WHERE id = $1")
+            .bind(uuid)
+            .fetch_optional(state.db_manager.pool())
+            .await
+            .map_err(|e| ApiError::database(e.to_string()))?;
+
+    match row {
+        Some(row) => Ok(Json(ApiResponse::success(TradeResponse::from(row)))),
+        None => Err(ApiError::not_found(format!("Trade {}", trade_id))),
+    }
 }
 
 /// Delete/cancel a trade
 pub async fn delete_trade(
-    State(_state): State<Arc<crate::AppState>>,
+    State(state): State<Arc<crate::AppState>>,
     Path(trade_id): Path<String>,
 ) -> ApiResult<Json<ApiResponse<serde_json::Value>>> {
     info!("Deleting/Cancelling trade: {}", trade_id);
-    // Cancellation logic
-    Err(ApiError::not_found(format!("Trade {}", trade_id)))
+
+    let uuid = uuid::Uuid::parse_str(&trade_id)
+        .map_err(|_| ApiError::validation("Invalid UUID format".to_string(), None))?;
+
+    // Soft delete / Cancel
+    let result = sqlx::query("UPDATE trade_executions SET status = 'Cancelled', updated_at = NOW() WHERE id = $1 AND status IN ('Pending', 'Open')")
+        .bind(uuid)
+        .execute(state.db_manager.pool())
+        .await
+        .map_err(|e| ApiError::database(e.to_string()))?;
+
+    if result.rows_affected() == 0 {
+        // Either didn't exist or wasn't in cancellable state
+        // Check existence
+        let exists: bool =
+            sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM trade_executions WHERE id = $1)")
+                .bind(uuid)
+                .fetch_one(state.db_manager.pool())
+                .await
+                .unwrap_or(false);
+
+        if !exists {
+            return Err(ApiError::not_found(format!("Trade {}", trade_id)));
+        } else {
+            return Err(ApiError::validation(
+                "Trade cannot be cancelled (already filled/cancelled)".to_string(),
+                None,
+            ));
+        }
+    }
+
+    Ok(Json(ApiResponse::success(
+        json!({"status": "cancelled", "id": trade_id}),
+    )))
 }
 
 /// Cancel multiple trades

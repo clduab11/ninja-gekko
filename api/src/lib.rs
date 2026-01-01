@@ -278,6 +278,7 @@ impl ApiServer {
             .route("/api/chat/message", post(handlers::chat::send_message))
             .route("/api/chat/persona", get(handlers::chat::get_persona))
             .route("/api/chat/persona", post(handlers::chat::update_persona)) // Handle both GET and POST
+            .route("/api/chat/persist", post(handlers::chat::persist_chat))
             .route("/api/trading/pause", post(handlers::chat::pause_trading))
             // Old generic route - keeping for backward compatibility if needed, or replacing
             .route(

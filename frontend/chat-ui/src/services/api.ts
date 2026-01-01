@@ -57,6 +57,17 @@ export async function sendChatMessage(prompt: string): Promise<ChatResponse> {
   return handleResponse<ChatResponse>(res);
 }
 
+export async function persistChatInteraction(userMsg: ChatMessage, assistantMsg: ChatMessage): Promise<void> {
+  await fetch('/api/chat/persist', {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ 
+      user_message: userMsg, 
+      assistant_message: assistantMsg 
+    })
+  });
+}
+
 export async function fetchPersona(): Promise<PersonaSettings> {
   const res = await fetch('/api/chat/persona');
   return handleResponse<PersonaSettings>(res);

@@ -274,3 +274,43 @@ pub async fn summon_swarm(Json(request): Json<SwarmRequest>) -> ApiResult<Json<S
         eta_seconds: 300,
     }))
 }
+#[derive(Debug, Deserialize)]
+pub struct PersistChatRequest {
+    pub user_message: ChatMessage,
+    pub assistant_message: ChatMessage,
+}
+
+pub async fn persist_chat(
+    State(state): State<Arc<AppState>>,
+    Json(request): Json<PersistChatRequest>,
+) -> ApiResult<Json<serde_json::Value>> {
+    info!("Persisting chat interaction");
+
+    let pool = state.db_manager.pool();
+
+    // Persist User Message
+    sqlx::query(
+        "INSERT INTO chat_history (id, role, content, timestamp) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING",
+    )
+    .bind(uuid::Uuid::parse_str(&request.user_message.id).unwrap_or_else(|_| uuid::Uuid::new_v4()))
+    .bind(&request.user_message.role)
+    .bind(&request.user_message.content)
+    .bind(DateTime::parse_from_rfc3339(&request.user_message.timestamp).unwrap_or(chrono::Utc::now().into()))
+    .execute(pool)
+    .await
+    .map_err(|e| ApiError::database(e.to_string()))?;
+
+    // Persist Assistant Message
+    sqlx::query(
+        "INSERT INTO chat_history (id, role, content, timestamp) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING",
+    )
+    .bind(uuid::Uuid::parse_str(&request.assistant_message.id).unwrap_or_else(|_| uuid::Uuid::new_v4()))
+    .bind(&request.assistant_message.role)
+    .bind(&request.assistant_message.content)
+    .bind(DateTime::parse_from_rfc3339(&request.assistant_message.timestamp).unwrap_or(chrono::Utc::now().into()))
+    .execute(pool)
+    .await
+    .map_err(|e| ApiError::database(e.to_string()))?;
+
+    Ok(Json(json!({"status": "persisted"})))
+}

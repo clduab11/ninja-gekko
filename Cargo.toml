@@ -121,6 +121,7 @@ indexmap = "2.6"
 
 # Pinned dependencies (home 0.5.12 requires edition2024 which needs Rust 1.85+)
 home = "=0.5.9"
+base64ct = "=1.6.0"
 
 [dev-dependencies]
 testcontainers = "0.15"

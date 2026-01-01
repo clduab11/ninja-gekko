@@ -1,6 +1,8 @@
 # Multi-stage Dockerfile with GPU support for Ninja Gekko
 # Supports CPU-only and CUDA builds via BUILD_TARGET arg
 
+ARG BUILD_TARGET=cpu
+
 # ============================================
 # Stage: builder-base (Common Rust builder)
 # ============================================
@@ -163,9 +165,14 @@ RUN find . -name "*.rs" -exec touch {} +
 RUN cargo build --release --bin ninja-gekko
 
 # ============================================
+# Stage: final-builder (Alias for selected builder)
+# ============================================
+FROM builder-${BUILD_TARGET} AS final-builder
+
+# ============================================
 # Stage: runtime (Conditional runtime)
 # ============================================
-ARG BUILD_TARGET=cpu
+# ARG BUILD_TARGET (inherited from global)
 
 # CPU runtime
 FROM debian:bookworm-slim AS runtime-cpu
@@ -191,9 +198,8 @@ RUN useradd -m -u 1000 -s /bin/bash ninja-gekko
 
 WORKDIR /app
 
-# Copy binary from appropriate builder
-ARG BUILD_TARGET=cpu
-COPY --from=builder-${BUILD_TARGET} /app/target/release/ninja-gekko /app/ninja-gekko
+# Copy binary from final-builder alias
+COPY --from=final-builder /app/target/release/ninja-gekko /app/ninja-gekko
 
 # Copy configuration files
 COPY config/arbitrage.toml /etc/ninja-gekko/arbitrage.toml

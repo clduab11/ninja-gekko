@@ -59,6 +59,13 @@ export function useChatController() {
               }));
           }
 
+          // 5. Persist the interaction to the backend
+          const { persistChatInteraction } = await import('../services/api');
+          const finalAssistantMsg = { ...assistantMsg, content: fullContent };
+          
+          // Fire and forget, or await? Await to ensure it's saved.
+          await persistChatInteraction(userMsg, finalAssistantMsg);
+
       } catch (e) {
           console.error("Chat streaming failed", e);
           useChatStore.setState(state => ({

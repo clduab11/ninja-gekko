@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  trading-engine:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: ${NVIDIA_GPU_COUNT:-all}
+              capabilities: [gpu]
