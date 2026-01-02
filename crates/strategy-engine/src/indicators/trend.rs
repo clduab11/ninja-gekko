@@ -1,7 +1,8 @@
 use crate::indicators::{buffer, dec_to_f64, f64_to_dec, Indicator, IndicatorValue};
 use rust_decimal::Decimal;
 use yata::core::{Method, PeriodType, ValueType};
-use yata::methods::{ADI, EMA, SMA};
+use yata::indicators::AverageDirectionalIndex;
+use yata::methods::{EMA, SMA};
 
 // ============================================================================
 // SMA
@@ -197,7 +198,7 @@ impl Indicator for Macd {
 ///
 /// Used to determine the strength of a trend.
 pub struct Adx {
-    inner: ADI,
+    inner: AverageDirectionalIndex,
     current: Option<ValueType>,
     samples: usize,
     period: usize,
@@ -207,7 +208,11 @@ impl Adx {
     /// Create a new ADX.
     pub fn new(period: usize) -> Self {
         Self {
-            inner: ADI::new(period as PeriodType, &yata::core::Candle::default()).unwrap(),
+            inner: AverageDirectionalIndex::new(
+                period as PeriodType,
+                &yata::core::Candle::default(),
+            )
+            .unwrap(),
             current: None,
             samples: 0,
             period,

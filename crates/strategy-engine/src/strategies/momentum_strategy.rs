@@ -192,6 +192,9 @@ impl StrategyExecutor<8> for MomentumStrategy {
             volume: dec!(100), // Dummy volume, as Snapshot doesn't have it
             timestamp: latest.timestamp.timestamp(),
         };
+        // WARN: Synthetic candle creation from single tick snapshots loses OHLC fidelity.
+        // High/Low/Open are forced to match Last, and Volume is dummy.
+        // This is acceptable for high-frequency momentum checks but not for volatility/volume strategies.
 
         if let Some(mut signal) = self.on_candle(candle) {
             signal.symbol = latest.symbol.clone(); // Fix symbol
@@ -208,7 +211,7 @@ impl StrategyExecutor<8> for MomentumStrategy {
             let payload = SignalEventPayload {
                 strategy_id: self.strategy_id,
                 account_id: self.account_id.clone(),
-                priority: if signal.confidence > 0.8 {
+                priority: if signal.confidence >= 0.8 {
                     Priority::High
                 } else {
                     Priority::Normal

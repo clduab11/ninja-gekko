@@ -200,10 +200,7 @@ impl Indicator for Mfi {
         self.samples += 1;
 
         // Simplify: return 50.0 until full impl logic
-        IndicatorValue {
-            value: Decimal::from(50),
-            signal: None,
-        }
+        unimplemented!("MFI logic pending");
     }
 
     fn current(&self) -> Option<IndicatorValue> {

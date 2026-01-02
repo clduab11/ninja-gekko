@@ -13,6 +13,24 @@ pub struct Candle {
     pub timestamp: i64,
 }
 
+impl Candle {
+    pub fn validate(&self) -> Result<(), String> {
+        if self.high < self.low {
+            return Err("High must be >= Low".into());
+        }
+        if self.high < self.open || self.high < self.close {
+            return Err("High must be >= Open and Close".into());
+        }
+        if self.low > self.open || self.low > self.close {
+            return Err("Low must be <= Open and Close".into());
+        }
+        if self.volume < Decimal::ZERO {
+            return Err("Volume must be positive".into());
+        }
+        Ok(())
+    }
+}
+
 /// Ring buffer with configurable depth for indicator lookback
 #[derive(Debug, Clone)]
 pub struct CandleBuffer {

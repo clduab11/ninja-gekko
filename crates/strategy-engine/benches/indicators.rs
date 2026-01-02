@@ -5,6 +5,19 @@ use rust_decimal_macros::dec;
 use strategy_engine::indicators::prelude::*;
 use strategy_engine::strategies::MomentumStrategy;
 
+fn bench_rsi_update(c: &mut Criterion) {
+    let mut rsi = Rsi::new(14);
+
+    // Warmup
+    for i in 1..=14 {
+        rsi.update(Decimal::from(i * 10));
+    }
+
+    c.bench_function("rsi_update", |b| {
+        b.iter(|| rsi.update(black_box(dec!(150.25))))
+    });
+}
+
 fn bench_momentum_strategy_cycle(c: &mut Criterion) {
     // Simulates the indicator part of the strategy
     let mut state = strategy_engine::indicators::state::IndicatorState::new(200);
