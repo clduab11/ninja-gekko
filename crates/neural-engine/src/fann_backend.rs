@@ -102,13 +102,19 @@ impl FannModel {
 
     /// Load a FANN model from a .net file
     ///
-    /// This attempts to load model weights and architecture from a FANN-compatible
-    /// file format. If the file doesn't exist, returns an error.
+    /// **Note**: Full file loading is not yet implemented. This function validates
+    /// that the file exists and creates a network with the expected dimensions.
+    /// Once proper file parsing is implemented, this will load actual trained weights.
     ///
     /// # Arguments
     /// * `path` - Path to the .net model file
     /// * `expected_input_size` - Expected number of input neurons (for validation)
     /// * `expected_output_size` - Expected number of output neurons (for validation)
+    ///
+    /// # Current Behavior
+    /// - Validates file existence
+    /// - Creates untrained network with specified dimensions
+    /// - Logs warning about placeholder implementation
     #[allow(dead_code)]
     pub fn load_from_file(
         path: &str,
@@ -126,9 +132,12 @@ impl FannModel {
 
         info!("📂 Loading FANN model from: {}", path);
 
+        // TODO: Implement proper .net file parsing when ruv-fann adds serialization support
         // For now, create a model with the expected dimensions
-        // In production, this would parse the .net file format
-        warn!("FANN file loading not fully implemented, creating placeholder network");
+        warn!(
+            "FANN file loading not fully implemented - creating untrained network with expected dimensions. \
+            Train this network before production use."
+        );
 
         let model = Self::new(expected_input_size, &[16, 8], expected_output_size)?;
 

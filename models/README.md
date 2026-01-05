@@ -20,7 +20,16 @@ models/
 ### FANN (.net) Files
 - **Format**: ruv-FANN compatible network files
 - **Usage**: Load with `FannModel::load_from_file()` when implemented
-- **Current Status**: Placeholder models created dynamically
+- **Current Status**: **Untrained networks** - Models are initialized with random weights and must be trained on historical data before production use
+
+### ⚠️ Important: Training Required
+
+The neural models created by `FannModel::create_*_model()` are **untrained**. Before using in production:
+
+1. Collect historical training data (market data, spreads, outcomes)
+2. Train models using ruv-FANN training APIs
+3. Save trained weights to `.net` files
+4. Validate model accuracy meets threshold (≥85%)
 
 ### Model Specifications
 
