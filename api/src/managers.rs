@@ -1,4 +1,5 @@
 use crate::error::{ApiError, ApiResult};
+use crate::indicators::{CandleData, IndicatorService};
 use crate::models::*;
 use chrono::Utc;
 use ninja_gekko_database::DatabaseManager;
@@ -139,6 +140,8 @@ impl PortfolioManager {
 pub struct MarketDataService {
     _db: Arc<DatabaseManager>,
     connector: Option<Arc<Box<dyn exchange_connectors::ExchangeConnector>>>,
+    /// Technical indicator service for calculating indicators
+    indicator_service: IndicatorService,
 }
 
 impl MarketDataService {
@@ -146,7 +149,11 @@ impl MarketDataService {
         db: Arc<DatabaseManager>,
         connector: Option<Arc<Box<dyn exchange_connectors::ExchangeConnector>>>,
     ) -> Self {
-        Self { _db: db, connector }
+        Self {
+            _db: db,
+            connector,
+            indicator_service: IndicatorService::new(),
+        }
     }
 
     /// Get latest market data from exchange
@@ -250,14 +257,43 @@ impl MarketDataService {
     pub async fn get_data_with_indicators(
         &self,
         symbol: &str,
-        _params: PaginationParams,
+        params: PaginationParams,
     ) -> ApiResult<MarketDataWithIndicators> {
         let data = self.get_latest_data(symbol).await?;
+
+        // Fetch historical data to calculate indicators
+        let historical = self.get_historical_data(symbol, params).await?;
+        let candle_data: Vec<_> = historical
+            .response
+            .data
+            .unwrap_or_default()
+            .into_iter()
+            .map(|point| CandleData {
+                open: point.open.unwrap_or(point.price),
+                high: point.high.unwrap_or(point.price),
+                low: point.low.unwrap_or(point.price),
+                close: point.close.unwrap_or(point.price),
+                volume: point.volume,
+                timestamp: point.timestamp.timestamp(),
+            })
+            .collect();
+
+        // Calculate indicators if we have enough data
+        let indicators = if candle_data.len() >= 20 {
+            self.indicator_service.calculate_all_indicators_ohlcv(&candle_data)
+        } else if !candle_data.is_empty() {
+            // Not enough for full OHLCV analysis, use close prices only
+            let prices: Vec<f64> = candle_data.iter().map(|c| c.close).collect();
+            self.indicator_service.calculate_all_indicators(&prices)
+        } else {
+            HashMap::new()
+        };
+
         Ok(MarketDataWithIndicators {
             symbol: symbol.to_string(),
             price: data.price,
             volume: data.volume_24h,
-            indicators: HashMap::new(), // TODO: Calculate technical indicators
+            indicators,
             timestamp: data.timestamp,
         })
     }

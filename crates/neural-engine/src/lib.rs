@@ -16,6 +16,13 @@ use candle_core::{DType, Device};
 #[cfg(feature = "candle")]
 use std::env;
 
+// FANN backend module (conditional compilation)
+#[cfg(feature = "fann")]
+pub mod fann_backend;
+
+#[cfg(feature = "fann")]
+pub use fann_backend::{FannModel, FannModelMetadata};
+
 /// Neural engine error types
 #[derive(Error, Debug)]
 pub enum NeuralError {
@@ -33,6 +40,9 @@ pub enum NeuralError {
 
     #[error("Training failed: {0}")]
     TrainingFailed(String),
+
+    #[error("Backend not available: {0}")]
+    BackendUnavailable(String),
 }
 
 pub type NeuralResult<T> = Result<T, NeuralError>;
@@ -204,6 +214,15 @@ pub struct NeuralEngine {
     arbitrage_models: RwLock<HashMap<String, ArbitrageModel>>,
     #[cfg(feature = "candle")]
     device: Device,
+    /// FANN models for volatility prediction (when fann feature is enabled)
+    #[cfg(feature = "fann")]
+    fann_volatility_model: RwLock<Option<fann_backend::FannModel>>,
+    /// FANN models for arbitrage detection (when fann feature is enabled)
+    #[cfg(feature = "fann")]
+    fann_arbitrage_model: RwLock<Option<fann_backend::FannModel>>,
+    /// FANN models for risk assessment (when fann feature is enabled)
+    #[cfg(feature = "fann")]
+    fann_risk_model: RwLock<Option<fann_backend::FannModel>>,
 }
 
 /// Individual neural network model
@@ -244,7 +263,7 @@ pub struct ArbitrageModel {
 
 impl NeuralEngine {
     /// Create a new enhanced neural engine
-    #[cfg(feature = "candle")]
+    #[cfg(all(feature = "candle", not(feature = "fann")))]
     pub fn new(backend: NeuralBackend) -> NeuralResult<Self> {
         info!(
             "🧠 Initializing Enhanced Neural Engine for Gordon Gekko arbitrage ({})",
@@ -262,8 +281,42 @@ impl NeuralEngine {
         })
     }
 
-    /// Create a new enhanced neural engine (CPU-only fallback)
-    #[cfg(not(feature = "candle"))]
+    /// Create a new enhanced neural engine with FANN support
+    #[cfg(all(feature = "candle", feature = "fann"))]
+    pub fn new(backend: NeuralBackend) -> NeuralResult<Self> {
+        info!(
+            "🧠 Initializing Enhanced Neural Engine for Gordon Gekko arbitrage ({}) with FANN",
+            format!("{:?}", backend)
+        );
+
+        let device = detect_device()?;
+
+        // Initialize FANN models if backend is RuvFann
+        let (fann_volatility, fann_arbitrage, fann_risk) = if backend == NeuralBackend::RuvFann {
+            info!("🔧 Initializing FANN models for RuvFann backend");
+            (
+                RwLock::new(Some(fann_backend::FannModel::create_volatility_model()?)),
+                RwLock::new(Some(fann_backend::FannModel::create_arbitrage_model()?)),
+                RwLock::new(Some(fann_backend::FannModel::create_risk_model()?)),
+            )
+        } else {
+            (RwLock::new(None), RwLock::new(None), RwLock::new(None))
+        };
+
+        Ok(Self {
+            backend,
+            models: RwLock::new(HashMap::new()),
+            volatility_models: RwLock::new(HashMap::new()),
+            arbitrage_models: RwLock::new(HashMap::new()),
+            device,
+            fann_volatility_model: fann_volatility,
+            fann_arbitrage_model: fann_arbitrage,
+            fann_risk_model: fann_risk,
+        })
+    }
+
+    /// Create a new enhanced neural engine (CPU-only, no FANN)
+    #[cfg(all(not(feature = "candle"), not(feature = "fann")))]
     pub fn new(backend: NeuralBackend) -> NeuralResult<Self> {
         info!(
             "🧠 Initializing Enhanced Neural Engine for Gordon Gekko arbitrage ({})",
@@ -278,6 +331,44 @@ impl NeuralEngine {
             volatility_models: RwLock::new(HashMap::new()),
             arbitrage_models: RwLock::new(HashMap::new()),
         })
+    }
+
+    /// Create a new enhanced neural engine (CPU-only, with FANN)
+    #[cfg(all(not(feature = "candle"), feature = "fann"))]
+    pub fn new(backend: NeuralBackend) -> NeuralResult<Self> {
+        info!(
+            "🧠 Initializing Enhanced Neural Engine for Gordon Gekko arbitrage ({}) with FANN",
+            format!("{:?}", backend)
+        );
+
+        detect_device()?;
+
+        // Initialize FANN models if backend is RuvFann
+        let (fann_volatility, fann_arbitrage, fann_risk) = if backend == NeuralBackend::RuvFann {
+            info!("🔧 Initializing FANN models for RuvFann backend");
+            (
+                RwLock::new(Some(fann_backend::FannModel::create_volatility_model()?)),
+                RwLock::new(Some(fann_backend::FannModel::create_arbitrage_model()?)),
+                RwLock::new(Some(fann_backend::FannModel::create_risk_model()?)),
+            )
+        } else {
+            (RwLock::new(None), RwLock::new(None), RwLock::new(None))
+        };
+
+        Ok(Self {
+            backend,
+            models: RwLock::new(HashMap::new()),
+            volatility_models: RwLock::new(HashMap::new()),
+            arbitrage_models: RwLock::new(HashMap::new()),
+            fann_volatility_model: fann_volatility,
+            fann_arbitrage_model: fann_arbitrage,
+            fann_risk_model: fann_risk,
+        })
+    }
+
+    /// Get the current backend type
+    pub fn backend(&self) -> NeuralBackend {
+        self.backend
     }
 
     /// Load all models for arbitrage trading
@@ -314,7 +405,15 @@ impl NeuralEngine {
             .or_else(|| models.get("volatility_universal"))
             .ok_or_else(|| NeuralError::ModelNotFound(model_key.clone()))?;
 
-        // Simulate volatility prediction (in real implementation, this would use actual ML models)
+        // Use FANN backend if available and configured
+        #[cfg(feature = "fann")]
+        if self.backend == NeuralBackend::RuvFann {
+            if let Some(prediction) = self.predict_volatility_with_fann(symbol, exchange, market_data).await? {
+                return Ok(prediction);
+            }
+        }
+
+        // Fallback: Simulate volatility prediction
         let current_volatility = self.calculate_current_volatility(market_data);
 
         let prediction = VolatilityPrediction {
@@ -365,10 +464,24 @@ impl NeuralEngine {
             .or_else(|| models.get("arbitrage_universal"))
             .ok_or_else(|| NeuralError::ModelNotFound(model_key.clone()))?;
 
+        // Use FANN backend if available and configured
+        #[cfg(feature = "fann")]
+        if self.backend == NeuralBackend::RuvFann {
+            if let Some(prediction) = self.predict_arbitrage_with_fann(
+                symbol,
+                primary_exchange,
+                secondary_exchange,
+                primary_data,
+                secondary_data,
+            ).await? {
+                return Ok(prediction);
+            }
+        }
+
         // Calculate current spread
         let current_spread = (secondary_data.price - primary_data.price).abs() / primary_data.price;
 
-        // Simulate arbitrage prediction
+        // Fallback: Simulate arbitrage prediction
         let prediction = CrossExchangePrediction {
             symbol: symbol.to_string(),
             primary_exchange: primary_exchange.to_string(),
@@ -518,6 +631,135 @@ impl NeuralEngine {
 
         info!("🛡️ Loaded enhanced risk assessment models");
         Ok(())
+    }
+
+    /// Predict volatility using FANN model
+    #[cfg(feature = "fann")]
+    async fn predict_volatility_with_fann(
+        &self,
+        symbol: &str,
+        exchange: &str,
+        market_data: &MarketDataInput,
+    ) -> NeuralResult<Option<VolatilityPrediction>> {
+        let mut model_guard = self.fann_volatility_model.write().await;
+        let model = match model_guard.as_mut() {
+            Some(m) => m,
+            None => return Ok(None),
+        };
+
+        // Prepare input vector: [price, high, low, volume, avg_volume, bid, ask]
+        let input = vec![
+            market_data.price,
+            market_data.high,
+            market_data.low,
+            market_data.volume,
+            market_data.avg_volume,
+            market_data.bid,
+            market_data.ask,
+        ];
+
+        // Run FANN inference
+        let output = model.run(&input)?;
+
+        // Parse output: [volatility_1m, volatility_5m, volatility_15m, confidence]
+        let current_volatility = self.calculate_current_volatility(market_data);
+        let vol_1m = output.first().copied().unwrap_or(0.0).abs();
+        let vol_5m = output.get(1).copied().unwrap_or(0.0).abs();
+        let vol_15m = output.get(2).copied().unwrap_or(0.0).abs();
+        let confidence = output.get(3).copied().unwrap_or(0.5).abs().min(1.0);
+
+        let prediction = VolatilityPrediction {
+            symbol: symbol.to_string(),
+            exchange: exchange.to_string(),
+            current_volatility,
+            predicted_volatility_1m: vol_1m,
+            predicted_volatility_5m: vol_5m,
+            predicted_volatility_15m: vol_15m,
+            confidence_score: confidence,
+            trend_direction: if vol_1m > current_volatility * 1.5 {
+                TrendDirection::Highly_Volatile
+            } else if vol_1m > current_volatility {
+                TrendDirection::Bullish
+            } else if vol_1m < current_volatility * 0.5 {
+                TrendDirection::Bearish
+            } else {
+                TrendDirection::Neutral
+            },
+            volatility_regime: self.classify_volatility_regime(vol_1m),
+            predicted_at: chrono::Utc::now(),
+        };
+
+        debug!(
+            "🧠 FANN volatility prediction: vol_1m={:.4}, confidence={:.2}%",
+            vol_1m,
+            confidence * 100.0
+        );
+
+        Ok(Some(prediction))
+    }
+
+    /// Predict arbitrage using FANN model
+    #[cfg(feature = "fann")]
+    async fn predict_arbitrage_with_fann(
+        &self,
+        symbol: &str,
+        primary_exchange: &str,
+        secondary_exchange: &str,
+        primary_data: &MarketDataInput,
+        secondary_data: &MarketDataInput,
+    ) -> NeuralResult<Option<CrossExchangePrediction>> {
+        let mut model_guard = self.fann_arbitrage_model.write().await;
+        let model = match model_guard.as_mut() {
+            Some(m) => m,
+            None => return Ok(None),
+        };
+
+        // Calculate current spread
+        let current_spread = (secondary_data.price - primary_data.price).abs() / primary_data.price;
+
+        // Prepare input vector
+        let input = vec![
+            primary_data.price,
+            secondary_data.price,
+            current_spread,
+            primary_data.volume,
+            secondary_data.volume,
+            primary_data.bid,
+            primary_data.ask,
+            secondary_data.bid,
+            secondary_data.ask,
+        ];
+
+        // Run FANN inference
+        let output = model.run(&input)?;
+
+        // Parse output: [spread_1m, spread_5m, arb_probability, expected_profit, confidence]
+        let spread_1m = output.first().copied().unwrap_or(0.0).abs();
+        let spread_5m = output.get(1).copied().unwrap_or(0.0).abs();
+        let arb_prob = output.get(2).copied().unwrap_or(0.5).abs().min(1.0);
+        let expected_profit = output.get(3).copied().unwrap_or(0.0).abs() * 10000.0; // Convert to bps
+        let confidence = output.get(4).copied().unwrap_or(0.5).abs().min(1.0);
+
+        let prediction = CrossExchangePrediction {
+            symbol: symbol.to_string(),
+            primary_exchange: primary_exchange.to_string(),
+            secondary_exchange: secondary_exchange.to_string(),
+            current_spread,
+            predicted_spread_1m: spread_1m,
+            predicted_spread_5m: spread_5m,
+            arbitrage_probability: arb_prob,
+            expected_profit_bps: expected_profit,
+            confidence_score: confidence,
+            predicted_at: chrono::Utc::now(),
+        };
+
+        info!(
+            "🧠 FANN arbitrage prediction: prob={:.2}%, profit={:.1}bps",
+            arb_prob * 100.0,
+            expected_profit
+        );
+
+        Ok(Some(prediction))
     }
 
     fn calculate_current_volatility(&self, data: &MarketDataInput) -> f64 {

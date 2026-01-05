@@ -1,7 +1,7 @@
 use crate::indicators::{buffer, dec_to_f64, f64_to_dec, Indicator, IndicatorValue};
 use rust_decimal::Decimal;
+use std::collections::VecDeque;
 use yata::core::{Method, PeriodType, ValueType};
-use yata::indicators::AverageDirectionalIndex;
 use yata::methods::{EMA, SMA};
 
 // ============================================================================
@@ -197,25 +197,34 @@ impl Indicator for Macd {
 /// Average Directional Index (ADX).
 ///
 /// Used to determine the strength of a trend.
+/// Manual implementation that computes +DI, -DI and ADX from TR, +DM, -DM.
 pub struct Adx {
-    inner: AverageDirectionalIndex,
-    current: Option<ValueType>,
-    samples: usize,
     period: usize,
+    samples: usize,
+    prev_high: Option<f64>,
+    prev_low: Option<f64>,
+    prev_close: Option<f64>,
+    tr_history: VecDeque<f64>,
+    plus_dm_history: VecDeque<f64>,
+    minus_dm_history: VecDeque<f64>,
+    dx_history: VecDeque<f64>,
+    current_adx: Option<f64>,
 }
 
 impl Adx {
     /// Create a new ADX.
     pub fn new(period: usize) -> Self {
         Self {
-            inner: AverageDirectionalIndex::new(
-                period as PeriodType,
-                &yata::core::Candle::default(),
-            )
-            .unwrap(),
-            current: None,
-            samples: 0,
             period,
+            samples: 0,
+            prev_high: None,
+            prev_low: None,
+            prev_close: None,
+            tr_history: VecDeque::with_capacity(period),
+            plus_dm_history: VecDeque::with_capacity(period),
+            minus_dm_history: VecDeque::with_capacity(period),
+            dx_history: VecDeque::with_capacity(period),
+            current_adx: None,
         }
     }
 }
@@ -240,36 +249,113 @@ impl Indicator for Adx {
         let low = dec_to_f64(candle.low);
         let close = dec_to_f64(candle.close);
 
-        let yata_candle = yata::core::Candle {
-            open: dec_to_f64(candle.open),
-            high,
-            low,
-            close,
-            volume: dec_to_f64(candle.volume),
+        // Calculate True Range (TR)
+        let tr = if let Some(prev_close) = self.prev_close {
+            let hl = high - low;
+            let hpc = (high - prev_close).abs();
+            let lpc = (low - prev_close).abs();
+            hl.max(hpc).max(lpc)
+        } else {
+            high - low
         };
 
-        // This assumes `AverageDirectionalIndex` implements `Next<&Candle>`.
-        let result = self.inner.next(&yata_candle);
-        self.current = Some(result);
+        // Calculate +DM and -DM
+        let (plus_dm, minus_dm) = if let (Some(prev_h), Some(prev_l)) =
+            (self.prev_high, self.prev_low)
+        {
+            let up_move = high - prev_h;
+            let down_move = prev_l - low;
+
+            let plus = if up_move > down_move && up_move > 0.0 {
+                up_move
+            } else {
+                0.0
+            };
+            let minus = if down_move > up_move && down_move > 0.0 {
+                down_move
+            } else {
+                0.0
+            };
+            (plus, minus)
+        } else {
+            (0.0, 0.0)
+        };
+
+        self.prev_high = Some(high);
+        self.prev_low = Some(low);
+        self.prev_close = Some(close);
+
+        // Add to history
+        self.tr_history.push_back(tr);
+        self.plus_dm_history.push_back(plus_dm);
+        self.minus_dm_history.push_back(minus_dm);
+
+        if self.tr_history.len() > self.period {
+            self.tr_history.pop_front();
+            self.plus_dm_history.pop_front();
+            self.minus_dm_history.pop_front();
+        }
+
         self.samples += 1;
+
+        if self.samples >= self.period {
+            // Calculate smoothed values (Wilder's smoothing)
+            let atr: f64 = self.tr_history.iter().sum::<f64>() / self.period as f64;
+            let smooth_plus_dm: f64 =
+                self.plus_dm_history.iter().sum::<f64>() / self.period as f64;
+            let smooth_minus_dm: f64 =
+                self.minus_dm_history.iter().sum::<f64>() / self.period as f64;
+
+            // Calculate +DI and -DI
+            let plus_di = if atr != 0.0 {
+                (smooth_plus_dm / atr) * 100.0
+            } else {
+                0.0
+            };
+            let minus_di = if atr != 0.0 {
+                (smooth_minus_dm / atr) * 100.0
+            } else {
+                0.0
+            };
+
+            // Calculate DX
+            let di_sum = plus_di + minus_di;
+            let dx = if di_sum != 0.0 {
+                ((plus_di - minus_di).abs() / di_sum) * 100.0
+            } else {
+                0.0
+            };
+
+            self.dx_history.push_back(dx);
+            if self.dx_history.len() > self.period {
+                self.dx_history.pop_front();
+            }
+
+            // ADX is the smoothed average of DX
+            if self.dx_history.len() >= self.period {
+                let adx = self.dx_history.iter().sum::<f64>() / self.dx_history.len() as f64;
+                self.current_adx = Some(adx);
+            }
+        }
+
         IndicatorValue {
-            value: f64_to_dec(result),
+            value: f64_to_dec(self.current_adx.unwrap_or(0.0)),
             signal: None,
         }
     }
 
     fn current(&self) -> Option<IndicatorValue> {
-        self.current.map(|v| IndicatorValue {
+        self.current_adx.map(|v| IndicatorValue {
             value: f64_to_dec(v),
             signal: None,
         })
     }
 
     fn warmup_period(&self) -> usize {
-        self.period
+        self.period * 2 // ADX needs 2x period for proper warmup
     }
 
     fn is_ready(&self) -> bool {
-        self.samples >= self.period
+        self.samples >= self.period * 2
     }
 }
