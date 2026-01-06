@@ -37,6 +37,7 @@ pub mod config;
 pub mod env_validation;
 pub mod error;
 pub mod handlers;
+pub mod indicators;
 pub mod llm;
 pub mod managers;
 pub mod middleware;

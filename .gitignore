@@ -91,7 +91,11 @@ secrets/
 
 # Application specific
 data/
-models/
+# Models - track structure (README, .gitkeep) but not actual model files
+models/**/*.net
+models/**/*.bin
+models/**/*.pt
+models/**/*.onnx
 checkpoints/
 node_modules/
 frontend/chat-ui/node_modules/

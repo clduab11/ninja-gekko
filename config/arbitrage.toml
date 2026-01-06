@@ -153,10 +153,18 @@ enable_real_time_inference = true
 inference_timeout_ms = 100
 model_accuracy_threshold = 0.85
 
-# Model paths
-volatility_model_path = "models/volatility_predictor.bin"
-arbitrage_model_path = "models/arbitrage_detector.bin"
-risk_model_path = "models/risk_assessor.bin"
+# Backend selection: "ruv-fann", "candle", or "auto"
+backend = "auto"
+
+# Model paths (FANN .net format)
+volatility_model_path = "models/volatility/volatility_predictor.net"
+arbitrage_model_path = "models/arbitrage/arbitrage_detector.net"
+risk_model_path = "models/risk/risk_assessor.net"
+
+# Legacy model paths (Candle .bin format)
+legacy_volatility_model_path = "models/volatility_predictor.bin"
+legacy_arbitrage_model_path = "models/arbitrage_detector.bin"
+legacy_risk_model_path = "models/risk_assessor.bin"
 
 # Training configuration
 auto_retrain_on_performance_drop = true
