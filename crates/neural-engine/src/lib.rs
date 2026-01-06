@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use thiserror::Error;
 use tokio::sync::RwLock;
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 
 #[cfg(feature = "candle")]
 use candle_core::{DType, Device};
@@ -141,6 +141,8 @@ pub enum NeuralBackend {
     Candle,
     /// PyTorch via Candle bindings
     PyTorch,
+    /// Simulated: Returns placeholder predictions (for testing/fallback)
+    Simulated,
 }
 
 /// Neural network model types for trading
@@ -292,19 +294,106 @@ impl NeuralEngine {
         let device = detect_device()?;
 
         // Initialize FANN models if backend is RuvFann
-        let (fann_volatility, fann_arbitrage, fann_risk) = if backend == NeuralBackend::RuvFann {
-            info!("🔧 Initializing FANN models for RuvFann backend");
-            (
-                RwLock::new(Some(fann_backend::FannModel::create_volatility_model()?)),
-                RwLock::new(Some(fann_backend::FannModel::create_arbitrage_model()?)),
-                RwLock::new(Some(fann_backend::FannModel::create_risk_model()?)),
-            )
-        } else {
-            (RwLock::new(None), RwLock::new(None), RwLock::new(None))
-        };
+        // NOTE: These are untrained placeholder models. For production use,
+        // call new_with_model_paths() with paths to trained .net files.
+        let (fann_volatility, fann_arbitrage, fann_risk, actual_backend) =
+            if backend == NeuralBackend::RuvFann {
+                warn!(
+                    "⚠️ Creating untrained FANN models. For production, use new_with_model_paths() \
+                    to load trained models from disk."
+                );
+                (
+                    RwLock::new(Some(fann_backend::FannModel::create_volatility_model()?)),
+                    RwLock::new(Some(fann_backend::FannModel::create_arbitrage_model()?)),
+                    RwLock::new(Some(fann_backend::FannModel::create_risk_model()?)),
+                    backend,
+                )
+            } else {
+                (RwLock::new(None), RwLock::new(None), RwLock::new(None), backend)
+            };
 
         Ok(Self {
-            backend,
+            backend: actual_backend,
+            models: RwLock::new(HashMap::new()),
+            volatility_models: RwLock::new(HashMap::new()),
+            arbitrage_models: RwLock::new(HashMap::new()),
+            device,
+            fann_volatility_model: fann_volatility,
+            fann_arbitrage_model: fann_arbitrage,
+            fann_risk_model: fann_risk,
+        })
+    }
+
+    /// Create a new enhanced neural engine with FANN support, loading models from specified paths.
+    ///
+    /// This constructor attempts to load trained models from the filesystem. If model files
+    /// are not found or cannot be loaded, it falls back to the Simulated backend.
+    ///
+    /// # Arguments
+    /// * `backend` - Requested backend type
+    /// * `volatility_model_path` - Path to trained volatility .net model
+    /// * `arbitrage_model_path` - Path to trained arbitrage .net model  
+    /// * `risk_model_path` - Path to trained risk .net model
+    ///
+    /// # Returns
+    /// - `Ok(NeuralEngine)` with loaded models if all files exist and are valid
+    /// - `Ok(NeuralEngine)` with Simulated backend if loading fails (with warning logged)
+    /// - `Err(NeuralError)` only for critical initialization failures
+    #[cfg(all(feature = "candle", feature = "fann"))]
+    pub fn new_with_model_paths(
+        backend: NeuralBackend,
+        volatility_model_path: Option<&str>,
+        arbitrage_model_path: Option<&str>,
+        risk_model_path: Option<&str>,
+    ) -> NeuralResult<Self> {
+        info!(
+            "🧠 Initializing Enhanced Neural Engine with model paths ({}) with FANN",
+            format!("{:?}", backend)
+        );
+
+        let device = detect_device()?;
+
+        let (fann_volatility, fann_arbitrage, fann_risk, actual_backend) =
+            if backend == NeuralBackend::RuvFann {
+                // Try to load models from paths
+                let vol_result = volatility_model_path
+                    .map(|p| fann_backend::FannModel::load_from_file(p, 7, 4));
+                let arb_result = arbitrage_model_path
+                    .map(|p| fann_backend::FannModel::load_from_file(p, 9, 5));
+                let risk_result = risk_model_path
+                    .map(|p| fann_backend::FannModel::load_from_file(p, 5, 5));
+
+                // Check if all models loaded successfully
+                match (vol_result, arb_result, risk_result) {
+                    (Some(Ok(vol)), Some(Ok(arb)), Some(Ok(risk))) => {
+                        info!("✅ All FANN models loaded successfully from disk");
+                        (
+                            RwLock::new(Some(vol)),
+                            RwLock::new(Some(arb)),
+                            RwLock::new(Some(risk)),
+                            backend,
+                        )
+                    }
+                    _ => {
+                        warn!(
+                            "⚠️ Could not load FANN models from disk. \
+                            Falling back to Simulated backend. \
+                            Ensure trained .net files exist at configured paths."
+                        );
+                        (
+                            RwLock::new(None),
+                            RwLock::new(None),
+                            RwLock::new(None),
+                            NeuralBackend::Simulated,
+                        )
+                    }
+                }
+            } else {
+                (RwLock::new(None), RwLock::new(None), RwLock::new(None), backend)
+            };
+
+        Ok(Self {
+            backend: actual_backend,
             models: RwLock::new(HashMap::new()),
             volatility_models: RwLock::new(HashMap::new()),
             arbitrage_models: RwLock::new(HashMap::new()),
@@ -344,19 +433,91 @@ impl NeuralEngine {
         detect_device()?;
 
         // Initialize FANN models if backend is RuvFann
-        let (fann_volatility, fann_arbitrage, fann_risk) = if backend == NeuralBackend::RuvFann {
-            info!("🔧 Initializing FANN models for RuvFann backend");
-            (
-                RwLock::new(Some(fann_backend::FannModel::create_volatility_model()?)),
-                RwLock::new(Some(fann_backend::FannModel::create_arbitrage_model()?)),
-                RwLock::new(Some(fann_backend::FannModel::create_risk_model()?)),
-            )
-        } else {
-            (RwLock::new(None), RwLock::new(None), RwLock::new(None))
-        };
+        // NOTE: These are untrained placeholder models. For production use,
+        // call new_with_model_paths() with paths to trained .net files.
+        let (fann_volatility, fann_arbitrage, fann_risk, actual_backend) =
+            if backend == NeuralBackend::RuvFann {
+                warn!(
+                    "⚠️ Creating untrained FANN models. For production, use new_with_model_paths() \
+                    to load trained models from disk."
+                );
+                (
+                    RwLock::new(Some(fann_backend::FannModel::create_volatility_model()?)),
+                    RwLock::new(Some(fann_backend::FannModel::create_arbitrage_model()?)),
+                    RwLock::new(Some(fann_backend::FannModel::create_risk_model()?)),
+                    backend,
+                )
+            } else {
+                (RwLock::new(None), RwLock::new(None), RwLock::new(None), backend)
+            };
 
         Ok(Self {
-            backend,
+            backend: actual_backend,
+            models: RwLock::new(HashMap::new()),
+            volatility_models: RwLock::new(HashMap::new()),
+            arbitrage_models: RwLock::new(HashMap::new()),
+            fann_volatility_model: fann_volatility,
+            fann_arbitrage_model: fann_arbitrage,
+            fann_risk_model: fann_risk,
+        })
+    }
+
+    /// Create a new enhanced neural engine (CPU-only, with FANN), loading models from paths.
+    ///
+    /// Falls back to Simulated backend if model files cannot be loaded.
+    #[cfg(all(not(feature = "candle"), feature = "fann"))]
+    pub fn new_with_model_paths(
+        backend: NeuralBackend,
+        volatility_model_path: Option<&str>,
+        arbitrage_model_path: Option<&str>,
+        risk_model_path: Option<&str>,
+    ) -> NeuralResult<Self> {
+        info!(
+            "🧠 Initializing Enhanced Neural Engine with model paths ({}) with FANN",
+            format!("{:?}", backend)
+        );
+
+        detect_device()?;
+
+        let (fann_volatility, fann_arbitrage, fann_risk, actual_backend) =
+            if backend == NeuralBackend::RuvFann {
+                // Try to load models from paths
+                let vol_result = volatility_model_path
+                    .map(|p| fann_backend::FannModel::load_from_file(p, 7, 4));
+                let arb_result = arbitrage_model_path
+                    .map(|p| fann_backend::FannModel::load_from_file(p, 9, 5));
+                let risk_result = risk_model_path
+                    .map(|p| fann_backend::FannModel::load_from_file(p, 5, 5));
+
+                match (vol_result, arb_result, risk_result) {
+                    (Some(Ok(vol)), Some(Ok(arb)), Some(Ok(risk))) => {
+                        info!("✅ All FANN models loaded successfully from disk");
+                        (
+                            RwLock::new(Some(vol)),
+                            RwLock::new(Some(arb)),
+                            RwLock::new(Some(risk)),
+                            backend,
+                        )
+                    }
+                    _ => {
+                        warn!(
+                            "⚠️ Could not load FANN models from disk. \
+                            Falling back to Simulated backend."
+                        );
+                        (
+                            RwLock::new(None),
+                            RwLock::new(None),
+                            RwLock::new(None),
+                            NeuralBackend::Simulated,
+                        )
+                    }
+                }
+            } else {
+                (RwLock::new(None), RwLock::new(None), RwLock::new(None), backend)
+            };
+
+        Ok(Self {
+            backend: actual_backend,
             models: RwLock::new(HashMap::new()),
             volatility_models: RwLock::new(HashMap::new()),
             arbitrage_models: RwLock::new(HashMap::new()),
@@ -765,7 +926,7 @@ impl NeuralEngine {
     fn calculate_current_volatility(&self, data: &MarketDataInput) -> f64 {
         // Simplified volatility calculation
         let price_range = (data.high - data.low) / data.price;
-        let volume_factor = (data.volume / data.avg_volume).min(3.0).max(0.1);
+        let volume_factor = (data.volume / data.avg_volume).clamp(0.1, 3.0);
 
         price_range * volume_factor.sqrt() * 0.1
     }
@@ -886,5 +1047,45 @@ mod tests {
         let pred = prediction.unwrap();
         assert!(pred.arbitrage_probability > 0.5);
         assert!(pred.expected_profit_bps > 0.0);
+    }
+
+    #[cfg(feature = "fann")]
+    #[test]
+    fn test_model_path_loading_fallback() {
+        // When model paths don't exist, should fall back to Simulated backend
+        let engine = NeuralEngine::new_with_model_paths(
+            NeuralBackend::RuvFann,
+            Some("/nonexistent/volatility.net"),
+            Some("/nonexistent/arbitrage.net"),
+            Some("/nonexistent/risk.net"),
+        )
+        .expect("Engine creation should not fail");
+
+        // Backend should have fallen back to Simulated
+        assert_eq!(
+            engine.backend(),
+            NeuralBackend::Simulated,
+            "Should fall back to Simulated when model files not found"
+        );
+    }
+
+    #[cfg(feature = "fann")]
+    #[test]
+    fn test_model_path_loading_partial_missing() {
+        // When some model paths are missing, should fall back to Simulated backend
+        let engine = NeuralEngine::new_with_model_paths(
+            NeuralBackend::RuvFann,
+            None, // Missing path
+            Some("/nonexistent/arbitrage.net"),
+            Some("/nonexistent/risk.net"),
+        )
+        .expect("Engine creation should not fail");
+
+        // Backend should have fallen back to Simulated
+        assert_eq!(
+            engine.backend(),
+            NeuralBackend::Simulated,
+            "Should fall back to Simulated when any model path is missing"
+        );
     }
 }

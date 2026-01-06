@@ -4,6 +4,20 @@ use std::collections::VecDeque;
 use yata::core::{Method, PeriodType};
 use yata::methods::{EMA, SMA};
 
+/// Explicit Bollinger Bands output structure.
+///
+/// Provides unambiguous access to all three Bollinger Band values,
+/// avoiding reliance on implicit IndicatorValue field conventions.
+#[derive(Debug, Clone, Copy)]
+pub struct BollingerBandsOutput {
+    /// Upper band: SMA + (sigma × standard deviation)
+    pub upper: f64,
+    /// Middle band: Simple Moving Average
+    pub middle: f64,
+    /// Lower band: SMA - (sigma × standard deviation)
+    pub lower: f64,
+}
+
 // ============================================================================
 // ATR
 // ============================================================================
@@ -107,6 +121,29 @@ impl BollingerBands {
             current_upper: None,
             current_lower: None,
             current_mid: None,
+        }
+    }
+
+    /// Get explicit Bollinger Bands output with all three bands.
+    ///
+    /// Returns `None` if the indicator is not yet ready (warmup period not complete).
+    ///
+    /// # Example
+    /// ```ignore
+    /// let mut bb = BollingerBands::new(20, 2.0);
+    /// // ... feed prices via update() ...
+    /// if let Some(bands) = bb.calculate_bands() {
+    ///     println!("Upper: {}, Middle: {}, Lower: {}", bands.upper, bands.middle, bands.lower);
+    /// }
+    /// ```
+    pub fn calculate_bands(&self) -> Option<BollingerBandsOutput> {
+        match (self.current_upper, self.current_mid, self.current_lower) {
+            (Some(upper), Some(middle), Some(lower)) => Some(BollingerBandsOutput {
+                upper,
+                middle,
+                lower,
+            }),
+            _ => None,
         }
     }
 }

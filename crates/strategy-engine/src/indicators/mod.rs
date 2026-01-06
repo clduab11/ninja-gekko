@@ -41,6 +41,6 @@ pub mod prelude {
     // Re-export common indicators
     pub use super::momentum::{Cci, Rsi, Stochastic, WilliamsR};
     pub use super::trend::{Adx, Ema, Macd, Sma};
-    pub use super::volatility::{Atr, BollingerBands, KeltnerChannels};
+    pub use super::volatility::{Atr, BollingerBands, BollingerBandsOutput, KeltnerChannels};
     pub use super::volume::{Mfi, Obv, Vwap};
 }

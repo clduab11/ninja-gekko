@@ -146,25 +146,23 @@ impl IndicatorService {
 
     /// Calculate Bollinger Bands from a series of prices
     ///
-    /// Returns (upper_band, lower_band) or None if not enough data
-    pub fn calculate_bollinger_bands(&self, prices: &[f64]) -> Option<(f64, f64)> {
+    /// Returns (upper_band, middle_band, lower_band) or None if not enough data.
+    /// Uses the explicit `BollingerBands::calculate_bands()` method for unambiguous
+    /// access to all three band values.
+    pub fn calculate_bollinger_bands(&self, prices: &[f64]) -> Option<(f64, f64, f64)> {
         if prices.len() < self.bb_period {
             return None;
         }
 
         let mut bb = BollingerBands::new(self.bb_period, self.bb_sigma);
-        let mut last_value = None;
 
         for &price in prices {
-            let value = bb.update(Decimal::from_f64_retain(price)?);
-            if bb.is_ready() {
-                let upper: f64 = value.value.to_string().parse().ok()?;
-                let lower: f64 = value.signal?.to_string().parse().ok()?;
-                last_value = Some((upper, lower));
-            }
+            bb.update(Decimal::from_f64_retain(price)?);
         }
 
-        last_value
+        // Use explicit calculate_bands() for unambiguous access to all three values
+        bb.calculate_bands()
+            .map(|bands| (bands.upper, bands.middle, bands.lower))
     }
 
     /// Calculate ATR from OHLCV candle data
@@ -220,12 +218,11 @@ impl IndicatorService {
             indicators.insert("macd_histogram".to_string(), macd - signal);
         }
 
-        if let Some((upper, lower)) = self.calculate_bollinger_bands(prices) {
+        if let Some((upper, middle, lower)) = self.calculate_bollinger_bands(prices) {
             indicators.insert("bb_upper".to_string(), upper);
+            indicators.insert("bb_middle".to_string(), middle);
             indicators.insert("bb_lower".to_string(), lower);
             if let Some(last_price) = prices.last() {
-                let mid = (upper + lower) / 2.0;
-                indicators.insert("bb_middle".to_string(), mid);
                 // %B indicator: (price - lower) / (upper - lower)
                 let width = upper - lower;
                 if width > 0.0 {
@@ -345,7 +342,9 @@ mod tests {
         let prices = sample_prices();
         let bb = service.calculate_bollinger_bands(&prices);
         assert!(bb.is_some());
-        let (upper, lower) = bb.unwrap();
+        let (upper, middle, lower) = bb.unwrap();
+        assert!(upper >= middle);
+        assert!(middle >= lower);
         assert!(upper >= lower);
     }
 
@@ -355,11 +354,12 @@ mod tests {
         let prices = sample_prices();
         let indicators = service.calculate_all_indicators(&prices);
 
-        // Should have at least RSI, SMA, EMA, BB
+        // Should have at least RSI, SMA, EMA, BB (including middle)
         assert!(indicators.contains_key("rsi"));
         assert!(indicators.contains_key("sma"));
         assert!(indicators.contains_key("ema"));
         assert!(indicators.contains_key("bb_upper"));
+        assert!(indicators.contains_key("bb_middle"));
         assert!(indicators.contains_key("bb_lower"));
     }
 

@@ -196,23 +196,35 @@ impl Indicator for Macd {
 // ============================================================================
 /// Average Directional Index (ADX).
 ///
-/// Used to determine the strength of a trend.
-/// Manual implementation that computes +DI, -DI and ADX from TR, +DM, -DM.
+/// Implements Wilder's Smoothing Method as described in "New Concepts in
+/// Technical Trading Systems" (J. Welles Wilder Jr., 1978).
+///
+/// Uses Wilder's exponential smoothing formula:
+/// `Smoothed = [(Previous × (Period - 1)) + Current] / Period`
+///
+/// This produces values compatible with standard trading platforms (TradingView,
+/// MetaTrader, TA-Lib).
 pub struct Adx {
     period: usize,
     samples: usize,
     prev_high: Option<f64>,
     prev_low: Option<f64>,
     prev_close: Option<f64>,
-    tr_history: VecDeque<f64>,
-    plus_dm_history: VecDeque<f64>,
-    minus_dm_history: VecDeque<f64>,
-    dx_history: VecDeque<f64>,
+    // Raw values for initial accumulation
+    tr_accumulator: f64,
+    plus_dm_accumulator: f64,
+    minus_dm_accumulator: f64,
+    dx_accumulator: f64,
+    // Wilder-smoothed values
+    smoothed_tr: Option<f64>,
+    smoothed_plus_dm: Option<f64>,
+    smoothed_minus_dm: Option<f64>,
+    smoothed_adx: Option<f64>,
     current_adx: Option<f64>,
 }
 
 impl Adx {
-    /// Create a new ADX.
+    /// Create a new ADX indicator with Wilder's Smoothing.
     pub fn new(period: usize) -> Self {
         Self {
             period,
@@ -220,12 +232,22 @@ impl Adx {
             prev_high: None,
             prev_low: None,
             prev_close: None,
-            tr_history: VecDeque::with_capacity(period),
-            plus_dm_history: VecDeque::with_capacity(period),
-            minus_dm_history: VecDeque::with_capacity(period),
-            dx_history: VecDeque::with_capacity(period),
+            tr_accumulator: 0.0,
+            plus_dm_accumulator: 0.0,
+            minus_dm_accumulator: 0.0,
+            dx_accumulator: 0.0,
+            smoothed_tr: None,
+            smoothed_plus_dm: None,
+            smoothed_minus_dm: None,
+            smoothed_adx: None,
             current_adx: None,
         }
+    }
+
+    /// Apply Wilder's smoothing formula: (prev * (period - 1) + current) / period
+    #[inline]
+    fn wilder_smooth(&self, prev: f64, current: f64) -> f64 {
+        (prev * (self.period as f64 - 1.0) + current) / self.period as f64
     }
 }
 
@@ -284,28 +306,39 @@ impl Indicator for Adx {
         self.prev_high = Some(high);
         self.prev_low = Some(low);
         self.prev_close = Some(close);
-
-        // Add to history
-        self.tr_history.push_back(tr);
-        self.plus_dm_history.push_back(plus_dm);
-        self.minus_dm_history.push_back(minus_dm);
-
-        if self.tr_history.len() > self.period {
-            self.tr_history.pop_front();
-            self.plus_dm_history.pop_front();
-            self.minus_dm_history.pop_front();
-        }
-
         self.samples += 1;
 
-        if self.samples >= self.period {
-            // Calculate smoothed values (Wilder's smoothing)
-            let atr: f64 = self.tr_history.iter().sum::<f64>() / self.period as f64;
-            let smooth_plus_dm: f64 =
-                self.plus_dm_history.iter().sum::<f64>() / self.period as f64;
-            let smooth_minus_dm: f64 =
-                self.minus_dm_history.iter().sum::<f64>() / self.period as f64;
+        // Phase 1: Accumulate raw values for initial period
+        if self.samples <= self.period {
+            self.tr_accumulator += tr;
+            self.plus_dm_accumulator += plus_dm;
+            self.minus_dm_accumulator += minus_dm;
 
+            // At end of first period, initialize smoothed values with simple average
+            if self.samples == self.period {
+                self.smoothed_tr = Some(self.tr_accumulator / self.period as f64);
+                self.smoothed_plus_dm = Some(self.plus_dm_accumulator / self.period as f64);
+                self.smoothed_minus_dm = Some(self.minus_dm_accumulator / self.period as f64);
+            }
+        }
+        // Phase 2: Apply Wilder's smoothing after initial period
+        else if let (Some(prev_tr), Some(prev_plus_dm), Some(prev_minus_dm)) = (
+            self.smoothed_tr,
+            self.smoothed_plus_dm,
+            self.smoothed_minus_dm,
+        ) {
+            // Wilder's smoothing: (prev * (period - 1) + current) / period
+            self.smoothed_tr = Some(self.wilder_smooth(prev_tr, tr));
+            self.smoothed_plus_dm = Some(self.wilder_smooth(prev_plus_dm, plus_dm));
+            self.smoothed_minus_dm = Some(self.wilder_smooth(prev_minus_dm, minus_dm));
+        }
+
+        // Calculate DI values and DX once we have smoothed values
+        if let (Some(atr), Some(smooth_plus_dm), Some(smooth_minus_dm)) = (
+            self.smoothed_tr,
+            self.smoothed_plus_dm,
+            self.smoothed_minus_dm,
+        ) {
             // Calculate +DI and -DI
             let plus_di = if atr != 0.0 {
                 (smooth_plus_dm / atr) * 100.0
@@ -326,15 +359,22 @@ impl Indicator for Adx {
                 0.0
             };
 
-            self.dx_history.push_back(dx);
-            if self.dx_history.len() > self.period {
-                self.dx_history.pop_front();
-            }
+            // Phase 3: Accumulate DX for second period (ADX calculation)
+            let dx_samples = self.samples - self.period;
+            if dx_samples <= self.period {
+                self.dx_accumulator += dx;
 
-            // ADX is the smoothed average of DX
-            if self.dx_history.len() >= self.period {
-                let adx = self.dx_history.iter().sum::<f64>() / self.dx_history.len() as f64;
-                self.current_adx = Some(adx);
+                // At end of second period, initialize ADX with simple average of DX
+                if dx_samples == self.period {
+                    self.smoothed_adx = Some(self.dx_accumulator / self.period as f64);
+                    self.current_adx = self.smoothed_adx;
+                }
+            }
+            // Phase 4: Apply Wilder's smoothing to ADX after 2*period
+            else if let Some(prev_adx) = self.smoothed_adx {
+                let new_adx = self.wilder_smooth(prev_adx, dx);
+                self.smoothed_adx = Some(new_adx);
+                self.current_adx = Some(new_adx);
             }
         }
 
